@@ -113,7 +113,8 @@ Additionally, by making ADO updates a prerequisite for seamless time logging, th
 
 ### 4.3 Sync & Auth
 
-* PAT stored securely using `keytar` in Electron main process
+* PAT stored securely using `keytar` in Electron. In the browser the token is
+  kept in session storage only and never written to disk.
 * ADO sync fetches latest work items nightly or on-demand
 
 ---
@@ -134,7 +135,8 @@ Additionally, by making ADO updates a prerequisite for seamless time logging, th
 
 **Security**:
 
-* PAT stored securely via `keytar`
+* PAT stored securely via `keytar`; falls back to session storage when keytar is
+  unavailable
 * No external cloud storage
 * Local-only execution unless user opts into sync
 
@@ -210,7 +212,7 @@ Additionally, by making ADO updates a prerequisite for seamless time logging, th
 * Scaffold Electron + React project
 * Set up calendar grid and time block model
 * Connect to ADO API with manual PAT test
-* Implement secure PAT storage with `keytar`
+* Implement secure PAT storage with `keytar` (with session storage fallback)
 * Create local storage service (JSON-based MVP)
 
 ---
@@ -226,9 +228,10 @@ Additionally, by making ADO updates a prerequisite for seamless time logging, th
 
 2. **Authentication Layer**
 
-   * `adoService.js`: handles API calls with PAT
-   * `keytar`: store and retrieve PAT securely
-   * Settings screen to input/test PAT
+  * `adoService.js`: handles API calls with PAT
+  * `keytar`: store and retrieve PAT securely (session storage fallback in the
+    browser)
+  * Settings screen to input/test PAT
 
 3. **Local Storage**
 
