@@ -3,7 +3,6 @@ import Calendar from './components/Calendar';
 import HoursSummary from './components/HoursSummary';
 import WorkItems from './components/WorkItems';
 import Settings from './components/Settings';
-import ReviewPanel from './components/ReviewPanel';
 import useWorkBlocks from './hooks/useWorkBlocks';
 import useSettings from './hooks/useSettings';
 import useAdoItems from './hooks/useAdoItems';
@@ -135,7 +134,6 @@ function App() {
   };
 
   const addBlock = (block) => {
-    if (!block.status) block.status = 'draft';
     let adjusted = trimLunchOverlap(block);
     if (!adjusted) return;
 
@@ -226,12 +224,6 @@ function App() {
     setBlocks(blocks.filter((b) => b.id !== id));
   };
 
-  const submitBlock = (id) => {
-    setBlocks((prev) =>
-      prev.map((b) => (b.id === id ? { ...b, status: 'submitted' } : b))
-    );
-  };
-
   return (
     <div className="p-4 flex min-h-screen bg-yellow-50 text-gray-800 dark:bg-gray-900 dark:text-gray-100">
       <div className="flex-grow">
@@ -262,11 +254,6 @@ function App() {
       <div className="w-64 pl-4 space-y-4">
         <Settings settings={settings} setSettings={setSettings} />
         <HoursSummary blocks={blocks} weekStart={weekStart} />
-        <ReviewPanel
-          blocks={blocks}
-          weekStart={weekStart}
-          onSubmit={submitBlock}
-        />
         <WorkItems items={items} setItems={setItems} />
       </div>
     </div>
