@@ -14,6 +14,14 @@ function App() {
   const { items, setItems } = useAdoItems();
 
   useEffect(() => {
+    if (settings.darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [settings.darkMode]);
+
+  useEffect(() => {
     const service = new AdoService();
     service.getWorkItems().then(setItems);
   }, [setItems]);
@@ -217,17 +225,17 @@ function App() {
   };
 
   return (
-    <div className="p-4 flex">
+    <div className="p-4 flex min-h-screen bg-white text-gray-800 dark:bg-gray-900 dark:text-gray-100">
       <div className="flex-grow">
         <h1 className="text-2xl font-bold mb-4">Calendar-Ado MVP</h1>
         <div className="mb-2 space-x-2">
-          <button className="px-2 py-1 bg-gray-200" onClick={prevWeek}>
+          <button className="px-2 py-1 bg-gray-200 dark:bg-gray-700" onClick={prevWeek}>
             Prev Week
           </button>
-          <button className="px-2 py-1 bg-gray-200" onClick={currentWeek}>
+          <button className="px-2 py-1 bg-gray-200 dark:bg-gray-700" onClick={currentWeek}>
             This Week
           </button>
-          <button className="px-2 py-1 bg-gray-200" onClick={nextWeek}>
+          <button className="px-2 py-1 bg-gray-200 dark:bg-gray-700" onClick={nextWeek}>
             Next Week
           </button>
           <span className="ml-2 font-semibold">{formatRange()}</span>
