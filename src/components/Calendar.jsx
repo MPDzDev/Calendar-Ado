@@ -1,8 +1,19 @@
 import React, { useState } from 'react';
 
-export default function Calendar({ blocks, onAdd, settings, onDelete }) {
+export default function Calendar({
+  blocks,
+  onAdd,
+  settings,
+  onDelete,
+  weekStart,
+}) {
   const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   const days = settings.workDays;
+  const weekDates = days.map((d) => {
+    const date = new Date(weekStart);
+    date.setDate(weekStart.getDate() + d);
+    return date;
+  });
   const hours = Array.from(
     { length: settings.endHour - settings.startHour },
     (_, i) => (i + settings.startHour).toString().padStart(2, '0')
@@ -23,10 +34,9 @@ export default function Calendar({ blocks, onAdd, settings, onDelete }) {
   const addBlock = (e) => {
     e.preventDefault();
     if (activeDay === null) return;
-    const startDate = new Date();
-    const endDate = new Date();
-    startDate.setDate(startDate.getDate() - startDate.getDay() + 1 + parseInt(activeDay));
-    endDate.setDate(startDate.getDate());
+    const startDate = new Date(weekStart);
+    startDate.setDate(weekStart.getDate() + parseInt(activeDay));
+    const endDate = new Date(startDate);
     startDate.setHours(parseInt(form.start.split(':')[0]), parseInt(form.start.split(':')[1]));
     endDate.setHours(parseInt(form.end.split(':')[0]), parseInt(form.end.split(':')[1]));
     onAdd({
@@ -77,10 +87,9 @@ export default function Calendar({ blocks, onAdd, settings, onDelete }) {
       setDrag(null);
       return;
     }
-    const startDate = new Date();
-    const endDate = new Date();
-    startDate.setDate(startDate.getDate() - startDate.getDay() + 1 + dayIdx);
-    endDate.setDate(startDate.getDate());
+    const startDate = new Date(weekStart);
+    startDate.setDate(weekStart.getDate() + dayIdx);
+    const endDate = new Date(startDate);
     startDate.setHours(
       settings.startHour + Math.floor(drag.start / 60),
       drag.start % 60,
@@ -112,10 +121,12 @@ export default function Calendar({ blocks, onAdd, settings, onDelete }) {
               ) {
                 return;
               }
-              setActiveDay(idx);
+              setActiveDay(dayIdx);
             }}
           >
-            <h2 className="font-semibold mb-2">{weekDays[dayIdx]}</h2>
+            <h2 className="font-semibold mb-2">
+              {weekDays[dayIdx]} {weekDates[idx].getMonth() + 1}/{weekDates[idx].getDate()}
+            </h2>
             <div
               className="relative select-none"
               style={{ height: `${hours.length * hourHeight}px` }}
@@ -147,7 +158,9 @@ export default function Calendar({ blocks, onAdd, settings, onDelete }) {
                 {blocks
                   .filter((b) => {
                     const date = new Date(b.start);
-                    return date.getDay() === ((dayIdx + 1) % 7);
+                    const dayDate = new Date(weekStart);
+                    dayDate.setDate(weekStart.getDate() + dayIdx);
+                    return date.toDateString() === dayDate.toDateString();
                   })
                   .map((b) => {
                     const start = new Date(b.start);
