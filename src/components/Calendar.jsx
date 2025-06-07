@@ -384,12 +384,26 @@ export default function Calendar({
                             return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                           })()}
                         </div>
-                        <div className="text-[10px] flex flex-wrap items-center gap-1">
-                          {b.itemId && <ItemBubble item={findItem(b.itemId)} />}
-                          {b.taskId && (
-                            <ItemBubble item={findItem(b.taskId)} />
-                          )}
-                          {b.workItem && (
+                        <div className="text-[10px] flex flex-col gap-1">
+                          {(() => {
+                            const item = b.itemId ? findItem(b.itemId) : null;
+                            const task = b.taskId ? findItem(b.taskId) : null;
+                            const hasParent = item && task && item.id !== task.id;
+                            if (item) {
+                              return (
+                                <div className="flex flex-col gap-1">
+                                  <ItemBubble item={item} full />
+                                  {hasParent && (
+                                    <div className="pl-2">
+                                      <ItemBubble item={task} />
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            }
+                            return task ? <ItemBubble item={task} /> : null;
+                          })()}
+                          {!b.itemId && b.workItem && (
                             <span className="bg-gray-200 dark:bg-gray-700 rounded px-1">
                               {b.workItem}
                             </span>
