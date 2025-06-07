@@ -11,12 +11,16 @@ function App() {
     setBlocks([...blocks, block]);
   };
 
+  const deleteBlock = (id) => {
+    setBlocks(blocks.filter((b) => b.id !== id));
+  };
+
   return (
     <div className="p-4">
       <h1 className="text-2xl font-bold mb-4">Calendar-Ado MVP</h1>
       <HoursSummary blocks={blocks} />
       <WorkItems />
-      <Calendar blocks={blocks} onAdd={addBlock} />
+      <Calendar blocks={blocks} onAdd={addBlock} onDelete={deleteBlock} />
     </div>
   );
 }

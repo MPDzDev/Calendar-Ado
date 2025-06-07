@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 
-export default function Calendar({ blocks, onAdd }) {
+export default function Calendar({ blocks, onAdd, onDelete }) {
   const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   const hours = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
   const hourHeight = 40; // px height for each hour block
   const [activeDay, setActiveDay] = useState(null);
   const [form, setForm] = useState({ start: '09:00', end: '10:00', note: '', workItem: '' });
   const [drag, setDrag] = useState(null); // { day, start, end }
+  const [hoveredId, setHoveredId] = useState(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
 
   const addBlock = (e) => {
     e.preventDefault();
@@ -99,10 +101,16 @@ export default function Calendar({ blocks, onAdd }) {
                     const endMinutes = end.getHours() * 60 + end.getMinutes();
                     const top = startMinutes * (hourHeight / 60);
                     const height = (endMinutes - startMinutes) * (hourHeight / 60);
+                    const highlight = hoveredId === b.id;
                     return (
                       <div
                         key={b.id}
-                        className="absolute left-0 right-0 p-1 bg-gray-200 overflow-hidden"
+                        onMouseEnter={() => setHoveredId(b.id)}
+                        onMouseLeave={() => {
+                          setHoveredId(null);
+                          if (confirmDeleteId !== b.id) setConfirmDeleteId(null);
+                        }}
+                        className={`absolute left-0 right-0 p-1 bg-gray-200 overflow-hidden ${highlight ? 'ring-2 ring-blue-400' : ''}`}
                         style={{ top: `${top}px`, height: `${height}px` }}
                       >
                         <div className="text-sm">
@@ -119,6 +127,34 @@ export default function Calendar({ blocks, onAdd }) {
                         <div className="text-xs">
                           {b.workItem} {b.note}
                         </div>
+                        {highlight && confirmDeleteId !== b.id && (
+                          <button
+                            className="absolute bottom-0 right-0 p-1 text-red-600 text-xs bg-white"
+                            onClick={() => setConfirmDeleteId(b.id)}
+                          >
+                            🗑
+                          </button>
+                        )}
+                        {confirmDeleteId === b.id && (
+                          <div className="absolute bottom-0 right-0 flex space-x-1 text-xs">
+                            <button
+                              className="px-1 bg-red-500 text-white"
+                              onClick={() => {
+                                if (onDelete) onDelete(b.id);
+                                setConfirmDeleteId(null);
+                                setHoveredId(null);
+                              }}
+                            >
+                              Confirm?
+                            </button>
+                            <button
+                              className="px-1 bg-gray-300"
+                              onClick={() => setConfirmDeleteId(null)}
+                            >
+                              x
+                            </button>
+                          </div>
+                        )}
                       </div>
                     );
                   })}
