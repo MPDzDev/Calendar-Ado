@@ -4,6 +4,8 @@ import StorageService from '../services/storageService';
 const defaultSettings = {
   startHour: 9,
   endHour: 17,
+  lunchStart: 12,
+  lunchEnd: 13,
   workDays: [0, 1, 2, 3, 4],
 };
 
