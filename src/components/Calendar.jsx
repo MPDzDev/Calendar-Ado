@@ -344,7 +344,7 @@ export default function Calendar({
                             e.currentTarget.style.cursor = 'move';
                           }
                         }}
-                        className={`work-block absolute left-0 right-0 p-1 border rounded-md overflow-hidden select-none text-[10px] leading-tight ${b.taskId ? 'bg-blue-200 border-blue-300' : 'bg-transparent border-gray-300'} ${b.taskId && b.workItem ? 'border-yellow-400' : ''} ${highlight ? 'ring-2 ring-blue-400' : ''}`}
+                        className={`work-block absolute left-0 right-0 p-1 border rounded-md overflow-hidden select-none text-[10px] leading-tight ${b.taskId ? 'bg-blue-200 border-blue-300' : 'bg-gray-100 border-gray-300'} ${b.taskId && b.workItem ? 'border-yellow-400' : ''} ${highlight ? 'ring-2 ring-blue-400' : ''}`}
                         style={{ top: `${top}px`, height: `${height}px` }}
                       >
                         <div className="text-[10px]">
