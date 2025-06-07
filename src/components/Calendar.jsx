@@ -6,6 +6,8 @@ export default function Calendar({
   settings,
   onDelete,
   weekStart,
+  onUpdate,
+  items,
 }) {
   const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   const days = settings.workDays;
@@ -30,6 +32,30 @@ export default function Calendar({
   const [drag, setDrag] = useState(null); // { day, start, end }
   const [hoveredId, setHoveredId] = useState(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+  const [taskSelect, setTaskSelect] = useState(null); // {blockId, parent, tasks}
+
+  const findItem = (id) => items?.find((i) => i.id === id);
+  const getDescendantTasks = (id) => {
+    const tasks = [];
+    const stack = items?.filter((i) => i.parentId === id) || [];
+    while (stack.length) {
+      const cur = stack.pop();
+      if (cur.type?.toLowerCase() === 'task') tasks.push(cur);
+      stack.push(...(items?.filter((i) => i.parentId === cur.id) || []));
+    }
+    return tasks;
+  };
+  const findDisplayItem = (item) => {
+    if (item.type?.toLowerCase() !== 'task') return item;
+    let cur = item;
+    while (cur.parentId) {
+      const parent = findItem(cur.parentId);
+      if (!parent) break;
+      if (parent.type?.toLowerCase() !== 'task') return parent;
+      cur = parent;
+    }
+    return item;
+  };
 
   const addBlock = (e) => {
     e.preventDefault();
@@ -106,6 +132,27 @@ export default function Calendar({
     setDrag(null);
   };
 
+  const handleDrop = (e, blockId) => {
+    e.preventDefault();
+    const raw = e.dataTransfer.getData('application/x-work-item');
+    if (!raw) return;
+    const item = JSON.parse(raw);
+    if (!item) return;
+    if (item.type?.toLowerCase() === 'task') {
+      const display = findDisplayItem(item);
+      if (onUpdate)
+        onUpdate(blockId, { workItem: display.title, taskId: item.id });
+    } else {
+      const tasks = getDescendantTasks(item.id);
+      if (tasks.length === 1) {
+        if (onUpdate)
+          onUpdate(blockId, { workItem: item.title, taskId: tasks[0].id });
+      } else if (tasks.length > 0) {
+        setTaskSelect({ blockId, parent: item, tasks });
+      }
+    }
+  };
+
   return (
     <div>
       <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${days.length}, minmax(0, 1fr))` }}>
@@ -179,7 +226,9 @@ export default function Calendar({
                           setHoveredId(null);
                           if (confirmDeleteId !== b.id) setConfirmDeleteId(null);
                         }}
-                        className={`work-block absolute left-0 right-0 p-1 bg-blue-200 border border-blue-300 rounded-md overflow-hidden select-none text-[10px] leading-tight ${highlight ? 'ring-2 ring-blue-400' : ''}`}
+                        onDragOver={(e) => e.preventDefault()}
+                        onDrop={(e) => handleDrop(e, b.id)}
+                        className={`work-block absolute left-0 right-0 p-1 border rounded-md overflow-hidden select-none text-[10px] leading-tight bg-blue-200 border-blue-300 ${b.taskId && b.workItem ? 'border-yellow-400' : ''} ${highlight ? 'ring-2 ring-blue-400' : ''}`}
                         style={{ top: `${top}px`, height: `${height}px` }}
                       >
                         <div className="text-[10px]">
@@ -293,6 +342,31 @@ export default function Calendar({
           </div>
         ))}
       </div>
+      {taskSelect && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-4 max-h-64 overflow-y-auto">
+            <h3 className="font-semibold mb-2">Select Task for {taskSelect.parent.title}</h3>
+            <ul>
+              {taskSelect.tasks.map((t) => (
+                <li
+                  key={t.id}
+                  className="p-1 cursor-pointer hover:bg-gray-100 text-sm"
+                  onClick={() => {
+                    if (onUpdate)
+                      onUpdate(taskSelect.blockId, { workItem: taskSelect.parent.title, taskId: t.id });
+                    setTaskSelect(null);
+                  }}
+                >
+                  {t.id} {t.title}
+                </li>
+              ))}
+            </ul>
+            <button className="mt-2 px-2 py-1 bg-gray-300" onClick={() => setTaskSelect(null)}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
