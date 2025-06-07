@@ -16,6 +16,7 @@ export default class AdoService {
       { id: '2005', title: 'Profile feature', type: 'feature' },
       { id: '2006', title: 'Update avatar story', type: 'user story', parentId: '2005' },
       { id: '2007', title: 'Add file uploader', type: 'task', parentId: '2006' },
+      { id: '2008', title: 'Validate image size', type: 'task', parentId: '2006' },
     ];
     return data.map((d) => new WorkItem(d));
   }
