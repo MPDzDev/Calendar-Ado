@@ -121,6 +121,16 @@ export default function Calendar({ blocks, onAdd, settings, onDelete }) {
                   </div>
                 ))}
               </div>
+              <div
+                className="absolute left-0 right-0 bg-yellow-100 text-center text-xs pointer-events-none"
+                style={{
+                  top: (settings.lunchStart - settings.startHour) * hourHeight,
+                  height: (settings.lunchEnd - settings.lunchStart) * hourHeight,
+                  lineHeight: `${(settings.lunchEnd - settings.lunchStart) * hourHeight}px`,
+                }}
+              >
+                Lunch
+              </div>
               <div className="relative z-10 w-full h-full">
                 {blocks
                   .filter((b) => {
