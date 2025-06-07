@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 
 export default function Calendar({
   blocks,
@@ -7,6 +7,7 @@ export default function Calendar({
   onDelete,
   weekStart,
   onUpdate,
+  onTimeChange,
   items,
 }) {
   const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -33,6 +34,8 @@ export default function Calendar({
   const [hoveredId, setHoveredId] = useState(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   const [taskSelect, setTaskSelect] = useState(null); // {blockId, parent, tasks}
+  const [blockDrag, setBlockDrag] = useState(null); // {id, mode, startRel, endRel, dayIndex, rects, minuteHeight, startX, startY}
+  const dayRefs = useRef({});
 
   const findItem = (id) => items?.find((i) => i.id === id);
   const getDescendantTasks = (id) => {
@@ -132,6 +135,110 @@ export default function Calendar({
     setDrag(null);
   };
 
+  const startBlockDrag = (e, block, dayIdx) => {
+    if (
+      e.target.closest('button') ||
+      e.target.closest('input') ||
+      e.target.closest('form')
+    ) {
+      return;
+    }
+    e.preventDefault();
+    const rects = days.map((d) => dayRefs.current[d].getBoundingClientRect());
+    const minuteHeight = rects[dayIdx].height / (hours.length * 60);
+    const bounds = e.currentTarget.getBoundingClientRect();
+    const offsetY = e.clientY - bounds.top;
+    let mode = 'move';
+    if (offsetY < 5) mode = 'resize-top';
+    else if (offsetY > bounds.height - 5) mode = 'resize-bottom';
+    const start = new Date(block.start);
+    const end = new Date(block.end);
+    const startRel = start.getHours() * 60 + start.getMinutes() - settings.startHour * 60;
+    const endRel = end.getHours() * 60 + end.getMinutes() - settings.startHour * 60;
+    setBlockDrag({
+      id: block.id,
+      mode,
+      startRel,
+      endRel,
+      dayIndex: days.indexOf(dayIdx),
+      rects,
+      minuteHeight,
+      startX: e.clientX,
+      startY: e.clientY,
+    });
+  };
+
+  useEffect(() => {
+    if (!blockDrag) return;
+    const move = (e) => {
+      const step =
+        Math.round((e.clientY - blockDrag.startY) / blockDrag.minuteHeight / blockMinutes) *
+        blockMinutes;
+      let startRel = blockDrag.startRel;
+      let endRel = blockDrag.endRel;
+      if (blockDrag.mode === 'move') {
+        startRel += step;
+        endRel += step;
+      } else if (blockDrag.mode === 'resize-top') {
+        startRel += step;
+        if (startRel < 0) startRel = 0;
+        if (endRel - startRel < blockMinutes) startRel = endRel - blockMinutes;
+      } else if (blockDrag.mode === 'resize-bottom') {
+        endRel += step;
+        const max = hours.length * 60;
+        if (endRel > max) endRel = max;
+        if (endRel - startRel < blockMinutes) endRel = startRel + blockMinutes;
+      }
+
+      const max = hours.length * 60;
+      if (blockDrag.mode === 'move') {
+        if (startRel < 0) {
+          endRel -= startRel;
+          startRel = 0;
+        }
+        if (endRel > max) {
+          const diff = endRel - max;
+          startRel -= diff;
+          endRel = max;
+          if (startRel < 0) startRel = 0;
+        }
+      }
+
+      let dayIndex = blockDrag.dayIndex;
+      for (let i = 0; i < blockDrag.rects.length; i++) {
+        const r = blockDrag.rects[i];
+        if (e.clientX >= r.left && e.clientX <= r.right) {
+          dayIndex = i;
+          break;
+        }
+      }
+
+      setBlockDrag({ ...blockDrag, startRel, endRel, dayIndex });
+    };
+
+    const up = () => {
+      const startAbs = blockDrag.startRel + settings.startHour * 60;
+      const endAbs = blockDrag.endRel + settings.startHour * 60;
+      const dayIdx = days[blockDrag.dayIndex];
+      const startDate = new Date(weekStart);
+      startDate.setDate(weekStart.getDate() + dayIdx);
+      startDate.setHours(Math.floor(startAbs / 60), startAbs % 60, 0, 0);
+      const endDate = new Date(weekStart);
+      endDate.setDate(weekStart.getDate() + dayIdx);
+      endDate.setHours(Math.floor(endAbs / 60), endAbs % 60, 0, 0);
+      if (onTimeChange)
+        onTimeChange(blockDrag.id, startDate.toISOString(), endDate.toISOString());
+      setBlockDrag(null);
+    };
+
+    window.addEventListener('mousemove', move);
+    window.addEventListener('mouseup', up);
+    return () => {
+      window.removeEventListener('mousemove', move);
+      window.removeEventListener('mouseup', up);
+    };
+  }, [blockDrag, blockMinutes, days, onTimeChange, settings.startHour, weekStart, hours.length]);
+
   const handleDrop = (e, blockId) => {
     e.preventDefault();
     const raw = e.dataTransfer.getData('application/x-work-item');
@@ -159,6 +266,7 @@ export default function Calendar({
         {days.map((dayIdx, idx) => (
           <div
             key={dayIdx}
+            ref={(el) => (dayRefs.current[dayIdx] = el)}
             className="border p-2 relative"
             onDoubleClick={(e) => {
               if (
@@ -204,6 +312,9 @@ export default function Calendar({
               <div className="relative z-10 w-full h-full">
                 {blocks
                   .filter((b) => {
+                    if (blockDrag && blockDrag.id === b.id) {
+                      return days[blockDrag.dayIndex] === dayIdx;
+                    }
                     const date = new Date(b.start);
                     const dayDate = new Date(weekStart);
                     dayDate.setDate(weekStart.getDate() + dayIdx);
@@ -212,8 +323,12 @@ export default function Calendar({
                   .map((b) => {
                     const start = new Date(b.start);
                     const end = new Date(b.end);
-                    const startMinutes = start.getHours() * 60 + start.getMinutes();
-                    const endMinutes = end.getHours() * 60 + end.getMinutes();
+                    let startMinutes = start.getHours() * 60 + start.getMinutes();
+                    let endMinutes = end.getHours() * 60 + end.getMinutes();
+                    if (blockDrag && blockDrag.id === b.id) {
+                      startMinutes = settings.startHour * 60 + blockDrag.startRel;
+                      endMinutes = settings.startHour * 60 + blockDrag.endRel;
+                    }
                     const top =
                       (startMinutes - settings.startHour * 60) * (hourHeight / 60);
                     const height = (endMinutes - startMinutes) * (hourHeight / 60);
@@ -228,19 +343,36 @@ export default function Calendar({
                         }}
                         onDragOver={(e) => e.preventDefault()}
                         onDrop={(e) => handleDrop(e, b.id)}
+                        onMouseDown={(e) => startBlockDrag(e, b, dayIdx)}
                         className={`work-block absolute left-0 right-0 p-1 border rounded-md overflow-hidden select-none text-[10px] leading-tight bg-blue-200 border-blue-300 ${b.taskId && b.workItem ? 'border-yellow-400' : ''} ${highlight ? 'ring-2 ring-blue-400' : ''}`}
                         style={{ top: `${top}px`, height: `${height}px` }}
                       >
                         <div className="text-[10px]">
-                          {start.toLocaleTimeString([], {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}{' '}
+                          {(() => {
+                            const d = new Date(start);
+                            if (blockDrag && blockDrag.id === b.id) {
+                              d.setHours(
+                                settings.startHour + Math.floor(blockDrag.startRel / 60),
+                                blockDrag.startRel % 60,
+                                0,
+                                0
+                              );
+                            }
+                            return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                          })()}{' '}
                           -{' '}
-                          {end.toLocaleTimeString([], {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
+                          {(() => {
+                            const d = new Date(end);
+                            if (blockDrag && blockDrag.id === b.id) {
+                              d.setHours(
+                                settings.startHour + Math.floor(blockDrag.endRel / 60),
+                                blockDrag.endRel % 60,
+                                0,
+                                0
+                              );
+                            }
+                            return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                          })()}
                         </div>
                         <div className="text-[10px]">
                           {b.workItem} {b.note}
