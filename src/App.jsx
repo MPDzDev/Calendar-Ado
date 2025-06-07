@@ -10,6 +10,48 @@ function App() {
   const { blocks, setBlocks } = useWorkBlocks();
   const { settings, setSettings } = useSettings();
 
+  const isOverlappingLunch = (block) => {
+    const start = new Date(block.start);
+    const end = new Date(block.end);
+    const lunchStart = new Date(start);
+    lunchStart.setHours(settings.lunchStart, 0, 0, 0);
+    const lunchEnd = new Date(start);
+    lunchEnd.setHours(settings.lunchEnd, 0, 0, 0);
+    return start < lunchEnd && end > lunchStart;
+  };
+
+  const trimLunchOverlap = (block) => {
+    if (!isOverlappingLunch(block)) return block;
+    const start = new Date(block.start);
+    const end = new Date(block.end);
+    const lunchStart = new Date(start);
+    lunchStart.setHours(settings.lunchStart, 0, 0, 0);
+    const lunchEnd = new Date(start);
+    lunchEnd.setHours(settings.lunchEnd, 0, 0, 0);
+
+    if (start >= lunchStart && end <= lunchEnd) {
+      return null;
+    }
+
+    if (start < lunchStart && end > lunchStart && end <= lunchEnd) {
+      end.setTime(lunchStart.getTime());
+    } else if (start >= lunchStart && start < lunchEnd && end > lunchEnd) {
+      start.setTime(lunchEnd.getTime());
+    } else if (start < lunchStart && end > lunchEnd) {
+      const before = lunchStart - start;
+      const after = end - lunchEnd;
+      if (before >= after) {
+        end.setTime(lunchStart.getTime());
+      } else {
+        start.setTime(lunchEnd.getTime());
+      }
+    }
+
+    if (end <= start) return null;
+
+    return { ...block, start: start.toISOString(), end: end.toISOString() };
+  };
+
   const hasOverlap = (newBlock) => {
     const newStart = new Date(newBlock.start);
     const newEnd = new Date(newBlock.end);
@@ -51,10 +93,15 @@ function App() {
   };
 
   const addBlock = (block) => {
-    let adjusted = hasOverlap(block) ? adjustForOverlap(block) : block;
+    let adjusted = trimLunchOverlap(block);
+    if (!adjusted) return;
+
+    adjusted = hasOverlap(adjusted) ? adjustForOverlap(adjusted) : adjusted;
+    adjusted = adjusted ? trimLunchOverlap(adjusted) : null;
 
     while (adjusted && hasOverlap(adjusted)) {
       adjusted = adjustForOverlap(adjusted);
+      adjusted = adjusted ? trimLunchOverlap(adjusted) : null;
     }
 
     if (!adjusted) {
