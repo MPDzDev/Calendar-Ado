@@ -6,6 +6,9 @@ export default class AdoService {
 
   async getWorkItems() {
     // TODO: implement fetch from Azure DevOps
-    return [];
+    return [
+      { id: '1001', title: 'Sample Task 1' },
+      { id: '1002', title: 'Sample Task 2' },
+    ];
   }
 }
