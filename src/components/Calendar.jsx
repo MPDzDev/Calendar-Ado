@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 
 export default function Calendar({ blocks, onAdd }) {
   const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-  const hours = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0')); 
+  const hours = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
+  const hourHeight = 40; // px height for each hour block
   const [activeDay, setActiveDay] = useState(null);
   const [form, setForm] = useState({ start: '09:00', end: '10:00', note: '', workItem: '' });
   const [drag, setDrag] = useState(null); // { day, start, end }
@@ -70,7 +71,7 @@ export default function Calendar({ blocks, onAdd }) {
             <h2 className="font-semibold mb-2">{day}</h2>
             <div
               className="relative"
-              style={{ height: `${hours.length * 40}px` }}
+              style={{ height: `${hours.length * hourHeight}px` }}
               onMouseDown={(e) => startDrag(e, idx)}
               onMouseMove={onDrag}
               onMouseUp={() => endDrag(idx)}
@@ -85,30 +86,42 @@ export default function Calendar({ blocks, onAdd }) {
                   </div>
                 ))}
               </div>
-              <div className="relative z-10">
+              <div className="relative z-10 w-full h-full">
                 {blocks
                   .filter((b) => {
                     const date = new Date(b.start);
                     return date.getDay() === ((idx + 1) % 7);
                   })
-                  .map((b) => (
-                    <div key={b.id} className="mb-2 p-1 bg-gray-200">
-                      <div className="text-sm">
-                        {new Date(b.start).toLocaleTimeString([], {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}{' '}
-                        -{' '}
-                        {new Date(b.end).toLocaleTimeString([], {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
+                  .map((b) => {
+                    const start = new Date(b.start);
+                    const end = new Date(b.end);
+                    const startMinutes = start.getHours() * 60 + start.getMinutes();
+                    const endMinutes = end.getHours() * 60 + end.getMinutes();
+                    const top = startMinutes * (hourHeight / 60);
+                    const height = (endMinutes - startMinutes) * (hourHeight / 60);
+                    return (
+                      <div
+                        key={b.id}
+                        className="absolute left-0 right-0 p-1 bg-gray-200 overflow-hidden"
+                        style={{ top: `${top}px`, height: `${height}px` }}
+                      >
+                        <div className="text-sm">
+                          {start.toLocaleTimeString([], {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}{' '}
+                          -{' '}
+                          {end.toLocaleTimeString([], {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </div>
+                        <div className="text-xs">
+                          {b.workItem} {b.note}
+                        </div>
                       </div>
-                      <div className="text-xs">
-                        {b.workItem} {b.note}
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 {activeDay === idx && (
                   <form
                     onSubmit={addBlock}
