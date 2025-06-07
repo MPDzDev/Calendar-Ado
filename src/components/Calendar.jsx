@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 
 export default function Calendar({ blocks, onAdd }) {
   const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const hours = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
   const [activeDay, setActiveDay] = useState(null);
   const [form, setForm] = useState({ start: '09:00', end: '10:00', note: '', workItem: '' });
 
@@ -35,79 +36,93 @@ export default function Calendar({ blocks, onAdd }) {
             onDoubleClick={() => setActiveDay(idx)}
           >
             <h2 className="font-semibold mb-2">{day}</h2>
-            {blocks
-              .filter((b) => {
-                const date = new Date(b.start);
-                return date.getDay() === ((idx + 1) % 7);
-              })
-              .map((b) => (
-                <div key={b.id} className="mb-2 p-1 bg-gray-200">
-                  <div className="text-sm">
-                    {new Date(b.start).toLocaleTimeString([], {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}{' '}
-                    -{' '}
-                    {new Date(b.end).toLocaleTimeString([], {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
-                  </div>
-                  <div className="text-xs">
-                    {b.workItem} {b.note}
-                  </div>
-                </div>
-              ))}
-            {activeDay === idx && (
-              <form
-                onSubmit={addBlock}
-                className="absolute top-0 left-0 bg-white border p-2 space-y-1 z-10"
-              >
-                <input
-                  type="time"
-                  value={form.start}
-                  onChange={(e) => setForm({ ...form, start: e.target.value })}
-                  className="border"
-                />
-                <input
-                  type="time"
-                  value={form.end}
-                  onChange={(e) => setForm({ ...form, end: e.target.value })}
-                  className="border"
-                />
-                <input
-                  type="text"
-                  placeholder="Work item"
-                  value={form.workItem}
-                  onChange={(e) =>
-                    setForm({ ...form, workItem: e.target.value })
-                  }
-                  className="border"
-                />
-                <input
-                  type="text"
-                  placeholder="Note"
-                  value={form.note}
-                  onChange={(e) => setForm({ ...form, note: e.target.value })}
-                  className="border"
-                />
-                <div className="flex space-x-1">
-                  <button
-                    type="submit"
-                    className="px-2 py-1 bg-blue-500 text-white text-xs"
+            <div className="relative" style={{ height: `${hours.length * 40}px` }}>
+              <div className="absolute inset-0 pointer-events-none flex flex-col">
+                {hours.map((h, i) => (
+                  <div
+                    key={i}
+                    className="flex-1 border-t border-gray-200 text-[10px] text-gray-400"
                   >
-                    Add
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setActiveDay(null)}
-                    className="px-2 py-1 bg-gray-300 text-xs"
+                    {h}:00
+                  </div>
+                ))}
+              </div>
+              <div className="relative z-10">
+                {blocks
+                  .filter((b) => {
+                    const date = new Date(b.start);
+                    return date.getDay() === ((idx + 1) % 7);
+                  })
+                  .map((b) => (
+                    <div key={b.id} className="mb-2 p-1 bg-gray-200">
+                      <div className="text-sm">
+                        {new Date(b.start).toLocaleTimeString([], {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}{' '}
+                        -{' '}
+                        {new Date(b.end).toLocaleTimeString([], {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </div>
+                      <div className="text-xs">
+                        {b.workItem} {b.note}
+                      </div>
+                    </div>
+                  ))}
+                {activeDay === idx && (
+                  <form
+                    onSubmit={addBlock}
+                    className="absolute top-0 left-0 bg-white border p-2 space-y-1 z-20"
                   >
-                    Cancel
-                  </button>
-                </div>
-              </form>
-            )}
+                    <input
+                      type="time"
+                      value={form.start}
+                      onChange={(e) => setForm({ ...form, start: e.target.value })}
+                      className="border"
+                    />
+                    <input
+                      type="time"
+                      value={form.end}
+                      onChange={(e) => setForm({ ...form, end: e.target.value })}
+                      className="border"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Work item"
+                      value={form.workItem}
+                      onChange={(e) =>
+                        setForm({ ...form, workItem: e.target.value })
+                      }
+                      className="border"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Note"
+                      value={form.note}
+                      onChange={(e) => setForm({ ...form, note: e.target.value })}
+                      className="border"
+                    />
+                    <div className="flex space-x-1">
+                      <button
+                        type="submit"
+                        className="px-2 py-1 bg-blue-500 text-white text-xs"
+                      >
+                        Add
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setActiveDay(null)}
+                        className="px-2 py-1 bg-gray-300 text-xs"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </div>
+            </div>
           </div>
         ))}
       </div>
