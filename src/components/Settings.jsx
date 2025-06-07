@@ -57,6 +57,32 @@ export default function Settings({ settings, setSettings }) {
             />
           </div>
           <div>
+            <label className="mr-1">Lunch start:</label>
+            <input
+              type="number"
+              min="0"
+              max="23"
+              value={temp.lunchStart}
+              onChange={(e) =>
+                setTemp({ ...temp, lunchStart: parseInt(e.target.value) })
+              }
+              className="border w-16"
+            />
+          </div>
+          <div>
+            <label className="mr-1">Lunch end:</label>
+            <input
+              type="number"
+              min="1"
+              max="24"
+              value={temp.lunchEnd}
+              onChange={(e) =>
+                setTemp({ ...temp, lunchEnd: parseInt(e.target.value) })
+              }
+              className="border w-16"
+            />
+          </div>
+          <div>
             <div className="mb-1">Work days:</div>
             <div className="flex space-x-2 flex-wrap">
               {dayNames.map((d, idx) => (
