@@ -1,14 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Calendar from './components/Calendar';
 import HoursSummary from './components/HoursSummary';
 import WorkItems from './components/WorkItems';
 import Settings from './components/Settings';
 import useWorkBlocks from './hooks/useWorkBlocks';
 import useSettings from './hooks/useSettings';
+import useAdoItems from './hooks/useAdoItems';
+import AdoService from './services/adoService';
 
 function App() {
   const { blocks, setBlocks } = useWorkBlocks();
   const { settings, setSettings } = useSettings();
+  const { items, setItems } = useAdoItems();
+
+  useEffect(() => {
+    const service = new AdoService();
+    service.getWorkItems().then(setItems);
+  }, [setItems]);
 
   const getWeekStart = (date) => {
     const d = new Date(date);
@@ -136,6 +144,12 @@ function App() {
     setBlocks((prev) => [...prev, adjusted]);
   };
 
+  const updateBlock = (id, data) => {
+    setBlocks((prev) =>
+      prev.map((b) => (b.id === id ? { ...b, ...data } : b))
+    );
+  };
+
   const deleteBlock = (id) => {
     setBlocks(blocks.filter((b) => b.id !== id));
   };
@@ -159,15 +173,17 @@ function App() {
         <Calendar
           blocks={blocks}
           onAdd={addBlock}
+          onUpdate={updateBlock}
           settings={settings}
           onDelete={deleteBlock}
           weekStart={weekStart}
+          items={items}
         />
       </div>
       <div className="w-64 pl-4 space-y-4">
         <Settings settings={settings} setSettings={setSettings} />
         <HoursSummary blocks={blocks} weekStart={weekStart} />
-        <WorkItems />
+        <WorkItems items={items} setItems={setItems} />
       </div>
     </div>
   );

@@ -1,5 +1,4 @@
 import React, { useEffect } from 'react';
-import useAdoItems from '../hooks/useAdoItems';
 import AdoService from '../services/adoService';
 import WorkItem from './WorkItem';
 
@@ -32,13 +31,13 @@ function renderTree(nodes, level = 0) {
   });
 }
 
-export default function WorkItems() {
-  const { items, setItems } = useAdoItems();
-
+export default function WorkItems({ items, setItems }) {
   useEffect(() => {
-    const service = new AdoService();
-    service.getWorkItems().then(setItems);
-  }, []);
+    if (items.length === 0) {
+      const service = new AdoService();
+      service.getWorkItems().then(setItems);
+    }
+  }, [items, setItems]);
 
   const tree = buildTree(items);
 
