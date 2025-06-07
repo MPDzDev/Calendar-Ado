@@ -116,12 +116,21 @@ function App() {
   };
 
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">Calendar-Ado MVP</h1>
-      <Settings settings={settings} setSettings={setSettings} />
-      <HoursSummary blocks={blocks} />
-      <WorkItems />
-      <Calendar blocks={blocks} onAdd={addBlock} settings={settings} onDelete={deleteBlock} />
+    <div className="p-4 flex">
+      <div className="flex-grow">
+        <h1 className="text-2xl font-bold mb-4">Calendar-Ado MVP</h1>
+        <Calendar
+          blocks={blocks}
+          onAdd={addBlock}
+          settings={settings}
+          onDelete={deleteBlock}
+        />
+      </div>
+      <div className="w-64 pl-4 space-y-4">
+        <Settings settings={settings} setSettings={setSettings} />
+        <HoursSummary blocks={blocks} />
+        <WorkItems />
+      </div>
     </div>
   );
 }

@@ -166,10 +166,10 @@ export default function Calendar({ blocks, onAdd, settings, onDelete }) {
                           setHoveredId(null);
                           if (confirmDeleteId !== b.id) setConfirmDeleteId(null);
                         }}
-                        className={`work-block absolute left-0 right-0 p-1 bg-gray-200 overflow-hidden select-none ${highlight ? 'ring-2 ring-blue-400' : ''}`}
+                        className={`work-block absolute left-0 right-0 p-1 bg-blue-200 border border-blue-300 rounded-md overflow-hidden select-none text-[10px] leading-tight ${highlight ? 'ring-2 ring-blue-400' : ''}`}
                         style={{ top: `${top}px`, height: `${height}px` }}
                       >
-                        <div className="text-sm">
+                        <div className="text-[10px]">
                           {start.toLocaleTimeString([], {
                             hour: '2-digit',
                             minute: '2-digit',
@@ -180,7 +180,7 @@ export default function Calendar({ blocks, onAdd, settings, onDelete }) {
                             minute: '2-digit',
                           })}
                         </div>
-                        <div className="text-xs">
+                        <div className="text-[10px]">
                           {b.workItem} {b.note}
                         </div>
                         {highlight && confirmDeleteId !== b.id && (

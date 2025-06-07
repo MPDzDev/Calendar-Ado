@@ -20,12 +20,16 @@ function buildTree(items) {
 }
 
 function renderTree(nodes, level = 0) {
-  return nodes.map((node) => (
-    <div key={node.id}>
-      <WorkItem item={node} level={level} />
-      {node.children.length > 0 && renderTree(node.children, level + 1)}
-    </div>
-  ));
+  return nodes.map((node) => {
+    const isFeature = node.type?.toLowerCase() === 'feature';
+    const containerClass = isFeature ? 'inline-block' : '';
+    return (
+      <div key={node.id} className={containerClass}>
+        <WorkItem item={node} level={level} />
+        {node.children.length > 0 && renderTree(node.children, level + 1)}
+      </div>
+    );
+  });
 }
 
 export default function WorkItems() {
