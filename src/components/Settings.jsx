@@ -4,6 +4,7 @@ const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 export default function Settings({ settings, setSettings }) {
   const [open, setOpen] = useState(false);
+  const [tab, setTab] = useState('general');
   const [temp, setTemp] = useState(settings);
 
   useEffect(() => {
@@ -27,41 +28,64 @@ export default function Settings({ settings, setSettings }) {
     <div className="mb-2">
       <button
         className="px-2 py-1 bg-gray-200 dark:bg-gray-700"
-        onClick={() => setOpen(true)}
+        onClick={() => {
+          setTab('general');
+          setOpen(true);
+        }}
       >
         Settings
       </button>
       {open && (
         <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-          <div className="border p-4 bg-yellow-50 dark:bg-gray-800 dark:text-white space-y-2 shadow-lg">
-            <div>
-              <label className="mr-1">Start hour:</label>
-              <input
-                type="number"
-                min="0"
-                max="23"
-                value={temp.startHour}
-                onChange={(e) =>
-                  setTemp({ ...temp, startHour: parseInt(e.target.value) })
-                }
-                className="border w-16"
-              />
+          <div className="border p-4 bg-yellow-50 dark:bg-gray-800 dark:text-white space-y-2 shadow-lg w-80">
+            <div className="flex mb-2 space-x-2">
+              <button
+                className={`px-2 py-1 text-sm ${
+                  tab === 'general' ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-gray-700'
+                }`}
+                onClick={() => setTab('general')}
+              >
+                General
+              </button>
+              <button
+                className={`px-2 py-1 text-sm ${
+                  tab === 'azure' ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-gray-700'
+                }`}
+                onClick={() => setTab('azure')}
+              >
+                Azure DevOps
+              </button>
             </div>
-            <div>
-              <label className="mr-1">End hour:</label>
-              <input
-                type="number"
-                min="1"
-                max="24"
-                value={temp.endHour}
-                onChange={(e) =>
-                  setTemp({ ...temp, endHour: parseInt(e.target.value) })
-                }
-                className="border w-16"
-              />
-            </div>
-            <div>
-              <label className="mr-1">Lunch start:</label>
+              {tab === 'general' && (
+                <>
+                  <div>
+                    <label className="mr-1">Start hour:</label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="23"
+                      value={temp.startHour}
+                      onChange={(e) =>
+                        setTemp({ ...temp, startHour: parseInt(e.target.value) })
+                      }
+                      className="border w-16"
+                    />
+                  </div>
+                  <div>
+                    <label className="mr-1">End hour:</label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="24"
+                      value={temp.endHour}
+                      onChange={(e) =>
+                        setTemp({ ...temp, endHour: parseInt(e.target.value) })
+                      }
+                      className="border w-16"
+                    />
+                  </div>
+                  <div>
+                    <label className="mr-1">Lunch start:</label>
               <input
                 type="number"
                 min="0"
@@ -72,9 +96,9 @@ export default function Settings({ settings, setSettings }) {
                 }
                 className="border w-16"
               />
-            </div>
-            <div>
-              <label className="mr-1">Lunch end:</label>
+                  </div>
+                  <div>
+                    <label className="mr-1">Lunch end:</label>
               <input
                 type="number"
                 min="1"
@@ -85,9 +109,9 @@ export default function Settings({ settings, setSettings }) {
                 }
                 className="border w-16"
               />
-            </div>
-            <div>
-              <label className="mr-1">Block size:</label>
+                  </div>
+                  <div>
+                    <label className="mr-1">Block size:</label>
               <select
                 value={temp.blockMinutes}
                 onChange={(e) =>
@@ -101,9 +125,9 @@ export default function Settings({ settings, setSettings }) {
                   </option>
                 ))}
               </select>
-            </div>
-            <div>
-              <div className="mb-1">Work days:</div>
+                  </div>
+                  <div>
+                    <div className="mb-1">Work days:</div>
               <div className="flex space-x-2 flex-wrap">
                 {dayNames.map((d, idx) => (
                   <label key={idx} className="flex items-center space-x-1">
@@ -116,35 +140,59 @@ export default function Settings({ settings, setSettings }) {
                   </label>
                 ))}
               </div>
-            </div>
-            <div className="flex items-center space-x-2">
-              <label className="flex items-center space-x-1">
-                <input
-                  type="checkbox"
-                  checked={temp.darkMode}
-                  onChange={() => setTemp({ ...temp, darkMode: !temp.darkMode })}
-                />
-                <span>Dark mode</span>
-              </label>
-            </div>
-            <div className="flex space-x-2">
-              <button className="px-2 py-1 bg-blue-500 text-white text-xs" onClick={save}>
-                Save
-              </button>
-              <button
-                className="px-2 py-1 bg-gray-300 dark:bg-gray-600 text-xs"
-                onClick={() => {
-                  setTemp(settings);
-                  setOpen(false);
-                }}
-              >
-                Cancel
-              </button>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <label className="flex items-center space-x-1">
+                      <input
+                        type="checkbox"
+                        checked={temp.darkMode}
+                        onChange={() => setTemp({ ...temp, darkMode: !temp.darkMode })}
+                      />
+                      <span>Dark mode</span>
+                    </label>
+                  </div>
+                </>
+              )}
+              {tab === 'azure' && (
+                <>
+                  <div>
+                    <label className="mr-1">Organization:</label>
+                    <input
+                      type="text"
+                      value={temp.azureOrg}
+                      onChange={(e) => setTemp({ ...temp, azureOrg: e.target.value })}
+                      className="border w-full px-1"
+                    />
+                  </div>
+                  <div>
+                    <label className="mr-1">PAT:</label>
+                    <input
+                      type="password"
+                      value={temp.azurePat}
+                      onChange={(e) => setTemp({ ...temp, azurePat: e.target.value })}
+                      className="border w-full px-1"
+                    />
+                  </div>
+                </>
+              )}
+              <div className="flex space-x-2 pt-2">
+                <button className="px-2 py-1 bg-blue-500 text-white text-xs" onClick={save}>
+                  Save
+                </button>
+                <button
+                  className="px-2 py-1 bg-gray-300 dark:bg-gray-600 text-xs"
+                  onClick={() => {
+                    setTemp(settings);
+                    setOpen(false);
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-    </div>
-  );
+        )}
+      </div>
+    );
 }
 
