@@ -13,10 +13,11 @@ try {
 }
 
 export default class StorageService {
-  constructor() {
-    this.storageKey = 'workBlocks';
+  constructor(storageKey = 'workBlocks', defaultData = null) {
+    this.storageKey = storageKey;
+    this.defaultData = defaultData;
     if (fs && path) {
-      this.dataPath = path.join(process.cwd(), 'data.json');
+      this.dataPath = path.join(process.cwd(), `${storageKey}.json`);
     }
   }
 
@@ -26,14 +27,14 @@ export default class StorageService {
       if (fs.existsSync(this.dataPath)) {
         return JSON.parse(fs.readFileSync(this.dataPath));
       }
-      return { workBlocks: [] };
+      return this.defaultData;
     }
     // Fallback to browser localStorage
     if (typeof localStorage !== 'undefined') {
       const raw = localStorage.getItem(this.storageKey);
-      return raw ? JSON.parse(raw) : { workBlocks: [] };
+      return raw ? JSON.parse(raw) : this.defaultData;
     }
-    return { workBlocks: [] };
+    return this.defaultData;
   }
 
   write(data) {
