@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-export default function Calendar({ blocks, onAdd, settings }) {
+export default function Calendar({ blocks, onAdd, settings, onDelete }) {
   const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   const days = settings.workDays;
   const hours = Array.from(
@@ -16,6 +16,8 @@ export default function Calendar({ blocks, onAdd, settings }) {
     workItem: '',
   });
   const [drag, setDrag] = useState(null); // { day, start, end }
+  const [hoveredId, setHoveredId] = useState(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
 
   const addBlock = (e) => {
     e.preventDefault();
@@ -43,6 +45,10 @@ export default function Calendar({ blocks, onAdd, settings }) {
   };
 
   const startDrag = (e, dayIdx) => {
+    // ignore drags that originate from interactive elements like buttons or the form
+    if (e.target.closest('button') || e.target.closest('input') || e.target.closest('form')) {
+      return;
+    }
     const rect = e.currentTarget.getBoundingClientRect();
     const hourHeight = rect.height / hours.length;
     const start = Math.floor((e.clientY - rect.top) / hourHeight);
@@ -80,7 +86,16 @@ export default function Calendar({ blocks, onAdd, settings }) {
           <div
             key={dayIdx}
             className="border p-2 relative"
-            onDoubleClick={() => setActiveDay(dayIdx)}
+            onDoubleClick={(e) => {
+              if (
+                e.target.closest('button') ||
+                e.target.closest('input') ||
+                e.target.closest('form')
+              ) {
+                return;
+              }
+              setActiveDay(idx);
+            }}
           >
             <h2 className="font-semibold mb-2">{weekDays[dayIdx]}</h2>
             <div
@@ -114,10 +129,16 @@ export default function Calendar({ blocks, onAdd, settings }) {
                     const top =
                       (startMinutes - settings.startHour * 60) * (hourHeight / 60);
                     const height = (endMinutes - startMinutes) * (hourHeight / 60);
+                    const highlight = hoveredId === b.id;
                     return (
                       <div
                         key={b.id}
-                        className="absolute left-0 right-0 p-1 bg-gray-200 overflow-hidden"
+                        onMouseEnter={() => setHoveredId(b.id)}
+                        onMouseLeave={() => {
+                          setHoveredId(null);
+                          if (confirmDeleteId !== b.id) setConfirmDeleteId(null);
+                        }}
+                        className={`absolute left-0 right-0 p-1 bg-gray-200 overflow-hidden ${highlight ? 'ring-2 ring-blue-400' : ''}`}
                         style={{ top: `${top}px`, height: `${height}px` }}
                       >
                         <div className="text-sm">
@@ -134,6 +155,34 @@ export default function Calendar({ blocks, onAdd, settings }) {
                         <div className="text-xs">
                           {b.workItem} {b.note}
                         </div>
+                        {highlight && confirmDeleteId !== b.id && (
+                          <button
+                            className="absolute bottom-0 right-0 p-1 text-red-600 text-xs bg-white"
+                            onClick={() => setConfirmDeleteId(b.id)}
+                          >
+                            🗑
+                          </button>
+                        )}
+                        {confirmDeleteId === b.id && (
+                          <div className="absolute bottom-0 right-0 flex space-x-1 text-xs">
+                            <button
+                              className="px-1 bg-red-500 text-white"
+                              onClick={() => {
+                                if (onDelete) onDelete(b.id);
+                                setConfirmDeleteId(null);
+                                setHoveredId(null);
+                              }}
+                            >
+                              Confirm?
+                            </button>
+                            <button
+                              className="px-1 bg-gray-300"
+                              onClick={() => setConfirmDeleteId(null)}
+                            >
+                              x
+                            </button>
+                          </div>
+                        )}
                       </div>
                     );
                   })}

@@ -88,6 +88,7 @@ Additionally, by making ADO updates a prerequisite for seamless time logging, th
 * Reuse previous week's structure for recurring patterns
 * Hover tooltip for blocks showing title, linked task, time spent, and sync status
 * Editable area path/job order hints for numeric values (e.g., "1234 → Billing team Q2")
+* Hover highlight with delete icon to remove a block after confirmation
 
 ---
 
