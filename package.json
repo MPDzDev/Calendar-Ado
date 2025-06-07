@@ -3,6 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "main": "src/main/main.js",
+  "build": {
+    "extends": null,
+    "files": [
+      "build/**/*",
+      "src/main/**/*"
+    ]
+  },
   "scripts": {
     "react-start": "react-scripts start",
     "electron": "ELECTRON_START_URL=http://localhost:3000 electron .",
