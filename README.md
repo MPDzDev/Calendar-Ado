@@ -40,6 +40,7 @@ Additionally, by making ADO updates a prerequisite for seamless time logging, th
 ### 3.2 ADO Work Item Panel
 
 * Scrollable list of work items pinned at top of the app window
+* Search box and type filter to narrow visible items
 * Toggle visibility by clicking on "Features" or filter tags
 * Work items scored and sorted by a blend of:
 
@@ -158,7 +159,7 @@ Additionally, by making ADO updates a prerequisite for seamless time logging, th
 ### Phase 1 – MVP
 
 * Calendar UI (drag to create blocks)
-* Work item panel with filters
+* Work item panel with search and type filters
 * Color-coded work items by type (tasks yellow, user stories blue, bugs red, features purple)
 * Local draft store (JSON file or SQLite)
 * Manual ADO linking + batch submit
