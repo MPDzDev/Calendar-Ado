@@ -31,6 +31,10 @@ export default function Calendar({ blocks, onAdd, onDelete }) {
   };
 
   const startDrag = (e, dayIdx) => {
+    // ignore drags that originate from interactive elements like buttons or the form
+    if (e.target.closest('button') || e.target.closest('input') || e.target.closest('form')) {
+      return;
+    }
     const rect = e.currentTarget.getBoundingClientRect();
     const hourHeight = rect.height / hours.length;
     const start = Math.floor((e.clientY - rect.top) / hourHeight);
@@ -68,7 +72,16 @@ export default function Calendar({ blocks, onAdd, onDelete }) {
           <div
             key={idx}
             className="border p-2 relative"
-            onDoubleClick={() => setActiveDay(idx)}
+            onDoubleClick={(e) => {
+              if (
+                e.target.closest('button') ||
+                e.target.closest('input') ||
+                e.target.closest('form')
+              ) {
+                return;
+              }
+              setActiveDay(idx);
+            }}
           >
             <h2 className="font-semibold mb-2">{day}</h2>
             <div
