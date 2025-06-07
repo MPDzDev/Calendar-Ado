@@ -35,6 +35,7 @@ Additionally, by making ADO updates a prerequisite for seamless time logging, th
 * Entry status: draft, linked, submitted
 * Drag on calendar to create "shell" work blocks
 * Suggested work item overlay when a block is created
+* Prevent overlapping blocks to discourage multitasking
 
 ### 3.2 ADO Work Item Panel
 
