@@ -150,6 +150,68 @@ function App() {
     );
   };
 
+  const updateBlockTime = (id, startISO, endISO) => {
+    const current = blocks.find((b) => b.id === id);
+    if (!current) return;
+
+    const others = blocks.filter((b) => b.id !== id);
+
+    const hasOverlapLocal = (newBlock) => {
+      const newStart = new Date(newBlock.start);
+      const newEnd = new Date(newBlock.end);
+      return others.some((b) => {
+        const start = new Date(b.start);
+        const end = new Date(b.end);
+        return newStart < end && newEnd > start;
+      });
+    };
+
+    const adjustForOverlapLocal = (newBlock) => {
+      let start = new Date(newBlock.start);
+      let end = new Date(newBlock.end);
+
+      const sorted = [...others].sort(
+        (a, b) => new Date(a.start) - new Date(b.start)
+      );
+
+      for (const b of sorted) {
+        const bStart = new Date(b.start);
+        const bEnd = new Date(b.end);
+
+        if (end > bStart && start < bEnd) {
+          if (start < bStart) {
+            end = new Date(Math.min(end, bStart));
+          } else {
+            start = new Date(Math.max(start, bEnd));
+          }
+        }
+      }
+
+      if (end <= start) {
+        return null;
+      }
+
+      return { ...newBlock, start: start.toISOString(), end: end.toISOString() };
+    };
+
+    let adjusted = trimLunchOverlap({ ...current, start: startISO, end: endISO });
+    if (!adjusted) return;
+
+    adjusted = hasOverlapLocal(adjusted)
+      ? adjustForOverlapLocal(adjusted)
+      : adjusted;
+    adjusted = adjusted ? trimLunchOverlap(adjusted) : null;
+
+    while (adjusted && hasOverlapLocal(adjusted)) {
+      adjusted = adjustForOverlapLocal(adjusted);
+      adjusted = adjusted ? trimLunchOverlap(adjusted) : null;
+    }
+
+    if (!adjusted) return;
+
+    setBlocks([...others, adjusted]);
+  };
+
   const deleteBlock = (id) => {
     setBlocks(blocks.filter((b) => b.id !== id));
   };
@@ -174,6 +236,7 @@ function App() {
           blocks={blocks}
           onAdd={addBlock}
           onUpdate={updateBlock}
+          onTimeChange={updateBlockTime}
           settings={settings}
           onDelete={deleteBlock}
           weekStart={weekStart}
