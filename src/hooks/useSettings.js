@@ -8,6 +8,7 @@ const defaultSettings = {
   lunchEnd: 13,
   workDays: [0, 1, 2, 3, 4],
   blockMinutes: 15,
+  darkMode: false,
 };
 
 export default function useSettings() {

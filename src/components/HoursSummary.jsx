@@ -28,7 +28,7 @@ export default function HoursSummary({ blocks, weekStart }) {
       return sum + diff;
     }, 0);
   const overLimit = totalHours > 40;
-  const textColor = overLimit ? 'text-red-600' : 'text-gray-800';
+  const textColor = overLimit ? 'text-red-600' : 'text-gray-800 dark:text-gray-200';
 
   return (
     <div className="mb-4">

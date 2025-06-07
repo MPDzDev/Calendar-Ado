@@ -344,7 +344,7 @@ export default function Calendar({
                             e.currentTarget.style.cursor = 'move';
                           }
                         }}
-                        className={`work-block absolute left-0 right-0 p-1 border rounded-md overflow-hidden select-none text-[10px] leading-tight ${b.taskId ? 'bg-blue-200 border-blue-300' : 'bg-gray-100 border-gray-300'} ${b.taskId && b.workItem ? 'border-yellow-400' : ''} ${highlight ? 'ring-2 ring-blue-400' : ''}`}
+                        className={`work-block absolute left-0 right-0 p-1 border rounded-md overflow-hidden select-none text-[10px] leading-tight ${b.taskId ? 'bg-blue-200 border-blue-300' : 'bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600'} ${b.taskId && b.workItem ? 'border-yellow-400' : ''} ${highlight ? 'ring-2 ring-blue-400' : ''}`}
                         style={{ top: `${top}px`, height: `${height}px` }}
                       >
                         <div className="text-[10px]">
@@ -379,7 +379,7 @@ export default function Calendar({
                         </div>
                         {highlight && confirmDeleteId !== b.id && (
                           <button
-                            className="absolute bottom-0 right-0 p-1 text-red-600 text-xs bg-white"
+                          className="absolute bottom-0 right-0 p-1 text-red-600 text-xs bg-white dark:bg-gray-800"
                             onClick={() => setConfirmDeleteId(b.id)}
                           >
                             🗑
@@ -398,7 +398,7 @@ export default function Calendar({
                               Confirm?
                             </button>
                             <button
-                              className="px-1 bg-gray-300"
+                              className="px-1 bg-gray-300 dark:bg-gray-600"
                               onClick={() => setConfirmDeleteId(null)}
                             >
                               x
@@ -411,7 +411,7 @@ export default function Calendar({
                 {activeDay === dayIdx && (
                   <form
                     onSubmit={addBlock}
-                    className="absolute top-0 left-0 bg-white border p-2 space-y-1 z-20"
+                    className="absolute top-0 left-0 bg-white dark:bg-gray-800 border p-2 space-y-1 z-20"
                   >
                     <input
                       type="time"
@@ -453,7 +453,7 @@ export default function Calendar({
                       <button
                         type="button"
                         onClick={() => setActiveDay(null)}
-                        className="px-2 py-1 bg-gray-300 text-xs"
+                        className="px-2 py-1 bg-gray-300 dark:bg-gray-600 text-xs"
                       >
                         Cancel
                       </button>
@@ -476,13 +476,13 @@ export default function Calendar({
       </div>
       {taskSelect && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-4 max-h-64 overflow-y-auto">
+          <div className="bg-white dark:bg-gray-800 dark:text-white p-4 max-h-64 overflow-y-auto">
             <h3 className="font-semibold mb-2">Select Task for {taskSelect.parent.title}</h3>
             <ul>
               {taskSelect.tasks.map((t) => (
                 <li
                   key={t.id}
-                  className="p-1 cursor-pointer hover:bg-gray-100 text-sm"
+                  className="p-1 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 text-sm"
                   onClick={() => {
                     if (onUpdate)
                       onUpdate(taskSelect.blockId, { workItem: taskSelect.parent.title, taskId: t.id });
@@ -493,7 +493,7 @@ export default function Calendar({
                 </li>
               ))}
             </ul>
-            <button className="mt-2 px-2 py-1 bg-gray-300" onClick={() => setTaskSelect(null)}>
+            <button className="mt-2 px-2 py-1 bg-gray-300 dark:bg-gray-600" onClick={() => setTaskSelect(null)}>
               Cancel
             </button>
           </div>
