@@ -156,6 +156,7 @@ Additionally, by making ADO updates a prerequisite for seamless time logging, th
 
 * Calendar UI (drag to create blocks)
 * Work item panel with filters
+* Color-coded work items by type (tasks yellow, user stories blue, bugs red, features purple)
 * Local draft store (JSON file or SQLite)
 * Manual ADO linking + batch submit
 
