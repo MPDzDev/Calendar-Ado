@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import StorageService from '../services/storageService';
+import PatService from '../services/patService';
 
 const defaultSettings = {
   startHour: 9,
@@ -19,14 +20,22 @@ export default function useSettings() {
   useEffect(() => {
     const storage = new StorageService('settings', defaultSettings);
     const data = storage.read();
-    if (data) {
-      setSettings({ ...defaultSettings, ...data });
-    }
+    const patService = new PatService();
+    Promise.resolve(patService.get()).then((pat) => {
+      if (data) {
+        setSettings({ ...defaultSettings, ...data, azurePat: pat });
+      } else {
+        setSettings({ ...defaultSettings, azurePat: pat });
+      }
+    });
   }, []);
 
   useEffect(() => {
     const storage = new StorageService('settings');
-    storage.write(settings);
+    const { azurePat, ...persist } = settings;
+    storage.write(persist);
+    const patService = new PatService();
+    patService.set(azurePat);
   }, [settings]);
 
   return { settings, setSettings };
