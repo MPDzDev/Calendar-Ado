@@ -8,6 +8,7 @@ export default function Calendar({ blocks, onAdd, settings, onDelete }) {
     (_, i) => (i + settings.startHour).toString().padStart(2, '0')
   );
   const hourHeight = 40; // px height for each hour block
+  const blockMinutes = settings.blockMinutes || 15;
   const [activeDay, setActiveDay] = useState(null);
   const [form, setForm] = useState({
     start: `${String(settings.startHour).padStart(2, '0')}:00`,
@@ -55,17 +56,18 @@ export default function Calendar({ blocks, onAdd, settings, onDelete }) {
       return;
     }
     const rect = e.currentTarget.getBoundingClientRect();
-    const hourHeight = rect.height / hours.length;
-    const rawStart = (e.clientY - rect.top) / hourHeight;
-    const start = Math.min(hours.length - 1, Math.max(0, Math.floor(rawStart)));
-    setDrag({ day: dayIdx, start, end: start + 1, rect, hourHeight });
+    const minuteHeight = rect.height / (hours.length * 60);
+    const rawStart = (e.clientY - rect.top) / minuteHeight;
+    const start = Math.max(0, Math.floor(rawStart / blockMinutes) * blockMinutes);
+    setDrag({ day: dayIdx, start, end: start + blockMinutes, rect, minuteHeight });
   };
 
   const onDrag = (e) => {
     if (!drag) return;
     const y = Math.max(0, Math.min(e.clientY - drag.rect.top, drag.rect.height));
-    const cur = Math.floor(y / drag.hourHeight) + 1;
-    const end = Math.min(hours.length, Math.max(cur, drag.start + 1));
+    const cur = Math.floor(y / drag.minuteHeight / blockMinutes) * blockMinutes + blockMinutes;
+    const maxMinutes = hours.length * 60;
+    const end = Math.min(maxMinutes, Math.max(cur, drag.start + blockMinutes));
     if (end !== drag.end) setDrag({ ...drag, end });
   };
 
@@ -79,8 +81,18 @@ export default function Calendar({ blocks, onAdd, settings, onDelete }) {
     const endDate = new Date();
     startDate.setDate(startDate.getDate() - startDate.getDay() + 1 + dayIdx);
     endDate.setDate(startDate.getDate());
-    startDate.setHours(drag.start + settings.startHour, 0, 0, 0);
-    endDate.setHours(drag.end + settings.startHour, 0, 0, 0);
+    startDate.setHours(
+      settings.startHour + Math.floor(drag.start / 60),
+      drag.start % 60,
+      0,
+      0
+    );
+    endDate.setHours(
+      settings.startHour + Math.floor(drag.end / 60),
+      drag.end % 60,
+      0,
+      0
+    );
     onAdd({ id: Date.now(), start: startDate.toISOString(), end: endDate.toISOString(), note: '', workItem: '' });
     setDrag(null);
   };
@@ -209,12 +221,14 @@ export default function Calendar({ blocks, onAdd, settings, onDelete }) {
                   >
                     <input
                       type="time"
+                      step={blockMinutes * 60}
                       value={form.start}
                       onChange={(e) => setForm({ ...form, start: e.target.value })}
                       className="border"
                     />
                     <input
                       type="time"
+                      step={blockMinutes * 60}
                       value={form.end}
                       onChange={(e) => setForm({ ...form, end: e.target.value })}
                       className="border"
@@ -257,8 +271,8 @@ export default function Calendar({ blocks, onAdd, settings, onDelete }) {
                 <div
                   className="absolute left-0 right-0 bg-blue-300 opacity-50 pointer-events-none"
                   style={{
-                    top: drag.start * drag.hourHeight,
-                    height: (drag.end - drag.start) * drag.hourHeight,
+                    top: drag.start * drag.minuteHeight,
+                    height: (drag.end - drag.start) * drag.minuteHeight,
                   }}
                 />
               )}
