@@ -379,7 +379,7 @@ export default function Calendar({
                         </div>
                         {highlight && confirmDeleteId !== b.id && (
                           <button
-                          className="absolute bottom-0 right-0 p-1 text-red-600 text-xs bg-white dark:bg-gray-800"
+                          className="absolute bottom-0 right-0 p-1 text-red-600 text-xs bg-yellow-50 dark:bg-gray-800"
                             onClick={() => setConfirmDeleteId(b.id)}
                           >
                             🗑
@@ -411,7 +411,7 @@ export default function Calendar({
                 {activeDay === dayIdx && (
                   <form
                     onSubmit={addBlock}
-                    className="absolute top-0 left-0 bg-white dark:bg-gray-800 border p-2 space-y-1 z-20"
+                    className="absolute top-0 left-0 bg-yellow-50 dark:bg-gray-800 border p-2 space-y-1 z-20"
                   >
                     <input
                       type="time"
@@ -476,7 +476,7 @@ export default function Calendar({
       </div>
       {taskSelect && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 dark:text-white p-4 max-h-64 overflow-y-auto">
+          <div className="bg-yellow-50 dark:bg-gray-800 dark:text-white p-4 max-h-64 overflow-y-auto">
             <h3 className="font-semibold mb-2">Select Task for {taskSelect.parent.title}</h3>
             <ul>
               {taskSelect.tasks.map((t) => (

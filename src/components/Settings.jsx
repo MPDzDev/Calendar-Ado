@@ -33,7 +33,7 @@ export default function Settings({ settings, setSettings }) {
       </button>
       {open && (
         <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-          <div className="border p-4 bg-white dark:bg-gray-800 dark:text-white space-y-2 shadow-lg">
+          <div className="border p-4 bg-yellow-50 dark:bg-gray-800 dark:text-white space-y-2 shadow-lg">
             <div>
               <label className="mr-1">Start hour:</label>
               <input

@@ -225,7 +225,7 @@ function App() {
   };
 
   return (
-    <div className="p-4 flex min-h-screen bg-white text-gray-800 dark:bg-gray-900 dark:text-gray-100">
+    <div className="p-4 flex min-h-screen bg-yellow-50 text-gray-800 dark:bg-gray-900 dark:text-gray-100">
       <div className="flex-grow">
         <h1 className="text-2xl font-bold mb-4">Calendar-Ado MVP</h1>
         <div className="mb-2 space-x-2">
