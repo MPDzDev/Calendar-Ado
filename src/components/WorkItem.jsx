@@ -12,10 +12,10 @@ export default function WorkItem({ item, level = 0 }) {
 
   return (
     <div
-      className={`p-1 mb-1 border ${colorClass}`}
+      className={`p-1 mb-1 border ${colorClass} text-xs truncate`}
       style={{ marginLeft: `${level * 1}rem` }}
     >
-      <span className="font-mono text-xs mr-1">{item.id}</span>
+      <span className="font-mono mr-1">{item.id}</span>
       {item.title}
     </div>
   );

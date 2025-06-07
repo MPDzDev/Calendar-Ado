@@ -13,9 +13,11 @@ export default function TaskList() {
   return (
     <div className="mb-4">
       <h2 className="font-semibold">Work Items</h2>
-      <ul className="list-disc ml-4">
-        {items.map(item => (
-          <li key={item.id}>{item.id}: {item.title}</li>
+      <ul className="list-disc ml-4 text-xs space-y-1">
+        {items.map((item) => (
+          <li key={item.id} className="truncate">
+            {item.id}: {item.title}
+          </li>
         ))}
       </ul>
     </div>
