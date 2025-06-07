@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 
 export default function Calendar({ blocks, onAdd }) {
   const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-  const hours = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
+  const hours = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0')); 
   const [activeDay, setActiveDay] = useState(null);
   const [form, setForm] = useState({ start: '09:00', end: '10:00', note: '', workItem: '' });
+  const [drag, setDrag] = useState(null); // { day, start, end }
 
   const addBlock = (e) => {
     e.preventDefault();
@@ -26,6 +27,37 @@ export default function Calendar({ blocks, onAdd }) {
     setActiveDay(null);
   };
 
+  const startDrag = (e, dayIdx) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const hourHeight = rect.height / hours.length;
+    const start = Math.floor((e.clientY - rect.top) / hourHeight);
+    setDrag({ day: dayIdx, start, end: start + 1, rect, hourHeight });
+  };
+
+  const onDrag = (e) => {
+    if (!drag) return;
+    const y = e.clientY - drag.rect.top;
+    const cur = Math.floor(y / drag.hourHeight) + 1;
+    const end = Math.max(cur, drag.start + 1);
+    if (end !== drag.end) setDrag({ ...drag, end });
+  };
+
+  const endDrag = (dayIdx) => {
+    if (!drag) return;
+    if (drag.day !== dayIdx) {
+      setDrag(null);
+      return;
+    }
+    const startDate = new Date();
+    const endDate = new Date();
+    startDate.setDate(startDate.getDate() - startDate.getDay() + 1 + dayIdx);
+    endDate.setDate(startDate.getDate());
+    startDate.setHours(drag.start, 0, 0, 0);
+    endDate.setHours(drag.end, 0, 0, 0);
+    onAdd({ id: Date.now(), start: startDate.toISOString(), end: endDate.toISOString(), note: '', workItem: '' });
+    setDrag(null);
+  };
+
   return (
     <div>
       <div className="grid grid-cols-7 gap-2">
@@ -36,7 +68,13 @@ export default function Calendar({ blocks, onAdd }) {
             onDoubleClick={() => setActiveDay(idx)}
           >
             <h2 className="font-semibold mb-2">{day}</h2>
-            <div className="relative" style={{ height: `${hours.length * 40}px` }}>
+            <div
+              className="relative"
+              style={{ height: `${hours.length * 40}px` }}
+              onMouseDown={(e) => startDrag(e, idx)}
+              onMouseMove={onDrag}
+              onMouseUp={() => endDrag(idx)}
+            >
               <div className="absolute inset-0 pointer-events-none flex flex-col">
                 {hours.map((h, i) => (
                   <div
@@ -122,6 +160,15 @@ export default function Calendar({ blocks, onAdd }) {
                   </form>
                 )}
               </div>
+              {drag && drag.day === idx && (
+                <div
+                  className="absolute left-0 right-0 bg-blue-300 opacity-50 pointer-events-none"
+                  style={{
+                    top: drag.start * drag.hourHeight,
+                    height: (drag.end - drag.start) * drag.hourHeight,
+                  }}
+                />
+              )}
             </div>
           </div>
         ))}
