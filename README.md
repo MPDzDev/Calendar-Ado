@@ -272,3 +272,9 @@ Additionally, by making ADO updates a prerequisite for seamless time logging, th
    npm start
    ```
    This will launch both the React dev server and the Electron shell.
+
+3. Build and package the application:
+   ```bash
+   npm run electron-pack
+   ```
+   This command first builds the React app and then packages the Electron application.
