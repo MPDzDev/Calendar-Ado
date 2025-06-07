@@ -51,15 +51,16 @@ export default function Calendar({ blocks, onAdd, settings, onDelete }) {
     }
     const rect = e.currentTarget.getBoundingClientRect();
     const hourHeight = rect.height / hours.length;
-    const start = Math.floor((e.clientY - rect.top) / hourHeight);
+    const rawStart = (e.clientY - rect.top) / hourHeight;
+    const start = Math.min(hours.length - 1, Math.max(0, Math.floor(rawStart)));
     setDrag({ day: dayIdx, start, end: start + 1, rect, hourHeight });
   };
 
   const onDrag = (e) => {
     if (!drag) return;
-    const y = e.clientY - drag.rect.top;
+    const y = Math.max(0, Math.min(e.clientY - drag.rect.top, drag.rect.height));
     const cur = Math.floor(y / drag.hourHeight) + 1;
-    const end = Math.max(cur, drag.start + 1);
+    const end = Math.min(hours.length, Math.max(cur, drag.start + 1));
     if (end !== drag.end) setDrag({ ...drag, end });
   };
 
@@ -99,7 +100,7 @@ export default function Calendar({ blocks, onAdd, settings, onDelete }) {
           >
             <h2 className="font-semibold mb-2">{weekDays[dayIdx]}</h2>
             <div
-              className="relative"
+              className="relative select-none"
               style={{ height: `${hours.length * hourHeight}px` }}
               onMouseDown={(e) => startDrag(e, dayIdx)}
               onMouseMove={onDrag}
