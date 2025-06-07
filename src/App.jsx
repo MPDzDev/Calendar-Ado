@@ -23,26 +23,44 @@ function App() {
   const adjustForOverlap = (newBlock) => {
     let start = new Date(newBlock.start);
     let end = new Date(newBlock.end);
-    const duration = end - start;
+
     const sorted = [...blocks].sort(
       (a, b) => new Date(a.start) - new Date(b.start)
     );
+
     for (const b of sorted) {
       const bStart = new Date(b.start);
       const bEnd = new Date(b.end);
-      if (start < bEnd && end > bStart) {
-        start = new Date(bEnd);
-        end = new Date(start.getTime() + duration);
+
+      if (end > bStart && start < bEnd) {
+        if (start < bStart) {
+          // overlap at the end of the new block, trim the end
+          end = new Date(Math.min(end, bStart));
+        } else {
+          // new block starts inside an existing one, move start after it
+          start = new Date(Math.max(start, bEnd));
+        }
       }
     }
+
+    if (end <= start) {
+      return null;
+    }
+
     return { ...newBlock, start: start.toISOString(), end: end.toISOString() };
   };
 
   const addBlock = (block) => {
     let adjusted = hasOverlap(block) ? adjustForOverlap(block) : block;
-    while (hasOverlap(adjusted)) {
+
+    while (adjusted && hasOverlap(adjusted)) {
       adjusted = adjustForOverlap(adjusted);
     }
+
+    if (!adjusted) {
+      return;
+    }
+
     setBlocks((prev) => [...prev, adjusted]);
   };
 

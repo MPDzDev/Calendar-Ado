@@ -45,8 +45,13 @@ export default function Calendar({ blocks, onAdd, settings, onDelete }) {
   };
 
   const startDrag = (e, dayIdx) => {
-    // ignore drags that originate from interactive elements like buttons or the form
-    if (e.target.closest('button') || e.target.closest('input') || e.target.closest('form')) {
+    // ignore drags that originate from interactive elements or existing blocks
+    if (
+      e.target.closest('button') ||
+      e.target.closest('input') ||
+      e.target.closest('form') ||
+      e.target.closest('.work-block')
+    ) {
       return;
     }
     const rect = e.currentTarget.getBoundingClientRect();
@@ -139,7 +144,7 @@ export default function Calendar({ blocks, onAdd, settings, onDelete }) {
                           setHoveredId(null);
                           if (confirmDeleteId !== b.id) setConfirmDeleteId(null);
                         }}
-                        className={`absolute left-0 right-0 p-1 bg-gray-200 overflow-hidden ${highlight ? 'ring-2 ring-blue-400' : ''}`}
+                        className={`work-block absolute left-0 right-0 p-1 bg-gray-200 overflow-hidden select-none ${highlight ? 'ring-2 ring-blue-400' : ''}`}
                         style={{ top: `${top}px`, height: `${height}px` }}
                       >
                         <div className="text-sm">
