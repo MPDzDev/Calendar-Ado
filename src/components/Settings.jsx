@@ -23,14 +23,15 @@ export default function Settings({ settings, setSettings }) {
     setOpen(false);
   };
 
-  return (
-    <div className="mb-2">
-      <button className="px-2 py-1 bg-gray-200" onClick={() => setOpen(!open)}>
-        Settings
-      </button>
-      {open && (
-        <div className="border p-2 mt-2 bg-white space-y-2">
-          <div>
+    return (
+      <div className="mb-2">
+        <button className="px-2 py-1 bg-gray-200" onClick={() => setOpen(true)}>
+          Settings
+        </button>
+        {open && (
+          <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+            <div className="border p-4 bg-white space-y-2 shadow-lg">
+              <div>
             <label className="mr-1">Start hour:</label>
             <input
               type="number"
@@ -128,6 +129,7 @@ export default function Settings({ settings, setSettings }) {
             </button>
           </div>
         </div>
+      </div>
       )}
     </div>
   );

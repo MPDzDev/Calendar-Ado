@@ -9,8 +9,13 @@ export default function WorkItem({ item, level = 0 }) {
   };
 
   const colorClass = colors[item.type?.toLowerCase()] || 'bg-gray-100';
+  const isFeature = item.type?.toLowerCase() === 'feature';
 
-  return (
+  return isFeature ? (
+    <div className="inline-block rounded-full px-2 py-1 bg-purple-200 text-xs font-semibold mr-2 mb-2">
+      {item.title}
+    </div>
+  ) : (
     <div
       className={`p-1 mb-1 border ${colorClass} text-xs truncate`}
       style={{ marginLeft: `${level * 1}rem` }}
