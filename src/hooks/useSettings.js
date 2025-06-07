@@ -9,6 +9,8 @@ const defaultSettings = {
   workDays: [0, 1, 2, 3, 4],
   blockMinutes: 15,
   darkMode: false,
+  azureOrg: '',
+  azurePat: '',
 };
 
 export default function useSettings() {
