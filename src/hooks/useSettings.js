@@ -7,6 +7,7 @@ const defaultSettings = {
   lunchStart: 12,
   lunchEnd: 13,
   workDays: [0, 1, 2, 3, 4],
+  blockMinutes: 15,
 };
 
 export default function useSettings() {

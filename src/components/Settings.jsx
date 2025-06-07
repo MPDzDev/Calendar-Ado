@@ -83,6 +83,22 @@ export default function Settings({ settings, setSettings }) {
             />
           </div>
           <div>
+            <label className="mr-1">Block size:</label>
+            <select
+              value={temp.blockMinutes}
+              onChange={(e) =>
+                setTemp({ ...temp, blockMinutes: parseInt(e.target.value) })
+              }
+              className="border"
+            >
+              {[10, 15, 30, 60].map((m) => (
+                <option key={m} value={m}>
+                  {m === 60 ? '1 h' : `${m} min`}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
             <div className="mb-1">Work days:</div>
             <div className="flex space-x-2 flex-wrap">
               {dayNames.map((d, idx) => (

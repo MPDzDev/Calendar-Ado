@@ -30,7 +30,7 @@ Additionally, by making ADO updates a prerequisite for seamless time logging, th
 ### 3.1 Calendar Interface
 
 * Week and day views
-* Time blocks: configurable (default 30 mins)
+* Time blocks: configurable (default 15 mins)
 * Add notes per block (e.g., "Reviewed PR for billing service")
 * Entry status: draft, linked, submitted
 * Drag on calendar to create "shell" work blocks
