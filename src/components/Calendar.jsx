@@ -386,6 +386,14 @@ export default function Calendar({
                         </div>
                         <div className="text-[10px] flex flex-wrap items-center gap-1">
                           {b.itemId && <ItemBubble item={findItem(b.itemId)} />}
+                          {b.taskId && (
+                            <ItemBubble item={findItem(b.taskId)} />
+                          )}
+                          {b.workItem && (
+                            <span className="bg-gray-200 dark:bg-gray-700 rounded px-1">
+                              {b.workItem}
+                            </span>
+                          )}
                           {b.note}
                         </div>
                         {highlight && confirmDeleteId !== b.id && (
