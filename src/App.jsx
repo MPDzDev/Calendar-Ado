@@ -7,8 +7,22 @@ import useWorkBlocks from './hooks/useWorkBlocks';
 function App() {
   const { blocks, setBlocks } = useWorkBlocks();
 
+  const hasOverlap = (newBlock) => {
+    const newStart = new Date(newBlock.start);
+    const newEnd = new Date(newBlock.end);
+    return blocks.some((b) => {
+      const start = new Date(b.start);
+      const end = new Date(b.end);
+      return newStart < end && newEnd > start;
+    });
+  };
+
   const addBlock = (block) => {
-    setBlocks([...blocks, block]);
+    if (hasOverlap(block)) {
+      alert('Cannot create overlapping work blocks.');
+      return;
+    }
+    setBlocks((prev) => [...prev, block]);
   };
 
   const deleteBlock = (id) => {
