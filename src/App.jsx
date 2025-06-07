@@ -20,12 +20,30 @@ function App() {
     });
   };
 
-  const addBlock = (block) => {
-    if (hasOverlap(block)) {
-      alert('Cannot create overlapping work blocks.');
-      return;
+  const adjustForOverlap = (newBlock) => {
+    let start = new Date(newBlock.start);
+    let end = new Date(newBlock.end);
+    const duration = end - start;
+    const sorted = [...blocks].sort(
+      (a, b) => new Date(a.start) - new Date(b.start)
+    );
+    for (const b of sorted) {
+      const bStart = new Date(b.start);
+      const bEnd = new Date(b.end);
+      if (start < bEnd && end > bStart) {
+        start = new Date(bEnd);
+        end = new Date(start.getTime() + duration);
+      }
     }
-    setBlocks((prev) => [...prev, block]);
+    return { ...newBlock, start: start.toISOString(), end: end.toISOString() };
+  };
+
+  const addBlock = (block) => {
+    let adjusted = hasOverlap(block) ? adjustForOverlap(block) : block;
+    while (hasOverlap(adjusted)) {
+      adjusted = adjustForOverlap(adjusted);
+    }
+    setBlocks((prev) => [...prev, adjusted]);
   };
 
   const deleteBlock = (id) => {
