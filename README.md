@@ -252,3 +252,15 @@ Additionally, by making ADO updates a prerequisite for seamless time logging, th
    * Tooltips and block styling
    * Area path hint system
    * Theme and tag filter presets
+
+## Getting Started
+
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
+2. Start the application:
+   ```bash
+   npm start
+   ```
+   This will launch both the React dev server and the Electron shell.
