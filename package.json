@@ -1,0 +1,26 @@
+{
+  "name": "calendar-ado",
+  "version": "0.1.0",
+  "private": true,
+  "main": "src/main/main.js",
+  "scripts": {
+    "react-start": "react-scripts start",
+    "electron": "ELECTRON_START_URL=http://localhost:3000 electron .",
+    "start": "concurrently \"npm run react-start\" \"npm run electron\"",
+    "build": "react-scripts build",
+    "electron-pack": "electron-builder"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "concurrently": "^8.0.0",
+    "electron": "^29.0.0",
+    "electron-builder": "^24.0.0",
+    "react-scripts": "5.0.1",
+    "tailwindcss": "^3.4.0",
+    "postcss": "^8.4.0",
+    "autoprefixer": "^10.4.0"
+  }
+}
