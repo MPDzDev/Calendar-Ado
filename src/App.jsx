@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Calendar from './components/Calendar';
 import HoursSummary from './components/HoursSummary';
 import WorkItems from './components/WorkItems';
@@ -9,6 +9,31 @@ import useSettings from './hooks/useSettings';
 function App() {
   const { blocks, setBlocks } = useWorkBlocks();
   const { settings, setSettings } = useSettings();
+
+  const getWeekStart = (date) => {
+    const d = new Date(date);
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+    d.setDate(diff);
+    d.setHours(0, 0, 0, 0);
+    return d;
+  };
+
+  const [weekStart, setWeekStart] = useState(getWeekStart(new Date()));
+
+  const prevWeek = () =>
+    setWeekStart((w) => new Date(w.getTime() - 7 * 24 * 60 * 60 * 1000));
+  const nextWeek = () =>
+    setWeekStart((w) => new Date(w.getTime() + 7 * 24 * 60 * 60 * 1000));
+  const currentWeek = () => setWeekStart(getWeekStart(new Date()));
+
+  const formatRange = () => {
+    const end = new Date(weekStart);
+    end.setDate(weekStart.getDate() + 6);
+    return `${weekStart.getMonth() + 1}/${weekStart.getDate()} - ${
+      end.getMonth() + 1
+    }/${end.getDate()}`;
+  };
 
   const isOverlappingLunch = (block) => {
     const start = new Date(block.start);
@@ -119,11 +144,24 @@ function App() {
     <div className="p-4 flex">
       <div className="flex-grow">
         <h1 className="text-2xl font-bold mb-4">Calendar-Ado MVP</h1>
+        <div className="mb-2 space-x-2">
+          <button className="px-2 py-1 bg-gray-200" onClick={prevWeek}>
+            Prev Week
+          </button>
+          <button className="px-2 py-1 bg-gray-200" onClick={currentWeek}>
+            This Week
+          </button>
+          <button className="px-2 py-1 bg-gray-200" onClick={nextWeek}>
+            Next Week
+          </button>
+          <span className="ml-2 font-semibold">{formatRange()}</span>
+        </div>
         <Calendar
           blocks={blocks}
           onAdd={addBlock}
           settings={settings}
           onDelete={deleteBlock}
+          weekStart={weekStart}
         />
       </div>
       <div className="w-64 pl-4 space-y-4">
