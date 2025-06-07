@@ -7,11 +7,7 @@ export default function useWorkBlocks() {
   useEffect(() => {
     const storage = new StorageService('workBlocks', { workBlocks: [] });
     const data = storage.read();
-    const loaded = (data.workBlocks || []).map((b) => ({
-      status: 'draft',
-      ...b,
-    }));
-    setBlocks(loaded);
+    setBlocks(data.workBlocks || []);
   }, []);
 
   useEffect(() => {
