@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import AdoService from '../services/adoService';
 import WorkItem from './WorkItem';
 
@@ -39,11 +39,44 @@ export default function WorkItems({ items, setItems }) {
     }
   }, [items, setItems]);
 
-  const tree = buildTree(items);
+  const [search, setSearch] = useState('');
+  const [typeFilter, setTypeFilter] = useState('all');
+
+  const filtered = items.filter((i) => {
+    const matchesSearch = i.title
+      .toLowerCase()
+      .includes(search.toLowerCase());
+    const matchesType =
+      typeFilter === 'all' ||
+      i.type?.toLowerCase() === typeFilter;
+    return matchesSearch && matchesType;
+  });
+
+  const tree = buildTree(filtered);
 
   return (
     <div className="mb-4">
       <h2 className="font-semibold">Work Items</h2>
+      <div className="flex space-x-2 mb-2">
+        <input
+          type="text"
+          placeholder="Search"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="border px-1 text-sm flex-grow"
+        />
+        <select
+          value={typeFilter}
+          onChange={(e) => setTypeFilter(e.target.value)}
+          className="border text-sm"
+        >
+          <option value="all">All</option>
+          <option value="feature">Features</option>
+          <option value="user story">User Stories</option>
+          <option value="bug">Bugs</option>
+          <option value="task">Tasks</option>
+        </select>
+      </div>
       <div>{renderTree(tree)}</div>
     </div>
   );
