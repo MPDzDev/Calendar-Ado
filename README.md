@@ -64,6 +64,7 @@ Additionally, by making ADO updates a prerequisite for seamless time logging, th
 ### 3.5 Sync & Review
 
 * Weekly summary panel
+* Displays total hours for the current week with red text when exceeding 40 hours
 * Bulk submit to ADO with preview
 * Warnings if area path is missing or invalid
 * Option to export week as CSV for backup
