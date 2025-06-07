@@ -171,9 +171,9 @@ export default function Calendar({
   useEffect(() => {
     if (!blockDrag) return;
     const move = (e) => {
-      const step =
-        Math.round((e.clientY - blockDrag.startY) / blockDrag.minuteHeight / blockMinutes) *
-        blockMinutes;
+      const step = Math.round(
+        (e.clientY - blockDrag.startY) / blockDrag.minuteHeight
+      );
       let startRel = blockDrag.startRel;
       let endRel = blockDrag.endRel;
       if (blockDrag.mode === 'move') {
@@ -337,13 +337,23 @@ export default function Calendar({
                       <div
                         key={b.id}
                         onMouseEnter={() => setHoveredId(b.id)}
-                        onMouseLeave={() => {
+                        onMouseLeave={(e) => {
                           setHoveredId(null);
                           if (confirmDeleteId !== b.id) setConfirmDeleteId(null);
+                          e.currentTarget.style.cursor = 'default';
                         }}
                         onDragOver={(e) => e.preventDefault()}
                         onDrop={(e) => handleDrop(e, b.id)}
                         onMouseDown={(e) => startBlockDrag(e, b, dayIdx)}
+                        onMouseMove={(e) => {
+                          const bounds = e.currentTarget.getBoundingClientRect();
+                          const offsetY = e.clientY - bounds.top;
+                          if (offsetY < 5 || offsetY > bounds.height - 5) {
+                            e.currentTarget.style.cursor = 'ns-resize';
+                          } else {
+                            e.currentTarget.style.cursor = 'move';
+                          }
+                        }}
                         className={`work-block absolute left-0 right-0 p-1 border rounded-md overflow-hidden select-none text-[10px] leading-tight bg-blue-200 border-blue-300 ${b.taskId && b.workItem ? 'border-yellow-400' : ''} ${highlight ? 'ring-2 ring-blue-400' : ''}`}
                         style={{ top: `${top}px`, height: `${height}px` }}
                       >
