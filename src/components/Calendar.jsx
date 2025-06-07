@@ -34,7 +34,7 @@ export default function Calendar({
   const [hoveredId, setHoveredId] = useState(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   const [taskSelect, setTaskSelect] = useState(null); // {blockId, parent, tasks}
-  const [blockDrag, setBlockDrag] = useState(null); // {id, mode, startRel, endRel, dayIndex, rects, minuteHeight, startX, startY}
+  const [blockDrag, setBlockDrag] = useState(null); // {id, mode, startRel, endRel, dayIndex, rects, minuteHeight, offsetY}
   const dayRefs = useRef({});
 
   const findItem = (id) => items?.find((i) => i.id === id);
@@ -163,47 +163,13 @@ export default function Calendar({
       dayIndex: days.indexOf(dayIdx),
       rects,
       minuteHeight,
-      startX: e.clientX,
-      startY: e.clientY,
+      offsetY,
     });
   };
 
   useEffect(() => {
     if (!blockDrag) return;
     const move = (e) => {
-      const step = Math.round(
-        (e.clientY - blockDrag.startY) / blockDrag.minuteHeight
-      );
-      let startRel = blockDrag.startRel;
-      let endRel = blockDrag.endRel;
-      if (blockDrag.mode === 'move') {
-        startRel += step;
-        endRel += step;
-      } else if (blockDrag.mode === 'resize-top') {
-        startRel += step;
-        if (startRel < 0) startRel = 0;
-        if (endRel - startRel < blockMinutes) startRel = endRel - blockMinutes;
-      } else if (blockDrag.mode === 'resize-bottom') {
-        endRel += step;
-        const max = hours.length * 60;
-        if (endRel > max) endRel = max;
-        if (endRel - startRel < blockMinutes) endRel = startRel + blockMinutes;
-      }
-
-      const max = hours.length * 60;
-      if (blockDrag.mode === 'move') {
-        if (startRel < 0) {
-          endRel -= startRel;
-          startRel = 0;
-        }
-        if (endRel > max) {
-          const diff = endRel - max;
-          startRel -= diff;
-          endRel = max;
-          if (startRel < 0) startRel = 0;
-        }
-      }
-
       let dayIndex = blockDrag.dayIndex;
       for (let i = 0; i < blockDrag.rects.length; i++) {
         const r = blockDrag.rects[i];
@@ -211,6 +177,30 @@ export default function Calendar({
           dayIndex = i;
           break;
         }
+      }
+
+      const rect = blockDrag.rects[dayIndex];
+      let startRel = blockDrag.startRel;
+      let endRel = blockDrag.endRel;
+
+      if (blockDrag.mode === 'move') {
+        const pos =
+          e.clientY - rect.top - blockDrag.offsetY;
+        const raw = Math.floor(pos / blockDrag.minuteHeight / blockMinutes) * blockMinutes;
+        const length = endRel - startRel;
+        startRel = Math.min(Math.max(0, raw), hours.length * 60 - length);
+        endRel = startRel + length;
+      } else if (blockDrag.mode === 'resize-top') {
+        const pos = e.clientY - rect.top;
+        startRel = Math.floor(pos / blockDrag.minuteHeight / blockMinutes) * blockMinutes;
+        if (startRel < 0) startRel = 0;
+        if (endRel - startRel < blockMinutes) startRel = endRel - blockMinutes;
+      } else if (blockDrag.mode === 'resize-bottom') {
+        const pos = e.clientY - rect.top;
+        endRel = Math.floor(pos / blockDrag.minuteHeight / blockMinutes) * blockMinutes;
+        const max = hours.length * 60;
+        if (endRel > max) endRel = max;
+        if (endRel - startRel < blockMinutes) endRel = startRel + blockMinutes;
       }
 
       setBlockDrag({ ...blockDrag, startRel, endRel, dayIndex });
