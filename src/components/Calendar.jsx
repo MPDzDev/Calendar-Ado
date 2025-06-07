@@ -22,7 +22,7 @@ export default function Calendar({
     { length: settings.endHour - settings.startHour },
     (_, i) => (i + settings.startHour).toString().padStart(2, '0')
   );
-  const hourHeight = 40; // px height for each hour block
+  const [hourHeight, setHourHeight] = useState(40); // px height for each hour block
   const blockMinutes = settings.blockMinutes || 15;
   const [activeDay, setActiveDay] = useState(null);
   const [form, setForm] = useState({
@@ -37,6 +37,17 @@ export default function Calendar({
   const [taskSelect, setTaskSelect] = useState(null); // {blockId, parent, tasks}
   const [blockDrag, setBlockDrag] = useState(null); // {id, mode, startRel, endRel, dayIndex, rects, minuteHeight, offsetY}
   const dayRefs = useRef({});
+
+  useEffect(() => {
+    const updateHeight = () => {
+      const minHeight = window.innerHeight * 0.6;
+      const hh = Math.max(minHeight / hours.length, 40);
+      setHourHeight(hh);
+    };
+    updateHeight();
+    window.addEventListener('resize', updateHeight);
+    return () => window.removeEventListener('resize', updateHeight);
+  }, [hours.length]);
 
   const findItem = (id) => items?.find((i) => i.id === id);
   const getDescendantTasks = (id) => {
