@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function ItemBubble({ item }) {
+export default function ItemBubble({ item, full = false }) {
   if (!item) return null;
   const colors = {
     task: 'bg-yellow-200 dark:bg-yellow-700',
@@ -9,7 +9,12 @@ export default function ItemBubble({ item }) {
     feature: 'bg-purple-200 dark:bg-purple-700',
   };
   const colorClass = colors[item.type?.toLowerCase()] || 'bg-gray-200 dark:bg-gray-700';
+  const displayClass = full ? 'block w-full text-center' : 'inline-block';
   return (
-    <span className={`inline-block rounded-full px-2 py-1 text-xs font-semibold ${colorClass}`}>{item.title}</span>
+    <span
+      className={`${displayClass} rounded-full px-2 py-1 text-xs font-semibold ${colorClass}`}
+    >
+      {item.title}
+    </span>
   );
 }
