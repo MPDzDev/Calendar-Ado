@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import ItemBubble from './ItemBubble';
 
 export default function Calendar({
   blocks,
@@ -74,6 +75,7 @@ export default function Calendar({
       end: endDate.toISOString(),
       note: form.note,
       workItem: form.workItem,
+      itemId: null,
     });
     setForm({
       start: `${String(settings.startHour).padStart(2, '0')}:00`,
@@ -238,12 +240,20 @@ export default function Calendar({
     if (item.type?.toLowerCase() === 'task') {
       const display = findDisplayItem(item);
       if (onUpdate)
-        onUpdate(blockId, { workItem: display.title, taskId: item.id });
+        onUpdate(blockId, {
+          workItem: display.title,
+          taskId: item.id,
+          itemId: display.id,
+        });
     } else {
       const tasks = getDescendantTasks(item.id);
       if (tasks.length === 1) {
         if (onUpdate)
-          onUpdate(blockId, { workItem: item.title, taskId: tasks[0].id });
+          onUpdate(blockId, {
+            workItem: item.title,
+            taskId: tasks[0].id,
+            itemId: item.id,
+          });
       } else if (tasks.length > 0) {
         setTaskSelect({ blockId, parent: item, tasks });
       }
@@ -344,7 +354,7 @@ export default function Calendar({
                             e.currentTarget.style.cursor = 'move';
                           }
                         }}
-                        className={`work-block absolute left-0 right-0 p-1 border rounded-md overflow-hidden select-none text-[10px] leading-tight ${b.taskId ? 'bg-blue-200 dark:bg-blue-800 border-blue-300 dark:border-blue-500' : 'bg-gray-100 dark:bg-gray-600 border-gray-300 dark:border-gray-500'} ${b.taskId && b.workItem ? 'border-yellow-400' : ''} ${highlight ? 'ring-2 ring-blue-400' : ''}`}
+                        className={`work-block absolute left-0 right-0 p-1 border rounded-md overflow-hidden select-none text-[10px] leading-tight ${b.taskId ? 'bg-blue-200 dark:bg-blue-800 border-blue-300 dark:border-blue-500' : 'bg-gray-100 dark:bg-gray-600 border-gray-300 dark:border-gray-500'} ${b.taskId && b.itemId ? 'border-yellow-400' : ''} ${highlight ? 'ring-2 ring-blue-400' : ''}`}
                         style={{ top: `${top}px`, height: `${height}px` }}
                       >
                         <div className="text-[10px]">
@@ -374,8 +384,9 @@ export default function Calendar({
                             return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                           })()}
                         </div>
-                        <div className="text-[10px]">
-                          {b.workItem} {b.note}
+                        <div className="text-[10px] flex flex-wrap items-center gap-1">
+                          {b.itemId && <ItemBubble item={findItem(b.itemId)} />}
+                          {b.note}
                         </div>
                         {highlight && confirmDeleteId !== b.id && (
                           <button
@@ -485,7 +496,11 @@ export default function Calendar({
                   className="p-1 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 text-sm"
                   onClick={() => {
                     if (onUpdate)
-                      onUpdate(taskSelect.blockId, { workItem: taskSelect.parent.title, taskId: t.id });
+                      onUpdate(taskSelect.blockId, {
+                        workItem: taskSelect.parent.title,
+                        taskId: t.id,
+                        itemId: taskSelect.parent.id,
+                      });
                     setTaskSelect(null);
                   }}
                 >
