@@ -166,7 +166,7 @@ function App() {
       </div>
       <div className="w-64 pl-4 space-y-4">
         <Settings settings={settings} setSettings={setSettings} />
-        <HoursSummary blocks={blocks} />
+        <HoursSummary blocks={blocks} weekStart={weekStart} />
         <WorkItems />
       </div>
     </div>
