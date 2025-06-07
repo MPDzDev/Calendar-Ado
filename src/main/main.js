@@ -15,7 +15,10 @@ function createWindow() {
   if (process.env.ELECTRON_START_URL) {
     win.loadURL(process.env.ELECTRON_START_URL);
   } else {
-    win.loadFile(path.join(__dirname, '../../public/index.html'));
+    // When packaged, load the compiled React build instead of the public
+    // development HTML. Using the development template results in a blank
+    // window because it does not include the bundled scripts.
+    win.loadFile(path.join(__dirname, '../../build/index.html'));
   }
 }
 
