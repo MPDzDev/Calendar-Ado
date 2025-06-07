@@ -1,11 +1,20 @@
 import React, { useState } from 'react';
 
-export default function Calendar({ blocks, onAdd, onDelete }) {
-  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-  const hours = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
+export default function Calendar({ blocks, onAdd, settings, onDelete }) {
+  const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const days = settings.workDays;
+  const hours = Array.from(
+    { length: settings.endHour - settings.startHour },
+    (_, i) => (i + settings.startHour).toString().padStart(2, '0')
+  );
   const hourHeight = 40; // px height for each hour block
   const [activeDay, setActiveDay] = useState(null);
-  const [form, setForm] = useState({ start: '09:00', end: '10:00', note: '', workItem: '' });
+  const [form, setForm] = useState({
+    start: `${String(settings.startHour).padStart(2, '0')}:00`,
+    end: `${String(settings.startHour + 1).padStart(2, '0')}:00`,
+    note: '',
+    workItem: '',
+  });
   const [drag, setDrag] = useState(null); // { day, start, end }
   const [hoveredId, setHoveredId] = useState(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
@@ -26,7 +35,12 @@ export default function Calendar({ blocks, onAdd, onDelete }) {
       note: form.note,
       workItem: form.workItem,
     });
-    setForm({ start: '09:00', end: '10:00', note: '', workItem: '' });
+    setForm({
+      start: `${String(settings.startHour).padStart(2, '0')}:00`,
+      end: `${String(settings.startHour + 1).padStart(2, '0')}:00`,
+      note: '',
+      workItem: '',
+    });
     setActiveDay(null);
   };
 
@@ -59,18 +73,18 @@ export default function Calendar({ blocks, onAdd, onDelete }) {
     const endDate = new Date();
     startDate.setDate(startDate.getDate() - startDate.getDay() + 1 + dayIdx);
     endDate.setDate(startDate.getDate());
-    startDate.setHours(drag.start, 0, 0, 0);
-    endDate.setHours(drag.end, 0, 0, 0);
+    startDate.setHours(drag.start + settings.startHour, 0, 0, 0);
+    endDate.setHours(drag.end + settings.startHour, 0, 0, 0);
     onAdd({ id: Date.now(), start: startDate.toISOString(), end: endDate.toISOString(), note: '', workItem: '' });
     setDrag(null);
   };
 
   return (
     <div>
-      <div className="grid grid-cols-7 gap-2">
-        {days.map((day, idx) => (
+      <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${days.length}, minmax(0, 1fr))` }}>
+        {days.map((dayIdx, idx) => (
           <div
-            key={idx}
+            key={dayIdx}
             className="border p-2 relative"
             onDoubleClick={(e) => {
               if (
@@ -83,13 +97,13 @@ export default function Calendar({ blocks, onAdd, onDelete }) {
               setActiveDay(idx);
             }}
           >
-            <h2 className="font-semibold mb-2">{day}</h2>
+            <h2 className="font-semibold mb-2">{weekDays[dayIdx]}</h2>
             <div
               className="relative"
               style={{ height: `${hours.length * hourHeight}px` }}
-              onMouseDown={(e) => startDrag(e, idx)}
+              onMouseDown={(e) => startDrag(e, dayIdx)}
               onMouseMove={onDrag}
-              onMouseUp={() => endDrag(idx)}
+              onMouseUp={() => endDrag(dayIdx)}
             >
               <div className="absolute inset-0 pointer-events-none flex flex-col">
                 {hours.map((h, i) => (
@@ -105,14 +119,15 @@ export default function Calendar({ blocks, onAdd, onDelete }) {
                 {blocks
                   .filter((b) => {
                     const date = new Date(b.start);
-                    return date.getDay() === ((idx + 1) % 7);
+                    return date.getDay() === ((dayIdx + 1) % 7);
                   })
                   .map((b) => {
                     const start = new Date(b.start);
                     const end = new Date(b.end);
                     const startMinutes = start.getHours() * 60 + start.getMinutes();
                     const endMinutes = end.getHours() * 60 + end.getMinutes();
-                    const top = startMinutes * (hourHeight / 60);
+                    const top =
+                      (startMinutes - settings.startHour * 60) * (hourHeight / 60);
                     const height = (endMinutes - startMinutes) * (hourHeight / 60);
                     const highlight = hoveredId === b.id;
                     return (
@@ -171,7 +186,7 @@ export default function Calendar({ blocks, onAdd, onDelete }) {
                       </div>
                     );
                   })}
-                {activeDay === idx && (
+                {activeDay === dayIdx && (
                   <form
                     onSubmit={addBlock}
                     className="absolute top-0 left-0 bg-white border p-2 space-y-1 z-20"
@@ -222,7 +237,7 @@ export default function Calendar({ blocks, onAdd, onDelete }) {
                   </form>
                 )}
               </div>
-              {drag && drag.day === idx && (
+              {drag && drag.day === dayIdx && (
                 <div
                   className="absolute left-0 right-0 bg-blue-300 opacity-50 pointer-events-none"
                   style={{
