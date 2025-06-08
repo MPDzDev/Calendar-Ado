@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import ItemBubble from './ItemBubble';
+import { lightenColor } from '../utils/color';
 
 export default function Calendar({
   blocks,
@@ -623,7 +624,11 @@ export default function Calendar({
                           top: `${top}px`,
                           height: `${height}px`,
                           borderLeft: projectColor ? `4px solid ${projectColor}` : undefined,
-                          backgroundColor: b.taskId ? projectColor || '#e5e7eb' : undefined,
+                          backgroundColor: b.taskId
+                            ? projectColor
+                              ? lightenColor(projectColor, 70)
+                              : '#e5e7eb'
+                            : undefined,
                         }}
                       >
                         <div className="text-[10px]">
