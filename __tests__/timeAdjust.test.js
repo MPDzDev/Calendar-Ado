@@ -1,6 +1,7 @@
 const {
   trimLunchOverlap,
   adjustForOverlap,
+  splitByLunch,
 } = require('../src/utils/timeAdjust');
 
 describe('trimLunchOverlap', () => {
@@ -54,5 +55,20 @@ describe('adjustForOverlap', () => {
       end: '2023-01-01T13:45:00.000Z',
     };
     expect(adjustForOverlap(existing, block)).toBeNull();
+  });
+});
+
+describe('splitByLunch', () => {
+  const settings = { lunchStart: 12, lunchEnd: 13 };
+
+  test('splits block crossing lunch', () => {
+    const block = {
+      start: '2023-01-01T11:00:00.000Z',
+      end: '2023-01-01T14:00:00.000Z',
+    };
+    const result = splitByLunch(block, settings);
+    expect(result).toHaveLength(2);
+    expect(result[0].end).toBe('2023-01-01T12:00:00.000Z');
+    expect(result[1].start).toBe('2023-01-01T13:00:00.000Z');
   });
 });

@@ -40,6 +40,23 @@ export function trimLunchOverlap(block, settings) {
   return { ...block, start: start.toISOString(), end: end.toISOString() };
 }
 
+export function splitByLunch(block, settings) {
+  const start = new Date(block.start);
+  const end = new Date(block.end);
+  const lunchStart = new Date(start);
+  lunchStart.setHours(settings.lunchStart, 0, 0, 0);
+  const lunchEnd = new Date(start);
+  lunchEnd.setHours(settings.lunchEnd, 0, 0, 0);
+
+  if (start < lunchStart && end > lunchEnd) {
+    return [
+      { ...block, end: lunchStart.toISOString() },
+      { ...block, start: lunchEnd.toISOString() },
+    ];
+  }
+  return [block];
+}
+
 export function hasOverlap(blocks, newBlock) {
   const newStart = new Date(newBlock.start);
   const newEnd = new Date(newBlock.end);
@@ -75,3 +92,4 @@ export function adjustForOverlap(blocks, newBlock) {
 
   return { ...newBlock, start: start.toISOString(), end: end.toISOString() };
 }
+
