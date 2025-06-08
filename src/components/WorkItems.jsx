@@ -68,7 +68,7 @@ export default function WorkItems({ items, onRefresh, projectColors = {} }) {
     setCollapsed((c) => ({ ...c, [project]: !c[project] }));
 
   return (
-    <div className="mb-4">
+    <div className="mb-4 flex flex-col flex-grow overflow-y-auto">
       <div className="flex items-center justify-between mb-1">
         <h2 className="font-semibold">Work Items</h2>
         {onRefresh && (
@@ -100,11 +100,11 @@ export default function WorkItems({ items, onRefresh, projectColors = {} }) {
           <option value="task">Tasks</option>
         </select>
       </div>
-      <div className="max-h-80 overflow-y-auto space-y-2 scroll-container relative">
+      <div className="flex-grow overflow-y-auto space-y-2 scroll-container">
         {Object.entries(grouped).map(([project, list]) => {
           const tree = buildTree(list);
           return (
-            <div key={project} className="relative">
+            <div key={project} className="">
               <div
                 className="px-2 py-1 cursor-pointer font-semibold"
                 style={{ backgroundColor: projectColors[project] || undefined }}
@@ -113,7 +113,7 @@ export default function WorkItems({ items, onRefresh, projectColors = {} }) {
                 {project}
               </div>
               {!collapsed[project] && (
-                <div className="absolute left-0 right-0 mt-1 ml-2 bg-white dark:bg-gray-800 border z-10 max-h-60 overflow-y-auto scroll-container p-1">
+                <div className="mt-1 ml-2 bg-white dark:bg-gray-800 border p-1">
                   {renderTree(tree)}
                 </div>
               )}
