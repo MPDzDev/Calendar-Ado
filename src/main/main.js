@@ -22,11 +22,14 @@ function createWindow() {
   }
 }
 
-function openWorkItemWindow({ id, hours, url, days }) {
+function openWorkItemWindow({ id, hours, url, days, message }) {
   const win = new BrowserWindow({ width: 1000, height: 800 });
   win.loadURL(url);
 
   win.webContents.on('did-finish-load', () => {
+    const messageSnippet = message
+      ? `const note = document.createElement('div'); note.textContent = ${JSON.stringify(message)}; banner.appendChild(note);`
+      : '';
     const script = `
       const banner = document.createElement('div');
       banner.style.position = 'fixed';
@@ -48,6 +51,7 @@ function openWorkItemWindow({ id, hours, url, days }) {
         list.appendChild(li);
       });
       banner.appendChild(list);
+      ${messageSnippet}
       document.body.appendChild(banner);
       document.body.style.marginTop = (banner.offsetHeight + 10) + 'px';
     `;
