@@ -2,14 +2,20 @@
 // Dynamically require Node modules when running in Electron
 let fs = null;
 let path = null;
+let ipcRenderer = null;
+let userDataPath = null;
 try {
   if (typeof window !== 'undefined' && window.require) {
     fs = window.require('fs');
     path = window.require('path');
+    ipcRenderer = window.require('electron').ipcRenderer;
+    userDataPath = ipcRenderer.sendSync('get-user-data-path');
   }
 } catch (e) {
   fs = null;
   path = null;
+  ipcRenderer = null;
+  userDataPath = null;
 }
 
 export default class StorageService {
@@ -17,7 +23,8 @@ export default class StorageService {
     this.storageKey = storageKey;
     this.defaultData = defaultData;
     if (fs && path) {
-      this.dataPath = path.join(process.cwd(), `${storageKey}.json`);
+      const baseDir = userDataPath || process.cwd();
+      this.dataPath = path.join(baseDir, `${storageKey}.json`);
     }
   }
 
