@@ -282,8 +282,14 @@ Additionally, by making ADO updates a prerequisite for seamless time logging, th
    ```
    This command first builds the React app and then packages the Electron application.
 
+
+## License
+
+This project is proprietary. See the [LICENSE](LICENSE) file for usage terms.
+
 4. Run the unit tests:
    ```bash
    npm test
    ```
    Executes the Jest test suite.
+
