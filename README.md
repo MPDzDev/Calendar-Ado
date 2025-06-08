@@ -270,6 +270,8 @@ Additionally, by making ADO updates a prerequisite for seamless time logging, th
    npm install
    ```
    This will also build the native `keytar` module used for secure PAT storage.
+   A postinstall script runs `electron-builder install-app-deps` to ensure
+   native modules like `keytar` are rebuilt for the Electron version.
 2. Start the application:
    ```bash
    npm start
