@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, shell } = require('electron');
 const path = require('path');
 
 function createWindow() {
@@ -22,27 +22,10 @@ function createWindow() {
   }
 }
 
-function openWorkItemWindow({ id, hours, url }) {
-  const win = new BrowserWindow({ width: 1000, height: 800 });
-  win.loadURL(url);
-
-  win.webContents.on('did-finish-load', () => {
-    const script = `
-      const banner = document.createElement('div');
-      banner.style.position = 'fixed';
-      banner.style.top = '0';
-      banner.style.left = '0';
-      banner.style.right = '0';
-      banner.style.zIndex = '10000';
-      banner.style.background = '#fffae6';
-      banner.style.padding = '10px';
-      banner.style.textAlign = 'center';
-      banner.textContent = 'Suggested hours to log: ${hours.toFixed(2)}';
-      document.body.appendChild(banner);
-      document.body.style.marginTop = (banner.offsetHeight + 10) + 'px';
-    `;
-    win.webContents.executeJavaScript(script).catch(() => {});
-  });
+function openWorkItemWindow({ url }) {
+  // Opening in an external browser avoids issues with Azure DevOps not
+  // rendering correctly inside an Electron BrowserWindow.
+  shell.openExternal(url);
 }
 
 app.whenReady().then(() => {
