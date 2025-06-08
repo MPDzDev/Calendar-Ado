@@ -26,6 +26,32 @@ body,
   @apply transition-transform;
 }
 
+/* subtle animation for calendar blocks */
+.work-block {
+  @apply transition-shadow;
+}
+.work-block:hover {
+  @apply shadow-md;
+}
+
+/* progress bar animation */
+.progress-segment {
+  @apply transition-all duration-500;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.hours-tooltip {
+  @apply absolute left-1/2 -translate-x-1/2 mt-1 text-xs bg-gray-700 text-white px-2 py-1 rounded pointer-events-none whitespace-nowrap;
+}
+
 /* week navigation buttons */
 .week-nav-button {
   @apply px-2 py-1 rounded bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-sm;

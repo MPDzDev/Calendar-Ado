@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 export default function HoursSummary({ blocks, weekStart, items }) {
   const WEEK_LIMIT = 40;
@@ -51,23 +51,33 @@ export default function HoursSummary({ blocks, weekStart, items }) {
   const assignedPercent = Math.min(correctAssigned, WEEK_LIMIT) / WEEK_LIMIT * 100;
   const misconfiguredPercent = Math.min(misconfiguredHours, WEEK_LIMIT) / WEEK_LIMIT * 100;
 
+  const [showDetails, setShowDetails] = useState(false);
+
   return (
     <div className="mb-4 w-full">
       <div
         className={`relative h-3 rounded bg-gray-200 overflow-hidden ${overLimit ? 'ring-2 ring-amber-500' : ''}`}
+        onMouseEnter={() => setShowDetails(true)}
+        onMouseLeave={() => setShowDetails(false)}
       >
         <div
-          className="absolute inset-0 bg-gray-400"
+          className="absolute inset-0 bg-gray-400 progress-segment"
           style={{ width: `${totalPercent}%` }}
         />
         <div
-          className="absolute inset-0 bg-green-500"
+          className="absolute inset-0 bg-green-500 progress-segment"
           style={{ width: `${assignedPercent}%` }}
         />
         <div
-          className="absolute inset-0 bg-red-500"
+          className="absolute inset-0 bg-red-500 progress-segment"
           style={{ width: `${misconfiguredPercent}%` }}
         />
+        {showDetails && (
+          <div className="hours-tooltip fade-in">
+            {totalHours.toFixed(1)}h total / {correctAssigned.toFixed(1)}h linked
+            {misconfiguredHours > 0 && `, ${misconfiguredHours.toFixed(1)}h missing area`}
+          </div>
+        )}
       </div>
       <div className="flex justify-between text-xs mt-1">
         <span className={textColor}>{totalHours.toFixed(1)}h/{WEEK_LIMIT}</span>
