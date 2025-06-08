@@ -499,6 +499,9 @@ export default function Calendar({
               if (!isDayLocked(dayIdx)) setActiveDay(dayIdx);
             }}
           >
+            {isDayLocked(dayIdx) && (
+              <div className="absolute inset-0 bg-gray-500 dark:bg-gray-600 opacity-10 pointer-events-none z-20" />
+            )}
             {hoverDay === dayIdx && (
               <button
                 className="absolute top-0 right-0 p-1 text-sm"
@@ -575,7 +578,9 @@ export default function Calendar({
                     return (
                       <div
                         key={b.id}
-                        onMouseEnter={() => setHoveredId(b.id)}
+                        onMouseEnter={() => {
+                          if (!isDayLocked(dayIdx)) setHoveredId(b.id);
+                        }}
                         onMouseLeave={(e) => {
                           setHoveredId(null);
                           if (confirmDeleteId !== b.id) setConfirmDeleteId(null);
