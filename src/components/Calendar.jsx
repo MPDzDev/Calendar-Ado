@@ -380,6 +380,21 @@ export default function Calendar({
           });
       } else if (tasks.length > 0) {
         setTaskSelect({ blockId, parent: item, tasks });
+      } else {
+        const org = settings.azureOrg;
+        const url = org
+          ? `https://dev.azure.com/${org}/_workitems/edit/${item.id}`
+          : `https://dev.azure.com/_workitems/edit/${item.id}`;
+        const msg =
+          'Please create a task under this work item to log your time.';
+        if (window.api && window.api.openWorkItems) {
+          window.api.openWorkItems([
+            { id: item.id, hours: 0, url, days: {}, message: msg },
+          ]);
+        } else {
+          window.open(url, '_blank');
+          window.alert(msg);
+        }
       }
     }
   };
