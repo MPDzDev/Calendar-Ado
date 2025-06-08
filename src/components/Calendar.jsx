@@ -39,7 +39,7 @@ export default function Calendar({
   });
   const [drag, setDrag] = useState(null); // { day, start, end }
   const [hoveredId, setHoveredId] = useState(null);
-  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+  const [contextMenu, setContextMenu] = useState(null); // {id, x, y}
   const [taskSelect, setTaskSelect] = useState(null); // {blockId, parent, tasks}
   const [blockDrag, setBlockDrag] = useState(null); // {id, mode, startRel, endRel, dayIndex, rects, minuteHeight, offsetY}
   const [extendDrag, setExtendDrag] = useState(null); // {id, direction, startIndex, dayIndex}
@@ -72,6 +72,17 @@ export default function Calendar({
       window.removeEventListener('contextmenu', cancel);
     };
   }, [drag]);
+
+  useEffect(() => {
+    if (!contextMenu) return;
+    const close = () => setContextMenu(null);
+    window.addEventListener('click', close);
+    window.addEventListener('contextmenu', close);
+    return () => {
+      window.removeEventListener('click', close);
+      window.removeEventListener('contextmenu', close);
+    };
+  }, [contextMenu]);
 
   const findItem = (id) => items?.find((i) => i.id === id);
   const getDescendantTasks = (id) => {
@@ -598,7 +609,6 @@ export default function Calendar({
                         }}
                         onMouseLeave={(e) => {
                           setHoveredId(null);
-                          if (confirmDeleteId !== b.id) setConfirmDeleteId(null);
                           e.currentTarget.style.cursor = 'default';
                         }}
                         onDragOver={(e) => e.preventDefault()}
@@ -632,6 +642,11 @@ export default function Calendar({
                           } else {
                             e.currentTarget.style.cursor = 'move';
                           }
+                        }}
+                        onContextMenu={(e) => {
+                          e.preventDefault();
+                          if (isDayLocked(dayIdx)) return;
+                          setContextMenu({ id: b.id, x: e.clientX, y: e.clientY });
                         }}
                         className={`work-block absolute left-0 right-0 p-1 border rounded-md overflow-hidden select-none text-[10px] leading-tight shadow-sm ${b.taskId ? 'border-gray-300 dark:border-gray-500' : 'bg-gray-100 dark:bg-gray-600 border-gray-300 dark:border-gray-500'} ${b.taskId && b.itemId ? 'border-yellow-400' : ''} ${highlight ? 'ring-2 ring-blue-400' : ''}`}
                         style={{
@@ -714,34 +729,6 @@ export default function Calendar({
                             </div>
                           )}
                         </div>
-                        {highlight && confirmDeleteId !== b.id && !isDayLocked(dayIdx) && (
-                          <button
-                            className="absolute bottom-0 right-0 p-1 text-red-600 text-xs bg-yellow-50 dark:bg-gray-800"
-                            onClick={() => setConfirmDeleteId(b.id)}
-                          >
-                            🗑
-                          </button>
-                        )}
-                        {confirmDeleteId === b.id && !isDayLocked(dayIdx) && (
-                          <div className="absolute bottom-0 right-0 flex space-x-1 text-xs">
-                            <button
-                              className="px-1 bg-red-500 text-white"
-                              onClick={() => {
-                                if (onDelete) onDelete(b.id);
-                                setConfirmDeleteId(null);
-                                setHoveredId(null);
-                              }}
-                            >
-                              Confirm?
-                            </button>
-                            <button
-                              className="px-1 bg-gray-300 dark:bg-gray-600"
-                              onClick={() => setConfirmDeleteId(null)}
-                            >
-                              x
-                            </button>
-                          </div>
-                        )}
                       </div>
                     );
                   })}
@@ -838,6 +825,22 @@ export default function Calendar({
               Cancel
             </button>
           </div>
+        </div>
+      )}
+      {contextMenu && (
+        <div
+          className="fixed z-50 bg-white dark:bg-gray-800 border text-xs"
+          style={{ top: contextMenu.y, left: contextMenu.x }}
+        >
+          <button
+            className="block w-full text-left px-2 py-1 hover:bg-red-500 hover:text-white"
+            onClick={() => {
+              if (onDelete) onDelete(contextMenu.id);
+              setContextMenu(null);
+            }}
+          >
+            Delete
+          </button>
         </div>
       )}
     </div>
