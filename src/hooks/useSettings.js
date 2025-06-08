@@ -31,6 +31,7 @@ const defaultSettings = {
 
 export default function useSettings() {
   const [settings, setSettings] = useState(defaultSettings);
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     const storage = new StorageService('settings', defaultSettings);
@@ -42,16 +43,18 @@ export default function useSettings() {
       } else {
         setSettings({ ...defaultSettings, azurePat: pat });
       }
+      setLoaded(true);
     });
   }, []);
 
   useEffect(() => {
+    if (!loaded) return;
     const storage = new StorageService('settings');
     const { azurePat, ...persist } = settings;
     storage.write(persist);
     const patService = new PatService();
     patService.set(azurePat);
-  }, [settings]);
+  }, [settings, loaded]);
 
   return { settings, setSettings };
 }
