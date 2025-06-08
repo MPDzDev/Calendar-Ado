@@ -17,14 +17,20 @@ function buildTree(items) {
   return roots;
 }
 
-function renderTree(nodes, level = 0) {
+function renderTree(nodes, level = 0, onNoteDrop, notesMap) {
   return nodes.map((node) => {
     const isFeature = node.type?.toLowerCase() === 'feature';
     const containerClass = isFeature ? 'inline-block' : '';
     return (
       <div key={node.id} className={containerClass}>
-        <WorkItem item={node} level={level} />
-        {node.children.length > 0 && renderTree(node.children, level + 1)}
+        <WorkItem
+          item={node}
+          level={level}
+          notes={notesMap[node.id] || []}
+          onNoteDrop={onNoteDrop}
+        />
+        {node.children.length > 0 &&
+          renderTree(node.children, level + 1, onNoteDrop, notesMap)}
       </div>
     );
   });
@@ -36,6 +42,8 @@ export default function WorkItems({
   projectColors = {},
   settings,
   setSettings,
+  onNoteDrop,
+  itemNotes = {},
 }) {
 
   const [search, setSearch] = useState('');
@@ -273,7 +281,7 @@ export default function WorkItems({
               </div>
               {!collapsed[project] && (
                 <div className="mt-1 ml-2 bg-white dark:bg-gray-800 border p-1">
-                  {renderTree(tree)}
+                  {renderTree(tree, 0, onNoteDrop, itemNotes)}
                 </div>
               )}
             </div>

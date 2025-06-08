@@ -4,21 +4,38 @@ import HoursSummary from './components/HoursSummary';
 import WorkItems from './components/WorkItems';
 import Settings from './components/Settings';
 import YearHint from './components/YearHint';
+import Notes from './components/Notes';
 import useWorkBlocks from './hooks/useWorkBlocks';
 import useSettings from './hooks/useSettings';
 import useAdoItems from './hooks/useAdoItems';
+import useNotes from './hooks/useNotes';
 import AdoService from './services/adoService';
 
 function App() {
   const { blocks, setBlocks } = useWorkBlocks();
   const { settings, setSettings } = useSettings();
   const { items, setItems } = useAdoItems();
+  const { notes, setNotes, itemNotes, setItemNotes } = useNotes();
   const [itemsFetched, setItemsFetched] = useState(false);
   const [sidebarWidth, setSidebarWidth] = useState(
     settings.sidebarWidth || 256
   );
   const containerRef = useRef(null);
   const [resizing, setResizing] = useState(false);
+
+  const addNote = (text) =>
+    setNotes((prev) => [...prev, { id: Date.now(), text }]);
+
+  const deleteNote = (id) =>
+    setNotes((prev) => prev.filter((n) => n.id !== id));
+
+  const handleNoteDrop = (itemId, note) => {
+    setItemNotes((prev) => {
+      const list = prev[itemId] ? [...prev[itemId], note.text] : [note.text];
+      return { ...prev, [itemId]: list };
+    });
+    deleteNote(note.id);
+  };
 
   const fetchWorkItems = useCallback(() => {
     const {
@@ -359,6 +376,7 @@ function App() {
           items={items}
           projectColors={settings.projectColors}
         />
+        <Notes notes={notes} onAdd={addNote} onDelete={deleteNote} />
       </div>
       <div
         className="resizer"
@@ -384,6 +402,8 @@ function App() {
           projectColors={settings.projectColors}
           settings={settings}
           setSettings={setSettings}
+          onNoteDrop={handleNoteDrop}
+          itemNotes={itemNotes}
         />
       </div>
     </div>
