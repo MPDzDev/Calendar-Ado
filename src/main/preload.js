@@ -1,5 +1,7 @@
-const { contextBridge, ipcRenderer } = require('electron');
+const { ipcRenderer } = require('electron');
 
-contextBridge.exposeInMainWorld('api', {
+// With contextIsolation disabled we can assign directly to the window
+// object instead of using contextBridge.
+window.api = {
   openWorkItems: (items) => ipcRenderer.send('open-work-items', items),
-});
+};
