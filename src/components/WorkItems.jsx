@@ -100,11 +100,11 @@ export default function WorkItems({ items, onRefresh, projectColors = {} }) {
           <option value="task">Tasks</option>
         </select>
       </div>
-      <div className="max-h-80 overflow-y-auto space-y-2">
+      <div className="max-h-80 overflow-y-auto space-y-2 scroll-container relative">
         {Object.entries(grouped).map(([project, list]) => {
           const tree = buildTree(list);
           return (
-            <div key={project}>
+            <div key={project} className="relative">
               <div
                 className="px-2 py-1 cursor-pointer font-semibold"
                 style={{ backgroundColor: projectColors[project] || undefined }}
@@ -113,7 +113,9 @@ export default function WorkItems({ items, onRefresh, projectColors = {} }) {
                 {project}
               </div>
               {!collapsed[project] && (
-                <div className="ml-2">{renderTree(tree)}</div>
+                <div className="absolute left-0 right-0 mt-1 ml-2 bg-white dark:bg-gray-800 border z-10 max-h-60 overflow-y-auto scroll-container p-1">
+                  {renderTree(tree)}
+                </div>
               )}
             </div>
           );
