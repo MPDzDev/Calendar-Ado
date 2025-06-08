@@ -27,7 +27,7 @@ export default class AdoService {
   async _fetchItems(ids, auth) {
     const batch = ids.join(',');
     const res = await fetch(
-      `https://dev.azure.com/${this.org}/_apis/wit/workitems?ids=${batch}&fields=System.Id,System.Title,System.WorkItemType,System.Parent&api-version=7.0`,
+      `https://dev.azure.com/${this.org}/_apis/wit/workitems?ids=${batch}&fields=System.Id,System.Title,System.WorkItemType,System.Parent,System.TeamProject&api-version=7.0`,
       {
         headers: { Authorization: auth },
       }
@@ -46,6 +46,7 @@ export default class AdoService {
           parentId: d.fields['System.Parent']
             ? d.fields['System.Parent'].toString()
             : null,
+          project: d.fields['System.TeamProject'] || '',
         })
     );
   }
