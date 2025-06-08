@@ -93,9 +93,19 @@ export default function WorkItems({
     );
   });
 
+  const itemMap = new Map(items.map((i) => [i.id, i]));
+
   const grouped = filtered.reduce((acc, item) => {
     const projectKey = item.project || 'Unknown';
-    const stateKey = item.state || 'Unknown';
+    let stateKey = item.state || 'Unknown';
+    if (
+      item.type?.toLowerCase() === 'task' &&
+      item.parentId &&
+      itemMap.has(item.parentId)
+    ) {
+      const parent = itemMap.get(item.parentId);
+      stateKey = parent.state || stateKey;
+    }
     if (!acc[projectKey]) acc[projectKey] = {};
     if (!acc[projectKey][stateKey]) acc[projectKey][stateKey] = [];
     acc[projectKey][stateKey].push(item);
@@ -362,15 +372,30 @@ export default function WorkItems({
                   onDragOver={allowGroupDrop}
                   onDrop={handleGroupDrop}
                 >
-                  {Object.entries(states).map(([state, list]) => {
-                    const tree = buildTree(list);
-                    return (
-                      <div key={state} className="mb-2">
-                        <div className="font-semibold italic">{state}</div>
-                        {renderTree(tree, 0, onNoteDrop, itemNotes)}
-                      </div>
-                    );
-                  })}
+                  {Object.keys(states)
+                    .sort((a, b) => {
+                      const order = settings.stateOrder || [];
+                      const ia = order.findIndex(
+                        (s) => s.toLowerCase() === a.toLowerCase()
+                      );
+                      const ib = order.findIndex(
+                        (s) => s.toLowerCase() === b.toLowerCase()
+                      );
+                      if (ia === -1 && ib === -1) return a.localeCompare(b);
+                      if (ia === -1) return 1;
+                      if (ib === -1) return -1;
+                      return ia - ib;
+                    })
+                    .map((state) => {
+                      const list = states[state];
+                      const tree = buildTree(list);
+                      return (
+                        <div key={state} className="mb-2">
+                          <div className="font-semibold italic">{state}</div>
+                          {renderTree(tree, 0, onNoteDrop, itemNotes)}
+                        </div>
+                      );
+                    })}
                 </div>
               )}
             </div>

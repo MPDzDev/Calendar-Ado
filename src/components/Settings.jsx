@@ -291,6 +291,23 @@ export default function Settings({ settings, setSettings }) {
                       className="border w-full px-1"
                     />
                   </div>
+                  <div>
+                    <label className="mr-1">State Order:</label>
+                    <input
+                      type="text"
+                      value={temp.stateOrder.join(', ')}
+                      onChange={(e) =>
+                        setTemp({
+                          ...temp,
+                          stateOrder: e.target.value
+                            .split(',')
+                            .map((s) => s.trim())
+                            .filter((s) => s),
+                        })
+                      }
+                      className="border w-full px-1"
+                    />
+                  </div>
                 </>
               )}
               <div className="flex space-x-2 pt-2">
