@@ -618,11 +618,12 @@ export default function Calendar({
                             e.currentTarget.style.cursor = 'move';
                           }
                         }}
-                        className={`work-block absolute left-0 right-0 p-1 border rounded-md overflow-hidden select-none text-[10px] leading-tight ${b.taskId ? 'bg-blue-200 dark:bg-blue-800 border-blue-300 dark:border-blue-500' : 'bg-gray-100 dark:bg-gray-600 border-gray-300 dark:border-gray-500'} ${b.taskId && b.itemId ? 'border-yellow-400' : ''} ${highlight ? 'ring-2 ring-blue-400' : ''}`}
+                        className={`work-block absolute left-0 right-0 p-1 border rounded-md overflow-hidden select-none text-[10px] leading-tight ${b.taskId ? 'border-gray-300 dark:border-gray-500' : 'bg-gray-100 dark:bg-gray-600 border-gray-300 dark:border-gray-500'} ${b.taskId && b.itemId ? 'border-yellow-400' : ''} ${highlight ? 'ring-2 ring-blue-400' : ''}`}
                         style={{
                           top: `${top}px`,
                           height: `${height}px`,
                           borderLeft: projectColor ? `4px solid ${projectColor}` : undefined,
+                          backgroundColor: b.taskId ? projectColor || '#e5e7eb' : undefined,
                         }}
                       >
                         <div className="text-[10px]">
@@ -672,7 +673,7 @@ export default function Calendar({
                             return task ? <ItemBubble item={task} showArea /> : null;
                           })()}
                           {!b.itemId && b.workItem && (
-                            <span className="bg-gray-200 dark:bg-gray-700 rounded px-1">
+                            <span className="px-1 italic">
                               {b.workItem}
                             </span>
                           )}
@@ -680,10 +681,7 @@ export default function Calendar({
                           {b.comments && b.comments.length > 0 && (
                             <div className="flex flex-wrap gap-1 mt-1">
                               {b.comments.map((c, idx) => (
-                                <span
-                                  key={idx}
-                                  className="bg-gray-200 dark:bg-gray-700 rounded-full px-1"
-                                >
+                                <span key={idx} className="border px-0.5 text-[9px]">
                                   {c}
                                 </span>
                               ))}
