@@ -6,6 +6,7 @@ export default function Settings({ settings, setSettings }) {
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState('general');
   const [temp, setTemp] = useState(settings);
+  const [newProject, setNewProject] = useState('');
 
   useEffect(() => {
     setTemp(settings);
@@ -22,6 +23,7 @@ export default function Settings({ settings, setSettings }) {
   const save = () => {
     setSettings(temp);
     setOpen(false);
+    setNewProject('');
   };
 
   return (
@@ -175,20 +177,47 @@ export default function Settings({ settings, setSettings }) {
                   </div>
                   <div>
                     <label className="mr-1">Projects:</label>
-                    <input
-                      type="text"
-                      value={temp.azureProjects.join(',')}
-                      onChange={(e) =>
-                        setTemp({
-                          ...temp,
-                          azureProjects: e.target.value
-                            .split(',')
-                            .map((p) => p.trim())
-                            .filter(Boolean),
-                        })
-                      }
-                      className="border w-full px-1"
-                    />
+                    <div className="flex mb-1">
+                      <input
+                        type="text"
+                        value={newProject}
+                        onChange={(e) => setNewProject(e.target.value)}
+                        className="border flex-grow px-1"
+                      />
+                      <button
+                        className="ml-1 px-2 bg-blue-500 text-white"
+                        onClick={() => {
+                          const name = newProject.trim();
+                          if (name) {
+                            setTemp({
+                              ...temp,
+                              azureProjects: [...temp.azureProjects, name],
+                            });
+                            setNewProject('');
+                          }
+                        }}
+                      >
+                        +
+                      </button>
+                    </div>
+                    <ul className="space-y-1">
+                      {temp.azureProjects.map((p, idx) => (
+                        <li key={idx} className="flex items-center justify-between border px-1">
+                          <span>{p}</span>
+                          <button
+                            className="text-xs text-red-600"
+                            onClick={() =>
+                              setTemp({
+                                ...temp,
+                                azureProjects: temp.azureProjects.filter((_, i) => i !== idx),
+                              })
+                            }
+                          >
+                            x
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
                 </>
               )}
@@ -201,6 +230,7 @@ export default function Settings({ settings, setSettings }) {
                   onClick={() => {
                     setTemp(settings);
                     setOpen(false);
+                    setNewProject('');
                   }}
                 >
                   Cancel
