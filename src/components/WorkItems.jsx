@@ -68,9 +68,29 @@ export default function WorkItems({
       .toLowerCase()
       .includes(search.toLowerCase());
     const matchesType =
-      typeFilter === 'all' ||
-      i.type?.toLowerCase() === typeFilter;
-    return matchesSearch && matchesType;
+      typeFilter === 'all' || i.type?.toLowerCase() === typeFilter;
+
+    const matchesTags =
+      settings.azureTags.length === 0 ||
+      settings.azureTags.every((t) => (i.tags || []).includes(t));
+
+    const matchesArea =
+      !settings.azureArea ||
+      (i.area || '').toLowerCase().startsWith(settings.azureArea.toLowerCase());
+
+    const matchesIteration =
+      !settings.azureIteration ||
+      (i.iteration || '')
+        .toLowerCase()
+        .startsWith(settings.azureIteration.toLowerCase());
+
+    return (
+      matchesSearch &&
+      matchesType &&
+      matchesTags &&
+      matchesArea &&
+      matchesIteration
+    );
   });
 
   const grouped = filtered.reduce((acc, item) => {
@@ -178,11 +198,24 @@ export default function WorkItems({
         </select>
       </div>
       <div className="mb-2 relative" ref={groupRefs.tags}>
-        <div
-          className="font-semibold cursor-pointer"
-          onClick={() => toggleFilterGroup('tags')}
-        >
-          Tags
+        <div className="flex items-center">
+          <div
+            className="font-semibold cursor-pointer flex-grow"
+            onClick={() => toggleFilterGroup('tags')}
+          >
+            Tags
+          </div>
+          {settings.azureTags.length > 0 && (
+            <button
+              className="ml-1 text-red-600 text-xs"
+              onClick={() => {
+                updateSettings({ azureTags: [] });
+                onRefresh && onRefresh();
+              }}
+            >
+              x
+            </button>
+          )}
         </div>
         {activeFilterGroup === 'tags' && (
           <div className="absolute left-0 mt-1 bg-white dark:bg-gray-800 border p-2 z-10 flex flex-wrap gap-1">
@@ -208,11 +241,24 @@ export default function WorkItems({
         )}
       </div>
       <div className="mb-2 relative" ref={groupRefs.areas}>
-        <div
-          className="font-semibold cursor-pointer"
-          onClick={() => toggleFilterGroup('areas')}
-        >
-          Areas
+        <div className="flex items-center">
+          <div
+            className="font-semibold cursor-pointer flex-grow"
+            onClick={() => toggleFilterGroup('areas')}
+          >
+            Areas
+          </div>
+          {settings.azureArea && (
+            <button
+              className="ml-1 text-red-600 text-xs"
+              onClick={() => {
+                updateSettings({ azureArea: '' });
+                onRefresh && onRefresh();
+              }}
+            >
+              x
+            </button>
+          )}
         </div>
         {activeFilterGroup === 'areas' && (
           <div className="absolute left-0 mt-1 bg-white dark:bg-gray-800 border p-2 z-10 flex flex-wrap gap-1">
@@ -238,11 +284,24 @@ export default function WorkItems({
         )}
       </div>
       <div className="mb-2 relative" ref={groupRefs.iterations}>
-        <div
-          className="font-semibold cursor-pointer"
-          onClick={() => toggleFilterGroup('iterations')}
-        >
-          Iterations
+        <div className="flex items-center">
+          <div
+            className="font-semibold cursor-pointer flex-grow"
+            onClick={() => toggleFilterGroup('iterations')}
+          >
+            Iterations
+          </div>
+          {settings.azureIteration && (
+            <button
+              className="ml-1 text-red-600 text-xs"
+              onClick={() => {
+                updateSettings({ azureIteration: '' });
+                onRefresh && onRefresh();
+              }}
+            >
+              x
+            </button>
+          )}
         </div>
         {activeFilterGroup === 'iterations' && (
           <div className="absolute left-0 mt-1 bg-white dark:bg-gray-800 border p-2 z-10 flex flex-wrap gap-1">
