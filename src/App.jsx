@@ -272,22 +272,13 @@ function App() {
       <div className="flex-grow">
         <h1 className="text-2xl font-bold mb-4">Calendar-Ado MVP</h1>
         <div className="mb-2 flex items-center space-x-2">
-          <button
-            className="px-3 py-1 rounded bg-blue-500 hover:bg-blue-600 text-white"
-            onClick={prevWeek}
-          >
+          <button className="week-nav-button" onClick={prevWeek}>
             ◀ Prev
           </button>
-          <button
-            className="px-3 py-1 rounded bg-blue-500 hover:bg-blue-600 text-white"
-            onClick={currentWeek}
-          >
+          <button className="week-nav-button" onClick={currentWeek}>
             This Week
           </button>
-          <button
-            className="px-3 py-1 rounded bg-blue-500 hover:bg-blue-600 text-white"
-            onClick={nextWeek}
-          >
+          <button className="week-nav-button" onClick={nextWeek}>
             Next ▶
           </button>
           <span className="week-range ml-4 font-semibold">{formatRange()}</span>
