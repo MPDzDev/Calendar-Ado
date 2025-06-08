@@ -678,11 +678,18 @@ export default function Calendar({
                             return task ? <ItemBubble item={task} showArea /> : null;
                           })()}
                           {!b.itemId && b.workItem && (
-                            <span className="px-1 italic">
+                            <span
+                              className="px-1 italic truncate"
+                              title={b.workItem}
+                            >
                               {b.workItem}
                             </span>
                           )}
-                          {b.note}
+                          {b.note && (
+                            <span className="truncate" title={b.note}>
+                              {b.note}
+                            </span>
+                          )}
                           {b.comments && b.comments.length > 0 && (
                             <div className="flex flex-wrap gap-1 mt-1">
                               {b.comments.map((c, idx) => (
