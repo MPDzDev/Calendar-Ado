@@ -265,6 +265,7 @@ export default function Calendar({
   };
 
   const startBlockDrag = (e, block, dayIdx) => {
+    if (e.button !== 0) return; // only start on left click
     if (
       e.target.closest('button') ||
       e.target.closest('input') ||
