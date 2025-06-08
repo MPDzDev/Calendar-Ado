@@ -12,6 +12,8 @@ export default function Calendar({
   items,
   projectColors = {},
   onCommentDrop,
+  lockedDays = {},
+  setLockedDays,
 }) {
   const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   const days = settings.workDays;
@@ -39,6 +41,7 @@ export default function Calendar({
   const [taskSelect, setTaskSelect] = useState(null); // {blockId, parent, tasks}
   const [blockDrag, setBlockDrag] = useState(null); // {id, mode, startRel, endRel, dayIndex, rects, minuteHeight, offsetY}
   const [extendDrag, setExtendDrag] = useState(null); // {id, direction, startIndex, dayIndex}
+  const [hoverDay, setHoverDay] = useState(null);
   const dayRefs = useRef({});
 
   useEffect(() => {
@@ -91,6 +94,25 @@ export default function Calendar({
     return item;
   };
 
+  const dayKey = (idx) => {
+    const d = new Date(weekStart);
+    d.setDate(weekStart.getDate() + idx);
+    return d.toISOString().split('T')[0];
+  };
+
+  const isDayLocked = (idx) => lockedDays[dayKey(idx)];
+
+  const toggleDayLock = (idx) => {
+    if (!setLockedDays) return;
+    const key = dayKey(idx);
+    setLockedDays((prev) => {
+      const next = { ...prev };
+      if (next[key]) delete next[key];
+      else next[key] = true;
+      return next;
+    });
+  };
+
   const addBlock = (e) => {
     e.preventDefault();
     if (activeDay === null) return;
@@ -128,6 +150,7 @@ export default function Calendar({
     ) {
       return;
     }
+    if (isDayLocked(dayIdx)) return;
     const rect = e.currentTarget.getBoundingClientRect();
     const minuteHeight = rect.height / (hours.length * 60);
     const rawStart = (e.clientY - rect.top) / minuteHeight;
@@ -149,6 +172,10 @@ export default function Calendar({
   const endDrag = (dayIdx, pos) => {
     if (!drag) return;
     if (drag.day !== dayIdx) {
+      setDrag(null);
+      return;
+    }
+    if (isDayLocked(dayIdx)) {
       setDrag(null);
       return;
     }
@@ -203,6 +230,7 @@ export default function Calendar({
     const indexInWeek = ((targetIndex % days.length) + days.length) % days.length;
     if (indexInWeek < 0 || indexInWeek >= days.length) return;
     const dayIdx = days[indexInWeek];
+    if (isDayLocked(dayIdx)) return;
     const start = new Date(block.start);
     const end = new Date(block.end);
     const startDate = new Date(weekStart);
@@ -231,6 +259,7 @@ export default function Calendar({
     ) {
       return;
     }
+    if (isDayLocked(dayIdx)) return;
     e.preventDefault();
     const rects = days.map((d) => dayRefs.current[d].getBoundingClientRect());
     const minuteHeight = rects[dayIdx].height / (hours.length * 60);
@@ -313,6 +342,10 @@ export default function Calendar({
       const startAbs = blockDrag.startRel + settings.startHour * 60;
       const endAbs = blockDrag.endRel + settings.startHour * 60;
       const dayIdx = days[blockDrag.dayIndex];
+      if (isDayLocked(dayIdx)) {
+        setBlockDrag(null);
+        return;
+      }
       const startDate = new Date(weekStart);
       startDate.setDate(weekStart.getDate() + dayIdx);
       startDate.setHours(Math.floor(startAbs / 60), startAbs % 60, 0, 0);
@@ -359,6 +392,7 @@ export default function Calendar({
         ) {
           if (i < 0 || i >= days.length) continue;
           const dayIdx = days[i];
+          if (isDayLocked(dayIdx)) continue;
           const startDate = new Date(weekStart);
           startDate.setDate(weekStart.getDate() + dayIdx);
           startDate.setHours(Math.floor(startAbs / 60), startAbs % 60, 0, 0);
@@ -390,6 +424,11 @@ export default function Calendar({
 
   const handleDrop = (e, blockId) => {
     e.preventDefault();
+    const block = blocks.find((b) => b.id === blockId);
+    if (block) {
+      const dIdx = (new Date(block.start).getDay() + 6) % 7;
+      if (isDayLocked(dIdx)) return;
+    }
     if (e.dataTransfer.types.includes('application/x-note')) {
       const rawNote = e.dataTransfer.getData('application/x-note');
       if (!rawNote) return;
@@ -447,6 +486,8 @@ export default function Calendar({
             key={dayIdx}
             ref={(el) => (dayRefs.current[dayIdx] = el)}
             className="border p-2 relative"
+            onMouseEnter={() => setHoverDay(dayIdx)}
+            onMouseLeave={() => setHoverDay((h) => (h === dayIdx ? null : h))}
             onDoubleClick={(e) => {
               if (
                 e.target.closest('button') ||
@@ -455,16 +496,26 @@ export default function Calendar({
               ) {
                 return;
               }
-              setActiveDay(dayIdx);
+              if (!isDayLocked(dayIdx)) setActiveDay(dayIdx);
             }}
           >
+            {hoverDay === dayIdx && (
+              <button
+                className="absolute top-0 right-0 p-1 text-sm"
+                onClick={() => toggleDayLock(dayIdx)}
+              >
+                {isDayLocked(dayIdx) ? '🔒' : '🔓'}
+              </button>
+            )}
             <h2 className="font-semibold mb-2">
               {weekDays[dayIdx]} {weekDates[idx].getMonth() + 1}/{weekDates[idx].getDate()}
             </h2>
             <div
               className="relative select-none"
               style={{ height: `${hours.length * hourHeight}px` }}
-              onMouseDown={(e) => startDrag(e, dayIdx)}
+              onMouseDown={(e) => {
+                if (!isDayLocked(dayIdx)) startDrag(e, dayIdx);
+              }}
               onMouseMove={onDrag}
               onMouseUp={(e) => {
                 const pos = e.clientY - e.currentTarget.getBoundingClientRect().top;
@@ -532,7 +583,9 @@ export default function Calendar({
                         }}
                         onDragOver={(e) => e.preventDefault()}
                         onDrop={(e) => handleDrop(e, b.id)}
-                        onMouseDown={(e) => startBlockDrag(e, b, dayIdx)}
+                        onMouseDown={(e) => {
+                          if (!isDayLocked(dayIdx)) startBlockDrag(e, b, dayIdx);
+                        }}
                         onDoubleClick={(e) => {
                           e.stopPropagation();
                           const bounds = e.currentTarget.getBoundingClientRect();
@@ -548,6 +601,10 @@ export default function Calendar({
                           const bounds = e.currentTarget.getBoundingClientRect();
                           const offsetY = e.clientY - bounds.top;
                           const offsetX = e.clientX - bounds.left;
+                          if (isDayLocked(dayIdx)) {
+                            e.currentTarget.style.cursor = 'default';
+                            return;
+                          }
                           if (offsetY < 5 || offsetY > bounds.height - 5) {
                             e.currentTarget.style.cursor = 'ns-resize';
                           } else if (offsetX < 5 || offsetX > bounds.width - 5) {
@@ -628,15 +685,15 @@ export default function Calendar({
                             </div>
                           )}
                         </div>
-                        {highlight && confirmDeleteId !== b.id && (
+                        {highlight && confirmDeleteId !== b.id && !isDayLocked(dayIdx) && (
                           <button
-                          className="absolute bottom-0 right-0 p-1 text-red-600 text-xs bg-yellow-50 dark:bg-gray-800"
+                            className="absolute bottom-0 right-0 p-1 text-red-600 text-xs bg-yellow-50 dark:bg-gray-800"
                             onClick={() => setConfirmDeleteId(b.id)}
                           >
                             🗑
                           </button>
                         )}
-                        {confirmDeleteId === b.id && (
+                        {confirmDeleteId === b.id && !isDayLocked(dayIdx) && (
                           <div className="absolute bottom-0 right-0 flex space-x-1 text-xs">
                             <button
                               className="px-1 bg-red-500 text-white"
@@ -659,7 +716,7 @@ export default function Calendar({
                       </div>
                     );
                   })}
-                {activeDay === dayIdx && (
+                {activeDay === dayIdx && !isDayLocked(dayIdx) && (
                   <form
                     onSubmit={addBlock}
                     className="absolute top-0 left-0 bg-yellow-50 dark:bg-gray-800 border p-2 space-y-1 z-20"

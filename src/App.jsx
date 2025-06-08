@@ -9,6 +9,7 @@ import useWorkBlocks from './hooks/useWorkBlocks';
 import useSettings from './hooks/useSettings';
 import useAdoItems from './hooks/useAdoItems';
 import useNotes from './hooks/useNotes';
+import useDayLocks from './hooks/useDayLocks';
 import AdoService from './services/adoService';
 import {
   trimLunchOverlap,
@@ -22,6 +23,7 @@ function App() {
   const { settings, setSettings } = useSettings();
   const { items, setItems } = useAdoItems();
   const { notes, setNotes, itemNotes, setItemNotes } = useNotes();
+  const { lockedDays, setLockedDays } = useDayLocks();
   const [itemsFetched, setItemsFetched] = useState(false);
   const [sidebarWidth, setSidebarWidth] = useState(
     settings.sidebarWidth || 256
@@ -349,6 +351,8 @@ function App() {
           items={items}
           projectColors={settings.projectColors}
           onCommentDrop={handleBlockCommentDrop}
+          lockedDays={lockedDays}
+          setLockedDays={setLockedDays}
         />
         <Notes notes={notes} onAdd={addNote} onDelete={deleteNote} />
       </div>
