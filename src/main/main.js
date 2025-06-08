@@ -23,16 +23,26 @@ function createWindow() {
 }
 
 function openWorkItemWindow({ id, hours, url }) {
-  const win = new BrowserWindow({ width: 500, height: 300 });
-  const content = `
-    <html>
-      <body style="font-family: sans-serif; padding: 20px;">
-        <h3>Work Item ${id}</h3>
-        <p>Suggested hours to log: <strong>${hours.toFixed(2)}</strong></p>
-        <p><a href="${url}" target="_blank">Open in Azure DevOps</a></p>
-      </body>
-    </html>`;
-  win.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(content));
+  const win = new BrowserWindow({ width: 1000, height: 800 });
+  win.loadURL(url);
+
+  win.webContents.on('did-finish-load', () => {
+    const script = `
+      const banner = document.createElement('div');
+      banner.style.position = 'fixed';
+      banner.style.top = '0';
+      banner.style.left = '0';
+      banner.style.right = '0';
+      banner.style.zIndex = '10000';
+      banner.style.background = '#fffae6';
+      banner.style.padding = '10px';
+      banner.style.textAlign = 'center';
+      banner.textContent = 'Suggested hours to log: ${hours.toFixed(2)}';
+      document.body.appendChild(banner);
+      document.body.style.marginTop = (banner.offsetHeight + 10) + 'px';
+    `;
+    win.webContents.executeJavaScript(script).catch(() => {});
+  });
 }
 
 app.whenReady().then(() => {
