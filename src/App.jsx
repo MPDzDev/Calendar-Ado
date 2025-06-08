@@ -231,27 +231,29 @@ function App() {
 
 
   const addBlock = (block) => {
-    const pieces = splitByLunch(block, settings);
-    let updated = [...blocks];
-    for (const part of pieces) {
-      let adjusted = trimLunchOverlap(part, settings);
-      if (!adjusted) continue;
+    setBlocks((prev) => {
+      const pieces = splitByLunch(block, settings);
+      let updated = [...prev];
+      for (const part of pieces) {
+        let adjusted = trimLunchOverlap(part, settings);
+        if (!adjusted) continue;
 
-      adjusted = hasOverlap(updated, adjusted)
-        ? adjustForOverlap(updated, adjusted)
-        : adjusted;
-      adjusted = adjusted ? trimLunchOverlap(adjusted, settings) : null;
-
-      while (adjusted && hasOverlap(updated, adjusted)) {
-        adjusted = adjustForOverlap(updated, adjusted);
+        adjusted = hasOverlap(updated, adjusted)
+          ? adjustForOverlap(updated, adjusted)
+          : adjusted;
         adjusted = adjusted ? trimLunchOverlap(adjusted, settings) : null;
-      }
 
-      if (adjusted) {
-        updated.push(adjusted);
+        while (adjusted && hasOverlap(updated, adjusted)) {
+          adjusted = adjustForOverlap(updated, adjusted);
+          adjusted = adjusted ? trimLunchOverlap(adjusted, settings) : null;
+        }
+
+        if (adjusted) {
+          updated.push(adjusted);
+        }
       }
-    }
-    setBlocks(updated);
+      return updated;
+    });
   };
 
   const updateBlock = (id, data) => {
