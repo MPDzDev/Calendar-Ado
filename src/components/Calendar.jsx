@@ -598,16 +598,16 @@ export default function Calendar({
                             if (item) {
                               return (
                                 <div className="flex flex-col gap-1">
-                                  <ItemBubble item={item} full />
+                                  <ItemBubble item={item} full showArea />
                                   {hasParent && (
                                     <div className="pl-2">
-                                      <ItemBubble item={task} />
+                                      <ItemBubble item={task} showArea />
                                     </div>
                                   )}
                                 </div>
                               );
                             }
-                            return task ? <ItemBubble item={task} /> : null;
+                            return task ? <ItemBubble item={task} showArea /> : null;
                           })()}
                           {!b.itemId && b.workItem && (
                             <span className="bg-gray-200 dark:bg-gray-700 rounded px-1">
