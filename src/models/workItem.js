@@ -8,6 +8,7 @@ export default class WorkItem {
     tags = [],
     area = '',
     iteration = '',
+    state = '',
   }) {
     this.id = id;
     this.title = title;
@@ -17,5 +18,6 @@ export default class WorkItem {
     this.tags = tags;
     this.area = area;
     this.iteration = iteration;
+    this.state = state;
   }
 }
