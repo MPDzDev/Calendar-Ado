@@ -14,6 +14,7 @@ const defaultSettings = {
   azurePat: '',
   azureProjects: [],
   projectColors: {},
+  sidebarWidth: 256,
 };
 
 export default function useSettings() {

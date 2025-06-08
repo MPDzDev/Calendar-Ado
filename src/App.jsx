@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Calendar from './components/Calendar';
 import HoursSummary from './components/HoursSummary';
 import WorkItems from './components/WorkItems';
@@ -14,6 +14,11 @@ function App() {
   const { settings, setSettings } = useSettings();
   const { items, setItems } = useAdoItems();
   const [itemsFetched, setItemsFetched] = useState(false);
+  const [sidebarWidth, setSidebarWidth] = useState(
+    settings.sidebarWidth || 256
+  );
+  const containerRef = useRef(null);
+  const [resizing, setResizing] = useState(false);
 
   const fetchWorkItems = useCallback(() => {
     const { azureOrg, azurePat, azureProjects } = settings;
@@ -34,10 +39,38 @@ function App() {
   }, [settings.darkMode]);
 
   useEffect(() => {
+    setSidebarWidth(settings.sidebarWidth || 256);
+  }, [settings.sidebarWidth]);
+
+  useEffect(() => {
     if (!itemsFetched) {
       fetchWorkItems();
     }
   }, [fetchWorkItems, itemsFetched]);
+
+  useEffect(() => {
+    const handleMove = (e) => {
+      if (!resizing || !containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      let width = rect.right - e.clientX;
+      width = Math.min(Math.max(200, width), 600);
+      setSidebarWidth(width);
+    };
+
+    const handleUp = () => {
+      if (resizing) {
+        setResizing(false);
+        setSettings((prev) => ({ ...prev, sidebarWidth }));
+      }
+    };
+
+    window.addEventListener('mousemove', handleMove);
+    window.addEventListener('mouseup', handleUp);
+    return () => {
+      window.removeEventListener('mousemove', handleMove);
+      window.removeEventListener('mouseup', handleUp);
+    };
+  }, [resizing, sidebarWidth, setSettings]);
 
   const getWeekStart = (date) => {
     const d = new Date(date);
@@ -268,7 +301,10 @@ function App() {
   };
 
   return (
-    <div className="p-4 flex h-full w-full overflow-hidden bg-yellow-50 text-gray-800 dark:bg-gray-900 dark:text-gray-100">
+    <div
+      ref={containerRef}
+      className="p-4 flex h-full w-full overflow-hidden bg-yellow-50 text-gray-800 dark:bg-gray-900 dark:text-gray-100"
+    >
       <div className="flex flex-col flex-grow overflow-y-auto">
         <h1 className="text-2xl font-bold mb-4">Calendar-Ado MVP</h1>
         <div className="mb-2 flex items-center space-x-2">
@@ -296,7 +332,14 @@ function App() {
           projectColors={settings.projectColors}
         />
       </div>
-      <div className="w-64 pl-4 space-y-4 flex flex-col h-full overflow-y-auto">
+      <div
+        className="resizer"
+        onMouseDown={() => setResizing(true)}
+      />
+      <div
+        className="pl-4 space-y-4 flex flex-col h-full overflow-y-auto"
+        style={{ width: sidebarWidth }}
+      >
         <Settings settings={settings} setSettings={setSettings} />
         <HoursSummary blocks={blocks} weekStart={weekStart} />
         <div>
