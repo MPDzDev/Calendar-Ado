@@ -224,6 +224,32 @@ function App() {
     setBlocks(blocks.filter((b) => b.id !== id));
   };
 
+  const startSubmitSession = () => {
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 7);
+    const map = {};
+    blocks.forEach((b) => {
+      const start = new Date(b.start);
+      if (start >= weekStart && start < weekEnd && b.taskId) {
+        const end = new Date(b.end);
+        const hours = (end - start) / (1000 * 60 * 60);
+        map[b.taskId] = (map[b.taskId] || 0) + hours;
+      }
+    });
+    const items = Object.entries(map).map(([id, hours]) => ({
+      id,
+      hours,
+      url: settings.azureOrg
+        ? `https://dev.azure.com/${settings.azureOrg}/_workitems/edit/${id}`
+        : `https://dev.azure.com/_workitems/edit/${id}`,
+    }));
+    if (window.api && window.api.openWorkItems) {
+      window.api.openWorkItems(items);
+    } else {
+      items.forEach((i) => window.open(i.url, '_blank'));
+    }
+  };
+
   return (
     <div className="p-4 flex min-h-screen bg-yellow-50 text-gray-800 dark:bg-gray-900 dark:text-gray-100">
       <div className="flex-grow">
@@ -254,6 +280,14 @@ function App() {
       <div className="w-64 pl-4 space-y-4">
         <Settings settings={settings} setSettings={setSettings} />
         <HoursSummary blocks={blocks} weekStart={weekStart} />
+        <div>
+          <button
+            className="w-full px-2 py-1 bg-green-600 text-white"
+            onClick={startSubmitSession}
+          >
+            Start Submit Session
+          </button>
+        </div>
         <WorkItems items={items} setItems={setItems} />
       </div>
     </div>

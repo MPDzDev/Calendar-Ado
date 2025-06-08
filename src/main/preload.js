@@ -1,5 +1,5 @@
-const { contextBridge } = require('electron');
+const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('api', {
-  // expose APIs here when needed
+  openWorkItems: (items) => ipcRenderer.send('open-work-items', items),
 });
