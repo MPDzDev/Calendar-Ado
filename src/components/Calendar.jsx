@@ -15,6 +15,7 @@ export default function Calendar({
   onCommentDrop,
   lockedDays = {},
   setLockedDays,
+  animDirection = null,
 }) {
   const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   const days = settings.workDays;
@@ -479,9 +480,20 @@ export default function Calendar({
     }
   };
 
+  const animClass =
+    animDirection === 'left'
+      ? 'week-slide-left'
+      : animDirection === 'right'
+      ? 'week-slide-right'
+      : '';
+
   return (
-    <div>
-      <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${days.length}, minmax(0, 1fr))` }}>
+    <div className="overflow-hidden">
+      <div
+        key={weekStart.toISOString()}
+        className={`grid gap-2 ${animClass}`}
+        style={{ gridTemplateColumns: `repeat(${days.length}, minmax(0, 1fr))` }}
+      >
         {days.map((dayIdx, idx) => (
           <div
             key={dayIdx}

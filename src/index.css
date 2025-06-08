@@ -81,3 +81,29 @@ body,
   cursor: col-resize;
   @apply bg-gray-300 dark:bg-gray-700;
 }
+
+@keyframes slideLeft {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideRight {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.week-slide-left {
+  animation: slideLeft 0.2s ease-out;
+}
+
+.week-slide-right {
+  animation: slideRight 0.2s ease-out;
+}
