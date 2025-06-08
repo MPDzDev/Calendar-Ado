@@ -102,15 +102,26 @@ export default function Calendar({
     return d.toISOString().split('T')[0];
   };
 
-  const isDayLocked = (idx) => lockedDays[dayKey(idx)];
+  const isDayLocked = (idx) => !!lockedDays[dayKey(idx)];
 
   const toggleDayLock = (idx) => {
     if (!setLockedDays) return;
     const key = dayKey(idx);
     setLockedDays((prev) => {
       const next = { ...prev };
-      if (next[key]) delete next[key];
-      else next[key] = true;
+      if (next[key]) {
+        delete next[key];
+      } else {
+        const dayStart = new Date(weekStart);
+        dayStart.setDate(weekStart.getDate() + idx);
+        const dayEnd = new Date(dayStart);
+        dayEnd.setDate(dayStart.getDate() + 1);
+        const dayBlocks = blocks.filter((b) => {
+          const bs = new Date(b.start);
+          return bs >= dayStart && bs < dayEnd;
+        });
+        next[key] = { closed: true, blocks: dayBlocks };
+      }
       return next;
     });
   };

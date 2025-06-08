@@ -39,7 +39,18 @@ export default function useSettings() {
     const patService = new PatService();
     Promise.resolve(patService.get()).then((pat) => {
       if (data) {
-        setSettings({ ...defaultSettings, ...data, azurePat: pat });
+        const {
+          azureProjects,
+          azureTags,
+          azureArea,
+          azureIteration,
+          ...rest
+        } = data;
+        setSettings({
+          ...defaultSettings,
+          ...rest,
+          azurePat: pat,
+        });
       } else {
         setSettings({ ...defaultSettings, azurePat: pat });
       }
@@ -50,7 +61,14 @@ export default function useSettings() {
   useEffect(() => {
     if (!loaded) return;
     const storage = new StorageService('settings');
-    const { azurePat, ...persist } = settings;
+    const {
+      azurePat,
+      azureProjects,
+      azureTags,
+      azureArea,
+      azureIteration,
+      ...persist
+    } = settings;
     storage.write(persist);
     const patService = new PatService();
     patService.set(azurePat);
