@@ -66,7 +66,7 @@ export default function WorkItem({ item, level = 0, notes = [], onNoteDrop }) {
       className={`p-1 mb-1 border ${colorClass} text-xs truncate`}
       style={{ marginLeft: `${level * 1}rem` }}
     >
-      <span className="font-mono mr-1">{item.id}</span>
+      <span className="font-mono mr-1 text-gray-500 dark:text-gray-400">{item.id}</span>
       <span className="mr-1">{icons[item.type?.toLowerCase()]}</span>
       {item.title}
       {notes.length > 0 && (
