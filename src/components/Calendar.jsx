@@ -11,6 +11,7 @@ export default function Calendar({
   onTimeChange,
   items,
   projectColors = {},
+  onCommentDrop,
 }) {
   const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   const days = settings.workDays;
@@ -105,6 +106,7 @@ export default function Calendar({
       note: form.note,
       workItem: form.workItem,
       itemId: null,
+      comments: [],
     });
     setForm({
       start: `${String(settings.startHour).padStart(2, '0')}:00`,
@@ -163,7 +165,14 @@ export default function Calendar({
       0,
       0
     );
-    onAdd({ id: Date.now(), start: startDate.toISOString(), end: endDate.toISOString(), note: '', workItem: '' });
+    onAdd({
+      id: Date.now(),
+      start: startDate.toISOString(),
+      end: endDate.toISOString(),
+      note: '',
+      workItem: '',
+      comments: [],
+    });
     setDrag(null);
   };
 
@@ -188,6 +197,7 @@ export default function Calendar({
       workItem: block.workItem,
       taskId: block.taskId,
       itemId: block.itemId,
+      comments: [...(block.comments || [])],
     });
   };
 
@@ -341,6 +351,7 @@ export default function Calendar({
             workItem: block.workItem,
             taskId: block.taskId,
             itemId: block.itemId,
+            comments: [...(block.comments || [])],
           });
         }
       }
@@ -357,6 +368,13 @@ export default function Calendar({
 
   const handleDrop = (e, blockId) => {
     e.preventDefault();
+    if (e.dataTransfer.types.includes('application/x-note')) {
+      const rawNote = e.dataTransfer.getData('application/x-note');
+      if (!rawNote) return;
+      const note = JSON.parse(rawNote);
+      if (onCommentDrop) onCommentDrop(blockId, note);
+      return;
+    }
     const raw = e.dataTransfer.getData('application/x-work-item');
     if (!raw) return;
     const item = JSON.parse(raw);
@@ -572,6 +590,18 @@ export default function Calendar({
                             </span>
                           )}
                           {b.note}
+                          {b.comments && b.comments.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {b.comments.map((c, idx) => (
+                                <span
+                                  key={idx}
+                                  className="bg-gray-200 dark:bg-gray-700 rounded-full px-1"
+                                >
+                                  {c}
+                                </span>
+                              ))}
+                            </div>
+                          )}
                         </div>
                         {highlight && confirmDeleteId !== b.id && (
                           <button

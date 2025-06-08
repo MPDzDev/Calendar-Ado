@@ -43,6 +43,17 @@ function App() {
     deleteNote(note.id);
   };
 
+  const handleBlockCommentDrop = (blockId, note) => {
+    setBlocks((prev) =>
+      prev.map((b) =>
+        b.id === blockId
+          ? { ...b, comments: [...(b.comments || []), note.text] }
+          : b
+      )
+    );
+    deleteNote(note.id);
+  };
+
   const fetchWorkItems = useCallback(() => {
     const {
       azureOrg,
@@ -310,6 +321,7 @@ function App() {
           weekStart={weekStart}
           items={items}
           projectColors={settings.projectColors}
+          onCommentDrop={handleBlockCommentDrop}
         />
         <Notes notes={notes} onAdd={addNote} onDelete={deleteNote} />
       </div>
