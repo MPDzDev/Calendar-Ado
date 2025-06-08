@@ -1,6 +1,11 @@
 import React from 'react';
 
-export default function YearHint({ weekStart, blocks = [], settings = {} }) {
+export default function YearHint({
+  weekStart,
+  blocks = [],
+  settings = {},
+  items = [],
+}) {
   const startHour = settings.startHour ?? 0;
   const endHour = settings.endHour ?? 24;
   const hours = endHour - startHour;
@@ -26,6 +31,8 @@ export default function YearHint({ weekStart, blocks = [], settings = {} }) {
   const hourHeight = 2; // px height per hour
   const totalHeight = hours * hourHeight;
 
+  const findItem = (id) => items?.find((i) => i.id === id);
+
   const currentIndex = Math.floor(
     (getWeekStart(weekStart) - firstWeek) / (7 * 24 * 60 * 60 * 1000)
   );
@@ -43,8 +50,15 @@ export default function YearHint({ weekStart, blocks = [], settings = {} }) {
     const startMin =
       start.getHours() * 60 + start.getMinutes() - startHour * 60;
     const endMin = end.getHours() * 60 + end.getMinutes() - startHour * 60;
+    const item = b.itemId ? findItem(b.itemId) : b.taskId ? findItem(b.taskId) : null;
+    const color = item ? settings.projectColors?.[item.project] : undefined;
     if (!blocksByWeek[wIdx]) blocksByWeek[wIdx] = Array.from({ length: 7 }, () => []);
-    blocksByWeek[wIdx][dIdx].push({ start: startMin, end: endMin, taskId: b.taskId });
+    blocksByWeek[wIdx][dIdx].push({
+      start: startMin,
+      end: endMin,
+      taskId: b.taskId,
+      color,
+    });
   });
 
   const months = Array.from({ length: 12 }, (_, m) => {
@@ -106,7 +120,7 @@ export default function YearHint({ weekStart, blocks = [], settings = {} }) {
                     y={(blk.start / 60) * hourHeight}
                     width={dayWidth}
                     height={((blk.end - blk.start) / 60) * hourHeight}
-                    fill={blk.taskId ? '#60a5fa' : '#cbd5e1'}
+                    fill={blk.color || (blk.taskId ? '#60a5fa' : '#cbd5e1')}
                   />
                 ))
               )}
