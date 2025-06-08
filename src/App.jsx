@@ -3,6 +3,7 @@ import Calendar from './components/Calendar';
 import HoursSummary from './components/HoursSummary';
 import WorkItems from './components/WorkItems';
 import Settings from './components/Settings';
+import YearHint from './components/YearHint';
 import useWorkBlocks from './hooks/useWorkBlocks';
 import useSettings from './hooks/useSettings';
 import useAdoItems from './hooks/useAdoItems';
@@ -270,17 +271,27 @@ function App() {
     <div className="p-4 flex min-h-screen bg-yellow-50 text-gray-800 dark:bg-gray-900 dark:text-gray-100">
       <div className="flex-grow">
         <h1 className="text-2xl font-bold mb-4">Calendar-Ado MVP</h1>
-        <div className="mb-2 space-x-2">
-          <button className="px-2 py-1 bg-gray-200 dark:bg-gray-700" onClick={prevWeek}>
-            Prev Week
+        <div className="mb-2 flex items-center space-x-2">
+          <button
+            className="px-3 py-1 rounded bg-blue-500 hover:bg-blue-600 text-white"
+            onClick={prevWeek}
+          >
+            ◀ Prev
           </button>
-          <button className="px-2 py-1 bg-gray-200 dark:bg-gray-700" onClick={currentWeek}>
+          <button
+            className="px-3 py-1 rounded bg-blue-500 hover:bg-blue-600 text-white"
+            onClick={currentWeek}
+          >
             This Week
           </button>
-          <button className="px-2 py-1 bg-gray-200 dark:bg-gray-700" onClick={nextWeek}>
-            Next Week
+          <button
+            className="px-3 py-1 rounded bg-blue-500 hover:bg-blue-600 text-white"
+            onClick={nextWeek}
+          >
+            Next ▶
           </button>
-          <span className="ml-2 font-semibold">{formatRange()}</span>
+          <span className="ml-4 font-semibold">{formatRange()}</span>
+          <YearHint weekStart={weekStart} />
         </div>
         <Calendar
           blocks={blocks}
