@@ -95,7 +95,16 @@ export default function WorkItems({
 
   const itemMap = new Map(items.map((i) => [i.id, i]));
 
-  const grouped = filtered.reduce((acc, item) => {
+  const allProjects = Array.from(
+    new Set(items.map((i) => i.project || 'Unknown'))
+  );
+
+  const grouped = allProjects.reduce((acc, project) => {
+    acc[project] = {};
+    return acc;
+  }, {});
+
+  filtered.forEach((item) => {
     const projectKey = item.project || 'Unknown';
     let stateKey = item.state || 'Unknown';
     if (
@@ -106,11 +115,9 @@ export default function WorkItems({
       const parent = itemMap.get(item.parentId);
       stateKey = parent.state || stateKey;
     }
-    if (!acc[projectKey]) acc[projectKey] = {};
-    if (!acc[projectKey][stateKey]) acc[projectKey][stateKey] = [];
-    acc[projectKey][stateKey].push(item);
-    return acc;
-  }, {});
+    if (!grouped[projectKey][stateKey]) grouped[projectKey][stateKey] = [];
+    grouped[projectKey][stateKey].push(item);
+  });
 
   useEffect(() => {
     const keys = Object.keys(grouped);
@@ -121,7 +128,7 @@ export default function WorkItems({
       });
       return next;
     });
-  }, [filtered]);
+  }, [items]);
 
   useEffect(() => {
     const handler = (e) => {
