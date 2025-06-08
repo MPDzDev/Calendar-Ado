@@ -27,7 +27,7 @@ function App() {
   const { lockedDays, setLockedDays } = useDayLocks();
   const [itemsFetched, setItemsFetched] = useState(false);
   const [sidebarWidth, setSidebarWidth] = useState(
-    settings.sidebarWidth || 256
+    settings.sidebarWidth || 320
   );
   const containerRef = useRef(null);
   const [resizing, setResizing] = useState(false);
@@ -113,7 +113,7 @@ function App() {
   }, [settings.darkMode]);
 
   useEffect(() => {
-    setSidebarWidth(settings.sidebarWidth || 256);
+    setSidebarWidth(settings.sidebarWidth || 320);
   }, [settings.sidebarWidth]);
 
   useEffect(() => {
