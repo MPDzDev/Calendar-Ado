@@ -8,7 +8,9 @@
     "extends": null,
     "files": [
       "build/**/*",
-      "src/main/**/*"
+      "src/main/**/*",
+      "node_modules/**/*",
+      "package.json"
     ]
   },
   "scripts": {
