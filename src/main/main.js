@@ -60,10 +60,6 @@ app.whenReady().then(() => {
     items.forEach(openWorkItemWindow);
   });
 
-  ipcMain.on('get-user-data-path', (event) => {
-    event.returnValue = app.getPath('userData');
-  });
-
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
       createWindow();

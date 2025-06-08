@@ -132,8 +132,6 @@ Additionally, by making ADO updates a prerequisite for seamless time logging, th
 * Node.js (Electron main process)
 * Fetch-based ADO API integration with PAT stored securely
 * JSON file-based storage with option to switch to SQLite (`better-sqlite3`)
-  * Files are saved under Electron's `userData` directory so calendar entries
-    and settings survive application reinstalls
 
 **Security**:
 
