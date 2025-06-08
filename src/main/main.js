@@ -22,7 +22,7 @@ function createWindow() {
   }
 }
 
-function openWorkItemWindow({ id, hours, url }) {
+function openWorkItemWindow({ id, hours, url, days }) {
   const win = new BrowserWindow({ width: 1000, height: 800 });
   win.loadURL(url);
 
@@ -37,7 +37,17 @@ function openWorkItemWindow({ id, hours, url }) {
       banner.style.background = '#fffae6';
       banner.style.padding = '10px';
       banner.style.textAlign = 'center';
-      banner.textContent = 'Suggested hours to log: ${hours.toFixed(2)}';
+      const header = document.createElement('div');
+      header.textContent = 'Suggested hours to log: ${hours.toFixed(2)}';
+      banner.appendChild(header);
+      const list = document.createElement('ul');
+      const breakdown = ${JSON.stringify(days || {})};
+      Object.entries(breakdown).forEach(([day, hrs]) => {
+        const li = document.createElement('li');
+        li.textContent = `${day}: ${hrs.toFixed(2)}`;
+        list.appendChild(li);
+      });
+      banner.appendChild(list);
       document.body.appendChild(banner);
       document.body.style.marginTop = (banner.offsetHeight + 10) + 'px';
     `;

@@ -245,12 +245,16 @@ function App() {
       if (start >= weekStart && start < weekEnd && b.taskId) {
         const end = new Date(b.end);
         const hours = (end - start) / (1000 * 60 * 60);
-        map[b.taskId] = (map[b.taskId] || 0) + hours;
+        const dayKey = start.toLocaleDateString('en-US', { weekday: 'short', month: 'numeric', day: 'numeric' });
+        if (!map[b.taskId]) map[b.taskId] = { total: 0, days: {} };
+        map[b.taskId].total += hours;
+        map[b.taskId].days[dayKey] = (map[b.taskId].days[dayKey] || 0) + hours;
       }
     });
-    const items = Object.entries(map).map(([id, hours]) => ({
+    const items = Object.entries(map).map(([id, data]) => ({
       id,
-      hours,
+      hours: data.total,
+      days: data.days,
       url: settings.azureOrg
         ? `https://dev.azure.com/${settings.azureOrg}/_workitems/edit/${id}`
         : `https://dev.azure.com/_workitems/edit/${id}`,
