@@ -137,8 +137,7 @@ Additionally, by making ADO updates a prerequisite for seamless time logging, th
 
 **Security**:
 
-* PAT stored securely via `keytar`; falls back to session storage when keytar is
-  unavailable
+* PAT stored securely via `keytar`
 * No external cloud storage
 * Local-only execution unless user opts into sync
 
@@ -214,7 +213,7 @@ Additionally, by making ADO updates a prerequisite for seamless time logging, th
 * Scaffold Electron + React project
 * Set up calendar grid and time block model
 * Connect to ADO API with manual PAT test
-* Implement secure PAT storage with `keytar` (with session storage fallback)
+* Implement secure PAT storage with `keytar`
 * Create local storage service (JSON-based MVP)
 
 ---
@@ -231,8 +230,7 @@ Additionally, by making ADO updates a prerequisite for seamless time logging, th
 2. **Authentication Layer**
 
   * `adoService.js`: handles API calls with PAT
-  * `keytar`: store and retrieve PAT securely (session storage fallback in the
-    browser)
+  * `keytar`: store and retrieve PAT securely
   * Settings screen to input/test PAT
 
 3. **Local Storage**
@@ -276,7 +274,41 @@ Additionally, by making ADO updates a prerequisite for seamless time logging, th
    ```bash
    npm start
    ```
-   This will launch both the React dev server and the Electron shell.
+  This will launch both the React dev server and the Electron shell.
+  When Electron starts with `contextIsolation` enabled, native modules
+  like `keytar` must be used from the main process. The main process
+  exposes IPC handlers and the preload script forwards calls:
+
+  ```javascript
+  // src/main/main.js
+  const { ipcMain } = require('electron');
+  const keytar = require('keytar');
+  ipcMain.handle('keytar:get', (_e, service, account) =>
+    keytar.getPassword(service, account)
+  );
+  ipcMain.handle('keytar:set', (_e, service, account, password) =>
+    password
+      ? keytar.setPassword(service, account, password)
+      : keytar.deletePassword(service, account)
+  );
+  ipcMain.handle('keytar:delete', (_e, service, account) =>
+    keytar.deletePassword(service, account)
+  );
+
+  // src/main/preload.js
+  const { contextBridge, ipcRenderer } = require('electron');
+  contextBridge.exposeInMainWorld('api', {
+    getPassword: (service, account) =>
+      ipcRenderer.invoke('keytar:get', service, account),
+    setPassword: (service, account, password) =>
+      ipcRenderer.invoke('keytar:set', service, account, password),
+    deletePassword: (service, account) =>
+      ipcRenderer.invoke('keytar:delete', service, account),
+  });
+  ```
+
+  Use `window.api` in the React code to save or retrieve your PAT so
+  `keytar` continues to work when context isolation is enabled.
 
 3. Build and package the application:
    ```bash
