@@ -158,6 +158,18 @@ export default function Settings({ settings, setSettings }) {
                       <span>Dark mode</span>
                     </label>
                   </div>
+                  <div className="flex items-center space-x-2">
+                    <label className="flex items-center space-x-1">
+                      <input
+                        type="checkbox"
+                        checked={temp.enableReminders}
+                        onChange={() =>
+                          setTemp({ ...temp, enableReminders: !temp.enableReminders })
+                        }
+                      />
+                      <span>Daily reminders</span>
+                    </label>
+                  </div>
                 </>
               )}
               {tab === 'azure' && (
