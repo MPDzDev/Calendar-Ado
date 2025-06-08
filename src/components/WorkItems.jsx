@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import WorkItem from './WorkItem';
 
 function buildTree(items) {
@@ -56,6 +56,38 @@ export default function WorkItems({
     areas: useRef(null),
     iterations: useRef(null),
   };
+
+  const pillRowRefs = {
+    tags: useRef(null),
+    areas: useRef(null),
+    iterations: useRef(null),
+  };
+
+  const [condensed, setCondensed] = useState({
+    tags: false,
+    areas: false,
+    iterations: false,
+  });
+
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+  useEffect(() => {
+    const handler = () => setWindowWidth(window.innerWidth);
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  }, []);
+
+  useLayoutEffect(() => {
+    const groups = ['tags', 'areas', 'iterations'];
+    setCondensed((prev) => {
+      const next = { ...prev };
+      groups.forEach((g) => {
+        const el = pillRowRefs[g]?.current;
+        if (el) next[g] = el.scrollWidth > el.clientWidth;
+      });
+      return next;
+    });
+  }, [settings.azureTags, settings.azureArea, settings.azureIteration, windowWidth]);
 
   const toggleFilterGroup = (group) =>
     setActiveFilterGroup((prev) => (prev === group ? null : group));
@@ -222,24 +254,42 @@ export default function WorkItems({
         </select>
       </div>
       <div className="mb-2 relative" ref={groupRefs.tags}>
-        <div className="flex items-center">
+        <div className="flex items-center flex-wrap" ref={pillRowRefs.tags}>
           <div
-            className="font-semibold cursor-pointer flex-grow"
+            className="font-semibold cursor-pointer"
             onClick={() => toggleFilterGroup('tags')}
           >
             Tags
           </div>
-          {settings.azureTags.length > 0 && (
-            <button
-              className="ml-1 text-red-600 text-xs"
-              onClick={() => {
-                updateSettings({ azureTags: [] });
-                onRefresh && onRefresh();
-              }}
-            >
-              x
-            </button>
-          )}
+          <div className="flex items-center flex-wrap ml-2 space-x-1 overflow-hidden">
+            {settings.azureTags.length > 0 &&
+              (condensed.tags ? (
+                <span className="px-2 py-1 text-xs border rounded-full bg-gray-200 dark:bg-gray-700 flex items-center">
+                  {`${settings.azureTags.length} filters`}
+                  <button
+                    className="ml-1"
+                    onClick={() => {
+                      updateSettings({ azureTags: [] });
+                      onRefresh && onRefresh();
+                    }}
+                  >
+                    x
+                  </button>
+                </span>
+              ) : (
+                settings.azureTags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="px-2 py-1 text-xs border rounded-full bg-gray-200 dark:bg-gray-700 flex items-center"
+                  >
+                    {tag}
+                    <button className="ml-1" onClick={() => toggleTag(tag)}>
+                      x
+                    </button>
+                  </span>
+                ))
+              ))}
+          </div>
         </div>
         {activeFilterGroup === 'tags' && (
           <div className="absolute left-0 mt-1 bg-white dark:bg-gray-800 border p-2 z-10 flex flex-wrap gap-1">
@@ -265,24 +315,23 @@ export default function WorkItems({
         )}
       </div>
       <div className="mb-2 relative" ref={groupRefs.areas}>
-        <div className="flex items-center">
+        <div className="flex items-center flex-wrap" ref={pillRowRefs.areas}>
           <div
-            className="font-semibold cursor-pointer flex-grow"
+            className="font-semibold cursor-pointer"
             onClick={() => toggleFilterGroup('areas')}
           >
             Areas
           </div>
-          {settings.azureArea && (
-            <button
-              className="ml-1 text-red-600 text-xs"
-              onClick={() => {
-                updateSettings({ azureArea: '' });
-                onRefresh && onRefresh();
-              }}
-            >
-              x
-            </button>
-          )}
+          <div className="flex items-center flex-wrap ml-2 space-x-1 overflow-hidden">
+            {settings.azureArea && (
+              <span className="px-2 py-1 text-xs border rounded-full bg-gray-200 dark:bg-gray-700 flex items-center">
+                {settings.azureArea}
+                <button className="ml-1" onClick={() => toggleArea(settings.azureArea)}>
+                  x
+                </button>
+              </span>
+            )}
+          </div>
         </div>
         {activeFilterGroup === 'areas' && (
           <div className="absolute left-0 mt-1 bg-white dark:bg-gray-800 border p-2 z-10 flex flex-wrap gap-1">
@@ -308,24 +357,23 @@ export default function WorkItems({
         )}
       </div>
       <div className="mb-2 relative" ref={groupRefs.iterations}>
-        <div className="flex items-center">
+        <div className="flex items-center flex-wrap" ref={pillRowRefs.iterations}>
           <div
-            className="font-semibold cursor-pointer flex-grow"
+            className="font-semibold cursor-pointer"
             onClick={() => toggleFilterGroup('iterations')}
           >
             Iterations
           </div>
-          {settings.azureIteration && (
-            <button
-              className="ml-1 text-red-600 text-xs"
-              onClick={() => {
-                updateSettings({ azureIteration: '' });
-                onRefresh && onRefresh();
-              }}
-            >
-              x
-            </button>
-          )}
+          <div className="flex items-center flex-wrap ml-2 space-x-1 overflow-hidden">
+            {settings.azureIteration && (
+              <span className="px-2 py-1 text-xs border rounded-full bg-gray-200 dark:bg-gray-700 flex items-center">
+                {settings.azureIteration}
+                <button className="ml-1" onClick={() => toggleIteration(settings.azureIteration)}>
+                  x
+                </button>
+              </span>
+            )}
+          </div>
         </div>
         {activeFilterGroup === 'iterations' && (
           <div className="absolute left-0 mt-1 bg-white dark:bg-gray-800 border p-2 z-10 flex flex-wrap gap-1">
