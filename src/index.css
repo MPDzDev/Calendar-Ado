@@ -7,6 +7,15 @@
   --minimap-highlight-color: #facc15;
 }
 
+html,
+body,
+#root {
+  width: 100vw;
+  height: 100vh;
+  margin: 0;
+  overflow: hidden;
+}
+
 .week-range {
   @apply inline-block w-week-range;
 }
