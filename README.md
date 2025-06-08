@@ -269,6 +269,7 @@ Additionally, by making ADO updates a prerequisite for seamless time logging, th
    ```bash
    npm install
    ```
+   This will also build the native `keytar` module used for secure PAT storage.
 2. Start the application:
    ```bash
    npm start

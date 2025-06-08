@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import PatService from '../services/patService';
 
 const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
@@ -21,6 +22,8 @@ export default function Settings({ settings, setSettings }) {
   };
 
   const save = () => {
+    const patService = new PatService();
+    patService.set(temp.azurePat);
     setSettings(temp);
     setOpen(false);
     setNewProject('');
