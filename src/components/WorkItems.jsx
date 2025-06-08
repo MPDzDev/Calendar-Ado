@@ -65,10 +65,16 @@ export default function WorkItems({ items, onRefresh, projectColors = {} }) {
   }, [filtered]);
 
   const toggle = (project) =>
-    setCollapsed((c) => ({ ...c, [project]: !c[project] }));
+    setCollapsed((prev) => {
+      const next = {};
+      Object.keys(prev).forEach((k) => {
+        next[k] = k === project ? !prev[project] : true;
+      });
+      return next;
+    });
 
   return (
-    <div className="mb-4 flex flex-col flex-grow overflow-y-auto">
+    <div className="mb-4 flex flex-col flex-grow overflow-y-auto min-h-0">
       <div className="flex items-center justify-between mb-1">
         <h2 className="font-semibold">Work Items</h2>
         {onRefresh && (
@@ -100,7 +106,7 @@ export default function WorkItems({ items, onRefresh, projectColors = {} }) {
           <option value="task">Tasks</option>
         </select>
       </div>
-      <div className="flex-grow overflow-y-auto space-y-2 scroll-container">
+      <div className="flex-grow overflow-y-auto space-y-2 scroll-container min-h-0">
         {Object.entries(grouped).map(([project, list]) => {
           const tree = buildTree(list);
           return (
