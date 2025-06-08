@@ -168,15 +168,17 @@ export default function Calendar({
   };
 
   const duplicateBlockToDay = (block, targetIndex) => {
-    if (targetIndex < 0 || targetIndex >= days.length) return;
-    const dayIdx = days[targetIndex];
+    const weekOffset = Math.floor(targetIndex / days.length);
+    const indexInWeek = ((targetIndex % days.length) + days.length) % days.length;
+    if (indexInWeek < 0 || indexInWeek >= days.length) return;
+    const dayIdx = days[indexInWeek];
     const start = new Date(block.start);
     const end = new Date(block.end);
     const startDate = new Date(weekStart);
-    startDate.setDate(weekStart.getDate() + dayIdx);
+    startDate.setDate(weekStart.getDate() + dayIdx + weekOffset * 7);
     startDate.setHours(start.getHours(), start.getMinutes(), 0, 0);
     const endDate = new Date(weekStart);
-    endDate.setDate(weekStart.getDate() + dayIdx);
+    endDate.setDate(weekStart.getDate() + dayIdx + weekOffset * 7);
     endDate.setHours(end.getHours(), end.getMinutes(), 0, 0);
     onAdd({
       id: Date.now() + targetIndex,
@@ -474,6 +476,7 @@ export default function Calendar({
                         onDrop={(e) => handleDrop(e, b.id)}
                         onMouseDown={(e) => startBlockDrag(e, b, dayIdx)}
                         onDoubleClick={(e) => {
+                          e.stopPropagation();
                           const bounds = e.currentTarget.getBoundingClientRect();
                           const offsetX = e.clientX - bounds.left;
                           const idx = days.indexOf(dayIdx);
