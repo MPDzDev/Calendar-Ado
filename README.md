@@ -214,7 +214,7 @@ Additionally, by making ADO updates a prerequisite for seamless time logging, th
 * Set up calendar grid and time block model
 * Connect to ADO API with manual PAT test
 * Implement secure PAT storage with `keytar`
-* Create local storage service (JSON-based MVP)
+* Create local storage service (JSON-based)
 
 ---
 
@@ -238,13 +238,13 @@ Additionally, by making ADO updates a prerequisite for seamless time logging, th
    * `storageService.js`: read/write JSON or SQLite
    * Store: `workBlocks`, `workItemCache`
 
-4. **Calendar UI MVP**
+4. **Calendar UI**
 
    * Implement weekly grid with `react-big-calendar`
    * Drag to create time blocks
    * Editable notes per block
 
-5. **Work Item Panel MVP**
+5. **Work Item Panel**
 
    * Fetch ADO items based on recent user activity
    * Render list with drag support

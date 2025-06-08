@@ -348,7 +348,7 @@ function App() {
             No time logged today. Don't forget to log your work!
           </div>
         )}
-        <h1 className="text-2xl font-bold mb-4">Calendar-Ado MVP</h1>
+        <h1 className="text-2xl font-bold mb-4">Calendar-Ado</h1>
         <div className="mb-2 flex items-center space-x-2">
           <button className="week-nav-button" onClick={prevWeek}>
             ◀ Prev
