@@ -12,9 +12,13 @@ export default function ItemBubble({ item, full = false, showArea = false }) {
   const displayClass = full ? 'block w-full' : 'block';
   return (
     <div className={`${displayClass} pl-1 border-l-4 ${colorClass} text-xs`}>
-      <div className="font-medium">{item.title}</div>
+      <div className="font-medium truncate" title={item.title}>
+        {item.title}
+      </div>
       {showArea && item.area && (
-        <div className="text-[9px] mt-0.5">{item.area}</div>
+        <div className="text-[9px] mt-0.5 truncate" title={item.area}>
+          {item.area}
+        </div>
       )}
     </div>
   );
