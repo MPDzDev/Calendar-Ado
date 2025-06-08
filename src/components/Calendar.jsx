@@ -77,10 +77,8 @@ export default function Calendar({
     if (!contextMenu) return;
     const close = () => setContextMenu(null);
     window.addEventListener('click', close);
-    window.addEventListener('contextmenu', close);
     return () => {
       window.removeEventListener('click', close);
-      window.removeEventListener('contextmenu', close);
     };
   }, [contextMenu]);
 
@@ -646,6 +644,7 @@ export default function Calendar({
                         }}
                         onContextMenu={(e) => {
                           e.preventDefault();
+                          e.stopPropagation();
                           if (isDayLocked(dayIdx)) return;
                           setContextMenu({ id: b.id, x: e.clientX, y: e.clientY });
                         }}
