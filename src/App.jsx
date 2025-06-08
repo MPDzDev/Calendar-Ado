@@ -119,11 +119,13 @@ function App() {
     }
   }, [fetchWorkItems, itemsFetched]);
 
-  useEffect(() => {
-    if (itemsFetched) {
-      fetchWorkItems();
-    }
-  }, [settings.azureTags, settings.azureArea, settings.azureIteration]);
+  // Previously we refetched work items whenever the Azure filter
+  // settings changed. This caused unnecessary API requests when
+  // users merely tweaked the local filters via the pill UI. Work
+  // items should only be refetched when the user explicitly refreshes
+  // or when configuration such as organization or project changes.
+  // Therefore this effect has been removed to avoid automatic
+  // refetching on filter changes.
 
   useEffect(() => {
     const handleMove = (e) => {
