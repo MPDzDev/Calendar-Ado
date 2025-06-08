@@ -14,6 +14,9 @@ const defaultSettings = {
   azurePat: '',
   azureProjects: [],
   projectColors: {},
+  azureTags: [],
+  azureArea: '',
+  azureIteration: '',
   sidebarWidth: 256,
 };
 

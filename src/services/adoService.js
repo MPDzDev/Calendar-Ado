@@ -1,10 +1,20 @@
 import WorkItem from '../models/workItem';
 
 export default class AdoService {
-  constructor(org = '', token = '', projects = []) {
+  constructor(
+    org = '',
+    token = '',
+    projects = [],
+    tags = [],
+    area = '',
+    iteration = ''
+  ) {
     this.org = org;
     this.token = token;
     this.projects = projects;
+    this.tags = tags;
+    this.area = area;
+    this.iteration = iteration;
     this._b64 =
       typeof btoa === 'function'
         ? (str) => btoa(str)
@@ -17,9 +27,21 @@ export default class AdoService {
           .map((p) => `'${p}'`)
           .join(',')}) and `
       : '';
+    const tagFilter = this.tags.length
+      ? this.tags
+          .map((t) => `[System.Tags] CONTAINS '${t}'`)
+          .join(' and ') + ' and '
+      : '';
+    const areaFilter = this.area ? `[System.AreaPath] under '${this.area}' and ` : '';
+    const iterationFilter = this.iteration
+      ? `[System.IterationPath] under '${this.iteration}' and `
+      : '';
     return (
       'Select [System.Id] From WorkItems Where ' +
       projectFilter +
+      tagFilter +
+      areaFilter +
+      iterationFilter +
       '[System.ChangedDate] >= @Today - 30 order by [System.ChangedDate] desc'
     );
   }

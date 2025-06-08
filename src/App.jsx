@@ -21,14 +21,36 @@ function App() {
   const [resizing, setResizing] = useState(false);
 
   const fetchWorkItems = useCallback(() => {
-    const { azureOrg, azurePat, azureProjects } = settings;
+    const {
+      azureOrg,
+      azurePat,
+      azureProjects,
+      azureTags,
+      azureArea,
+      azureIteration,
+    } = settings;
     if (!azureOrg || !azurePat) return;
-    const service = new AdoService(azureOrg, azurePat, azureProjects);
+    const service = new AdoService(
+      azureOrg,
+      azurePat,
+      azureProjects,
+      azureTags,
+      azureArea,
+      azureIteration
+    );
     service.getWorkItems().then((data) => {
       setItems(data);
       setItemsFetched(true);
     });
-  }, [settings.azureOrg, settings.azurePat, settings.azureProjects, setItems]);
+  }, [
+    settings.azureOrg,
+    settings.azurePat,
+    settings.azureProjects,
+    settings.azureTags,
+    settings.azureArea,
+    settings.azureIteration,
+    setItems,
+  ]);
 
   useEffect(() => {
     if (settings.darkMode) {
@@ -47,6 +69,12 @@ function App() {
       fetchWorkItems();
     }
   }, [fetchWorkItems, itemsFetched]);
+
+  useEffect(() => {
+    if (itemsFetched) {
+      fetchWorkItems();
+    }
+  }, [settings.azureTags, settings.azureArea, settings.azureIteration]);
 
   useEffect(() => {
     const handleMove = (e) => {
@@ -354,6 +382,8 @@ function App() {
           items={items}
           onRefresh={fetchWorkItems}
           projectColors={settings.projectColors}
+          settings={settings}
+          setSettings={setSettings}
         />
       </div>
     </div>
