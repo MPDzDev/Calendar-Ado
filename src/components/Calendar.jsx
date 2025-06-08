@@ -513,7 +513,9 @@ export default function Calendar({
             }}
           >
             {isDayLocked(dayIdx) && (
-              <div className="absolute inset-0 bg-gray-500 dark:bg-gray-600 opacity-10 pointer-events-none z-20" />
+              <div className="absolute inset-0 bg-gray-500/50 dark:bg-gray-600/50 flex items-center justify-center pointer-events-none z-20">
+                <span className="text-4xl text-gray-700 dark:text-gray-300">🔒</span>
+              </div>
             )}
             {hoverDay === dayIdx && (
               <button
