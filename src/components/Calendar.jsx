@@ -10,6 +10,7 @@ export default function Calendar({
   onUpdate,
   onTimeChange,
   items,
+  projectColors = {},
 }) {
   const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   const days = settings.workDays;
@@ -361,6 +362,12 @@ export default function Calendar({
                       (startMinutes - settings.startHour * 60) * (hourHeight / 60);
                     const height = (endMinutes - startMinutes) * (hourHeight / 60);
                     const highlight = hoveredId === b.id;
+                    const item = b.itemId
+                      ? findItem(b.itemId)
+                      : b.taskId
+                      ? findItem(b.taskId)
+                      : null;
+                    const projectColor = item ? projectColors[item.project] : null;
                     return (
                       <div
                         key={b.id}
@@ -383,7 +390,11 @@ export default function Calendar({
                           }
                         }}
                         className={`work-block absolute left-0 right-0 p-1 border rounded-md overflow-hidden select-none text-[10px] leading-tight ${b.taskId ? 'bg-blue-200 dark:bg-blue-800 border-blue-300 dark:border-blue-500' : 'bg-gray-100 dark:bg-gray-600 border-gray-300 dark:border-gray-500'} ${b.taskId && b.itemId ? 'border-yellow-400' : ''} ${highlight ? 'ring-2 ring-blue-400' : ''}`}
-                        style={{ top: `${top}px`, height: `${height}px` }}
+                        style={{
+                          top: `${top}px`,
+                          height: `${height}px`,
+                          borderLeft: projectColor ? `4px solid ${projectColor}` : undefined,
+                        }}
                       >
                         <div className="text-[10px]">
                           {(() => {

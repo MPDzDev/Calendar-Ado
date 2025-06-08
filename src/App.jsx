@@ -291,6 +291,7 @@ function App() {
           onDelete={deleteBlock}
           weekStart={weekStart}
           items={items}
+          projectColors={settings.projectColors}
         />
       </div>
       <div className="w-64 pl-4 space-y-4">
@@ -304,7 +305,11 @@ function App() {
             Start Submit Session
           </button>
         </div>
-        <WorkItems items={items} onRefresh={fetchWorkItems} />
+        <WorkItems
+          items={items}
+          onRefresh={fetchWorkItems}
+          projectColors={settings.projectColors}
+        />
       </div>
     </div>
   );
