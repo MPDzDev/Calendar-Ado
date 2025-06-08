@@ -16,9 +16,9 @@
   "scripts": {
     "react-start": "react-scripts start",
     "electron": "ELECTRON_START_URL=http://localhost:3000 electron .",
-  "start": "concurrently \"npm run react-start\" \"npm run electron\"",
-  "build": "react-scripts build",
-  "electron-pack": "npm run build && electron-builder",
+    "start": "concurrently \"npm run react-start\" \"npm run electron\"",
+    "build": "react-scripts build",
+    "electron-pack": "npm run build && electron-builder",
     "test": "jest",
     "postinstall": "electron-builder install-app-deps"
   },
@@ -40,5 +40,17 @@
   "license": "UNLICENSED",
   "jest": {
     "testEnvironment": "node"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
   }
 }
