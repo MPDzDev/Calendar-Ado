@@ -22,9 +22,11 @@ function App() {
   }, [settings.darkMode]);
 
   useEffect(() => {
-    const service = new AdoService();
+    const { azureOrg, azurePat, azureProjects } = settings;
+    if (!azureOrg || !azurePat) return;
+    const service = new AdoService(azureOrg, azurePat, azureProjects);
     service.getWorkItems().then(setItems);
-  }, [setItems]);
+  }, [settings.azureOrg, settings.azurePat, settings.azureProjects, setItems]);
 
   const getWeekStart = (date) => {
     const d = new Date(date);
@@ -288,7 +290,7 @@ function App() {
             Start Submit Session
           </button>
         </div>
-        <WorkItems items={items} setItems={setItems} />
+        <WorkItems items={items} />
       </div>
     </div>
   );

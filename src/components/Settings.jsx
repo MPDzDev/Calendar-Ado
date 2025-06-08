@@ -173,6 +173,23 @@ export default function Settings({ settings, setSettings }) {
                       className="border w-full px-1"
                     />
                   </div>
+                  <div>
+                    <label className="mr-1">Projects:</label>
+                    <input
+                      type="text"
+                      value={temp.azureProjects.join(',')}
+                      onChange={(e) =>
+                        setTemp({
+                          ...temp,
+                          azureProjects: e.target.value
+                            .split(',')
+                            .map((p) => p.trim())
+                            .filter(Boolean),
+                        })
+                      }
+                      className="border w-full px-1"
+                    />
+                  </div>
                 </>
               )}
               <div className="flex space-x-2 pt-2">

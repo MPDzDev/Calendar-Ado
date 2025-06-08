@@ -12,6 +12,7 @@ const defaultSettings = {
   darkMode: false,
   azureOrg: '',
   azurePat: '',
+  azureProjects: [],
 };
 
 export default function useSettings() {
