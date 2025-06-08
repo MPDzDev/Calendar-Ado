@@ -28,31 +28,21 @@ export default class PatService {
   }
 
   async get() {
-    if (keytar) {
-      const res = await keytar.getPassword(this.service, this.account);
-      return res || '';
+    if (!keytar) {
+      return '';
     }
-    if (typeof sessionStorage !== 'undefined') {
-      return sessionStorage.getItem(this.account) || '';
-    }
-    return '';
+    const res = await keytar.getPassword(this.service, this.account);
+    return res || '';
   }
 
   async set(pat) {
-    if (keytar) {
-      if (pat) {
-        await keytar.setPassword(this.service, this.account, pat);
-      } else {
-        await keytar.deletePassword(this.service, this.account);
-      }
-      return;
+    if (!keytar) {
+      throw new Error('keytar not available');
     }
-    if (typeof sessionStorage !== 'undefined') {
-      if (pat) {
-        sessionStorage.setItem(this.account, pat);
-      } else {
-        sessionStorage.removeItem(this.account);
-      }
+    if (pat) {
+      await keytar.setPassword(this.service, this.account, pat);
+    } else {
+      await keytar.deletePassword(this.service, this.account);
     }
   }
 }

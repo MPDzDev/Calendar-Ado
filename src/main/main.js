@@ -1,4 +1,5 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
+const keytar = require('keytar');
 const path = require('path');
 
 function createWindow() {
@@ -64,6 +65,21 @@ app.whenReady().then(() => {
 
   ipcMain.on('open-work-items', (_event, items) => {
     items.forEach(openWorkItemWindow);
+  });
+
+  ipcMain.handle('keytar:get', async (_event, service, account) => {
+    return keytar.getPassword(service, account);
+  });
+
+  ipcMain.handle('keytar:set', async (_event, service, account, password) => {
+    if (password) {
+      return keytar.setPassword(service, account, password);
+    }
+    return keytar.deletePassword(service, account);
+  });
+
+  ipcMain.handle('keytar:delete', async (_event, service, account) => {
+    return keytar.deletePassword(service, account);
   });
 
   ipcMain.on('get-user-data-path', (event) => {
