@@ -6,6 +6,9 @@ module.exports = {
       width: {
         'week-range': 'var(--week-range-width)',
       },
+      fontFamily: {
+        sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+      },
     },
   },
   plugins: [],

@@ -325,7 +325,7 @@ function App() {
   return (
     <div
       ref={containerRef}
-      className="p-4 flex h-full w-full overflow-hidden bg-yellow-50 text-gray-800 dark:bg-gray-900 dark:text-gray-100"
+      className="p-6 flex gap-4 h-full w-full overflow-hidden bg-gray-50 text-gray-800 dark:bg-gray-900 dark:text-gray-100"
     >
       <div className="flex flex-col flex-grow overflow-y-auto">
         {showReminder && (
@@ -368,7 +368,7 @@ function App() {
         onMouseDown={() => setResizing(true)}
       />
       <div
-        className="pl-4 space-y-4 flex flex-col h-full overflow-y-auto"
+        className="pl-6 space-y-4 flex flex-col h-full overflow-y-auto bg-white dark:bg-gray-800 shadow rounded-md"
         style={{ width: sidebarWidth }}
       >
         <Settings settings={settings} setSettings={setSettings} />

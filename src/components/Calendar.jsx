@@ -485,7 +485,7 @@ export default function Calendar({
           <div
             key={dayIdx}
             ref={(el) => (dayRefs.current[dayIdx] = el)}
-            className="border p-2 relative"
+            className="bg-white rounded-md shadow p-3 relative"
             onMouseEnter={() => setHoverDay(dayIdx)}
             onMouseLeave={() => setHoverDay((h) => (h === dayIdx ? null : h))}
             onDoubleClick={(e) => {
@@ -618,7 +618,7 @@ export default function Calendar({
                             e.currentTarget.style.cursor = 'move';
                           }
                         }}
-                        className={`work-block absolute left-0 right-0 p-1 border rounded-md overflow-hidden select-none text-[10px] leading-tight ${b.taskId ? 'border-gray-300 dark:border-gray-500' : 'bg-gray-100 dark:bg-gray-600 border-gray-300 dark:border-gray-500'} ${b.taskId && b.itemId ? 'border-yellow-400' : ''} ${highlight ? 'ring-2 ring-blue-400' : ''}`}
+                        className={`work-block absolute left-0 right-0 p-1 border rounded-md overflow-hidden select-none text-[10px] leading-tight shadow-sm ${b.taskId ? 'border-gray-300 dark:border-gray-500' : 'bg-gray-100 dark:bg-gray-600 border-gray-300 dark:border-gray-500'} ${b.taskId && b.itemId ? 'border-yellow-400' : ''} ${highlight ? 'ring-2 ring-blue-400' : ''}`}
                         style={{
                           top: `${top}px`,
                           height: `${height}px`,
@@ -722,7 +722,7 @@ export default function Calendar({
                 {activeDay === dayIdx && !isDayLocked(dayIdx) && (
                   <form
                     onSubmit={addBlock}
-                    className="absolute top-0 left-0 bg-yellow-50 dark:bg-gray-800 border p-2 space-y-1 z-20"
+                    className="absolute top-0 left-0 bg-white dark:bg-gray-800 border p-2 space-y-1 z-20 shadow rounded"
                   >
                     <input
                       type="time"

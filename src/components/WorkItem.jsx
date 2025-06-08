@@ -8,6 +8,13 @@ export default function WorkItem({ item, level = 0, notes = [], onNoteDrop }) {
     feature: 'bg-purple-100 dark:bg-purple-700',
   };
 
+  const icons = {
+    task: '✅',
+    'user story': '📝',
+    bug: '🐞',
+    feature: '📂',
+  };
+
   const colorClass = colors[item.type?.toLowerCase()] || 'bg-gray-100 dark:bg-gray-700';
   const isFeature = item.type?.toLowerCase() === 'feature';
 
@@ -40,6 +47,7 @@ export default function WorkItem({ item, level = 0, notes = [], onNoteDrop }) {
       onDragOver={allowDrop}
       onDrop={handleDrop}
     >
+      <span className="mr-1">{icons[item.type?.toLowerCase()]}</span>
       {item.title}
       {notes.length > 0 && (
         <ul className="ml-2 list-disc text-[10px]">
@@ -59,6 +67,7 @@ export default function WorkItem({ item, level = 0, notes = [], onNoteDrop }) {
       style={{ marginLeft: `${level * 1}rem` }}
     >
       <span className="font-mono mr-1">{item.id}</span>
+      <span className="mr-1">{icons[item.type?.toLowerCase()]}</span>
       {item.title}
       {notes.length > 0 && (
         <ul className="ml-4 list-disc text-[10px]">
