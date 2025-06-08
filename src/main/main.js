@@ -1,4 +1,4 @@
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 
 function createWindow() {
@@ -22,8 +22,25 @@ function createWindow() {
   }
 }
 
+function openWorkItemWindow({ id, hours, url }) {
+  const win = new BrowserWindow({ width: 500, height: 300 });
+  const content = `
+    <html>
+      <body style="font-family: sans-serif; padding: 20px;">
+        <h3>Work Item ${id}</h3>
+        <p>Suggested hours to log: <strong>${hours.toFixed(2)}</strong></p>
+        <p><a href="${url}" target="_blank">Open in Azure DevOps</a></p>
+      </body>
+    </html>`;
+  win.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(content));
+}
+
 app.whenReady().then(() => {
   createWindow();
+
+  ipcMain.on('open-work-items', (_event, items) => {
+    items.forEach(openWorkItemWindow);
+  });
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
