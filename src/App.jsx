@@ -202,13 +202,24 @@ function App() {
   };
 
   const [weekStart, setWeekStart] = useState(getWeekStart(new Date()));
+  const [weekAnim, setWeekAnim] = useState(null);
   const weekNumber = getWeekNumber(weekStart);
 
-  const prevWeek = () =>
+  const prevWeek = () => {
+    setWeekAnim('right');
     setWeekStart((w) => new Date(w.getTime() - 7 * 24 * 60 * 60 * 1000));
-  const nextWeek = () =>
+  };
+  const nextWeek = () => {
+    setWeekAnim('left');
     setWeekStart((w) => new Date(w.getTime() + 7 * 24 * 60 * 60 * 1000));
+  };
   const currentWeek = () => setWeekStart(getWeekStart(new Date()));
+
+  useEffect(() => {
+    if (!weekAnim) return;
+    const t = setTimeout(() => setWeekAnim(null), 200);
+    return () => clearTimeout(t);
+  }, [weekAnim]);
 
   const formatRange = () => {
     const end = new Date(weekStart);
@@ -368,6 +379,7 @@ function App() {
           onCommentDrop={handleBlockCommentDrop}
           lockedDays={lockedDays}
           setLockedDays={setLockedDays}
+          animDirection={weekAnim}
         />
         <Notes notes={notes} onAdd={addNote} onDelete={deleteNote} />
       </div>
