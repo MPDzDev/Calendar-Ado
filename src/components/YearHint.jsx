@@ -47,16 +47,41 @@ export default function YearHint({ weekStart, blocks = [], settings = {} }) {
     blocksByWeek[wIdx][dIdx].push({ start: startMin, end: endMin, taskId: b.taskId });
   });
 
-  const monthLines = Array.from({ length: 12 }, (_, m) => {
-    const d = new Date(weekStart.getFullYear(), m, 1);
-    const idx = Math.floor(
-      (getWeekStart(d) - firstWeek) / (7 * 24 * 60 * 60 * 1000)
+  const months = Array.from({ length: 12 }, (_, m) => {
+    const start = new Date(weekStart.getFullYear(), m, 1);
+    const end = new Date(weekStart.getFullYear(), m + 1, 1);
+    const startIdx = Math.floor(
+      (getWeekStart(start) - firstWeek) / (7 * 24 * 60 * 60 * 1000)
     );
-    return idx > 0 && idx < 52 ? idx : null;
-  }).filter((i) => i !== null);
+    const endIdx = Math.floor(
+      (getWeekStart(end) - firstWeek) / (7 * 24 * 60 * 60 * 1000)
+    );
+    return {
+      name: start.toLocaleString('en-US', { month: 'short' }),
+      startIdx,
+      endIdx,
+    };
+  });
+
+  const monthLines = months
+    .map((m) => (m.startIdx > 0 && m.startIdx < 52 ? m.startIdx : null))
+    .filter((i) => i !== null);
 
   return (
     <div className="relative ml-4" style={{ width: weekWidth * 52 + 'px' }}>
+      <div className="flex text-[10px] mb-1">
+        {months.map((m, idx) => {
+          const start = Math.max(m.startIdx, 0);
+          const end = Math.min(m.endIdx, 52);
+          const w = (end - start) * weekWidth;
+          if (w <= 0) return null;
+          return (
+            <div key={idx} style={{ width: w + 'px', textAlign: 'center' }}>
+              {m.name}
+            </div>
+          );
+        })}
+      </div>
       <svg width={weekWidth * 52} height={totalHeight} className="block">
         {weeks.map((_, w) => (
           <g key={w} transform={`translate(${w * weekWidth},0)`}>
