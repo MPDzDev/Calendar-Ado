@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import WorkItem from './WorkItem';
 
 function buildTree(items) {
@@ -34,6 +34,7 @@ export default function WorkItems({ items, onRefresh }) {
 
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
+  const [collapsed, setCollapsed] = useState({});
 
   const filtered = items.filter((i) => {
     const matchesSearch = i.title
@@ -45,7 +46,26 @@ export default function WorkItems({ items, onRefresh }) {
     return matchesSearch && matchesType;
   });
 
-  const tree = buildTree(filtered);
+  const grouped = filtered.reduce((acc, item) => {
+    const key = item.project || 'Unknown';
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(item);
+    return acc;
+  }, {});
+
+  useEffect(() => {
+    const keys = Object.keys(grouped);
+    setCollapsed((prev) => {
+      const next = { ...prev };
+      keys.forEach((k) => {
+        if (!(k in next)) next[k] = false;
+      });
+      return next;
+    });
+  }, [filtered]);
+
+  const toggle = (project) =>
+    setCollapsed((c) => ({ ...c, [project]: !c[project] }));
 
   return (
     <div className="mb-4">
@@ -80,7 +100,24 @@ export default function WorkItems({ items, onRefresh }) {
           <option value="task">Tasks</option>
         </select>
       </div>
-      <div>{renderTree(tree)}</div>
+      <div className="max-h-80 overflow-y-auto space-y-2">
+        {Object.entries(grouped).map(([project, list]) => {
+          const tree = buildTree(list);
+          return (
+            <div key={project}>
+              <div
+                className="px-2 py-1 bg-gray-200 dark:bg-gray-700 cursor-pointer font-semibold"
+                onClick={() => toggle(project)}
+              >
+                {project}
+              </div>
+              {!collapsed[project] && (
+                <div className="ml-2">{renderTree(tree)}</div>
+              )}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
