@@ -2,6 +2,7 @@
   "name": "calendar-ado",
   "version": "0.1.0",
   "private": true,
+  "homepage": "./",
   "main": "src/main/main.js",
   "build": {
     "extends": null,
