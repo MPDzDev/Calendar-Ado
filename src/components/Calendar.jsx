@@ -37,6 +37,7 @@ export default function Calendar({
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   const [taskSelect, setTaskSelect] = useState(null); // {blockId, parent, tasks}
   const [blockDrag, setBlockDrag] = useState(null); // {id, mode, startRel, endRel, dayIndex, rects, minuteHeight, offsetY}
+  const [extendDrag, setExtendDrag] = useState(null); // {id, direction, startIndex, dayIndex}
   const dayRefs = useRef({});
 
   useEffect(() => {
@@ -166,6 +167,28 @@ export default function Calendar({
     setDrag(null);
   };
 
+  const duplicateBlockToDay = (block, targetIndex) => {
+    if (targetIndex < 0 || targetIndex >= days.length) return;
+    const dayIdx = days[targetIndex];
+    const start = new Date(block.start);
+    const end = new Date(block.end);
+    const startDate = new Date(weekStart);
+    startDate.setDate(weekStart.getDate() + dayIdx);
+    startDate.setHours(start.getHours(), start.getMinutes(), 0, 0);
+    const endDate = new Date(weekStart);
+    endDate.setDate(weekStart.getDate() + dayIdx);
+    endDate.setHours(end.getHours(), end.getMinutes(), 0, 0);
+    onAdd({
+      id: Date.now() + targetIndex,
+      start: startDate.toISOString(),
+      end: endDate.toISOString(),
+      note: block.note,
+      workItem: block.workItem,
+      taskId: block.taskId,
+      itemId: block.itemId,
+    });
+  };
+
   const startBlockDrag = (e, block, dayIdx) => {
     if (
       e.target.closest('button') ||
@@ -179,23 +202,38 @@ export default function Calendar({
     const minuteHeight = rects[dayIdx].height / (hours.length * 60);
     const bounds = e.currentTarget.getBoundingClientRect();
     const offsetY = e.clientY - bounds.top;
+    const offsetX = e.clientX - bounds.left;
     let mode = 'move';
     if (offsetY < 5) mode = 'resize-top';
     else if (offsetY > bounds.height - 5) mode = 'resize-bottom';
+    else if (offsetX < 5) mode = 'extend-left';
+    else if (offsetX > bounds.width - 5) mode = 'extend-right';
     const start = new Date(block.start);
     const end = new Date(block.end);
     const startRel = start.getHours() * 60 + start.getMinutes() - settings.startHour * 60;
     const endRel = end.getHours() * 60 + end.getMinutes() - settings.startHour * 60;
-    setBlockDrag({
-      id: block.id,
-      mode,
-      startRel,
-      endRel,
-      dayIndex: days.indexOf(dayIdx),
-      rects,
-      minuteHeight,
-      offsetY,
-    });
+    if (mode === 'extend-left' || mode === 'extend-right') {
+      setExtendDrag({
+        id: block.id,
+        direction: mode === 'extend-right' ? 1 : -1,
+        startIndex: days.indexOf(dayIdx),
+        dayIndex: days.indexOf(dayIdx),
+        startRel,
+        endRel,
+        rects,
+      });
+    } else {
+      setBlockDrag({
+        id: block.id,
+        mode,
+        startRel,
+        endRel,
+        dayIndex: days.indexOf(dayIdx),
+        rects,
+        minuteHeight,
+        offsetY,
+      });
+    }
   };
 
   useEffect(() => {
@@ -259,6 +297,61 @@ export default function Calendar({
       window.removeEventListener('mouseup', up);
     };
   }, [blockDrag, blockMinutes, days, onTimeChange, settings.startHour, weekStart, hours.length]);
+
+  useEffect(() => {
+    if (!extendDrag) return;
+    const move = (e) => {
+      let dayIndex = extendDrag.dayIndex;
+      for (let i = 0; i < extendDrag.rects.length; i++) {
+        const r = extendDrag.rects[i];
+        if (e.clientX >= r.left && e.clientX <= r.right) {
+          dayIndex = i;
+          break;
+        }
+      }
+      setExtendDrag({ ...extendDrag, dayIndex });
+    };
+
+    const up = () => {
+      const block = blocks.find((b) => b.id === extendDrag.id);
+      if (block) {
+        const startAbs = extendDrag.startRel + settings.startHour * 60;
+        const endAbs = extendDrag.endRel + settings.startHour * 60;
+        const step = extendDrag.direction;
+        for (
+          let i = extendDrag.startIndex + step;
+          step > 0 ? i <= extendDrag.dayIndex : i >= extendDrag.dayIndex;
+          i += step
+        ) {
+          if (i < 0 || i >= days.length) continue;
+          const dayIdx = days[i];
+          const startDate = new Date(weekStart);
+          startDate.setDate(weekStart.getDate() + dayIdx);
+          startDate.setHours(Math.floor(startAbs / 60), startAbs % 60, 0, 0);
+          const endDate = new Date(weekStart);
+          endDate.setDate(weekStart.getDate() + dayIdx);
+          endDate.setHours(Math.floor(endAbs / 60), endAbs % 60, 0, 0);
+          onAdd({
+            id: Date.now() + i,
+            start: startDate.toISOString(),
+            end: endDate.toISOString(),
+            note: block.note,
+            workItem: block.workItem,
+            taskId: block.taskId,
+            itemId: block.itemId,
+          });
+        }
+      }
+      setExtendDrag(null);
+    };
+
+    window.addEventListener('mousemove', move);
+    window.addEventListener('mouseup', up);
+    return () => {
+      window.removeEventListener('mousemove', move);
+      window.removeEventListener('mouseup', up);
+    };
+  }, [extendDrag, onAdd, blocks, days, settings.startHour, weekStart]);
 
   const handleDrop = (e, blockId) => {
     e.preventDefault();
@@ -380,11 +473,24 @@ export default function Calendar({
                         onDragOver={(e) => e.preventDefault()}
                         onDrop={(e) => handleDrop(e, b.id)}
                         onMouseDown={(e) => startBlockDrag(e, b, dayIdx)}
+                        onDoubleClick={(e) => {
+                          const bounds = e.currentTarget.getBoundingClientRect();
+                          const offsetX = e.clientX - bounds.left;
+                          const idx = days.indexOf(dayIdx);
+                          if (offsetX > bounds.width - 5) {
+                            duplicateBlockToDay(b, idx + 1);
+                          } else if (offsetX < 5) {
+                            duplicateBlockToDay(b, idx - 1);
+                          }
+                        }}
                         onMouseMove={(e) => {
                           const bounds = e.currentTarget.getBoundingClientRect();
                           const offsetY = e.clientY - bounds.top;
+                          const offsetX = e.clientX - bounds.left;
                           if (offsetY < 5 || offsetY > bounds.height - 5) {
                             e.currentTarget.style.cursor = 'ns-resize';
+                          } else if (offsetX < 5 || offsetX > bounds.width - 5) {
+                            e.currentTarget.style.cursor = 'ew-resize';
                           } else {
                             e.currentTarget.style.cursor = 'move';
                           }
