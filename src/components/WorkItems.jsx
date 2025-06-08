@@ -30,7 +30,7 @@ function renderTree(nodes, level = 0) {
   });
 }
 
-export default function WorkItems({ items }) {
+export default function WorkItems({ items, onRefresh }) {
 
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
@@ -49,7 +49,17 @@ export default function WorkItems({ items }) {
 
   return (
     <div className="mb-4">
-      <h2 className="font-semibold">Work Items</h2>
+      <div className="flex items-center justify-between mb-1">
+        <h2 className="font-semibold">Work Items</h2>
+        {onRefresh && (
+          <button
+            className="px-2 py-1 text-xs bg-gray-200 dark:bg-gray-700"
+            onClick={onRefresh}
+          >
+            Refresh
+          </button>
+        )}
+      </div>
       <div className="flex space-x-2 mb-2">
         <input
           type="text"
