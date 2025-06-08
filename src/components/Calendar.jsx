@@ -137,14 +137,16 @@ export default function Calendar({
 
   const onDrag = (e) => {
     if (!drag) return;
-    const y = Math.max(0, Math.min(e.clientY - drag.rect.top, drag.rect.height));
+    let y = e.clientY - drag.rect.top;
+    if (y < 0 || y > drag.rect.height) return;
+    y = Math.max(0, Math.min(y, drag.rect.height));
     const cur = Math.floor(y / drag.minuteHeight / blockMinutes) * blockMinutes + blockMinutes;
     const maxMinutes = hours.length * 60;
     const end = Math.min(maxMinutes, Math.max(cur, drag.start + blockMinutes));
     if (end !== drag.end) setDrag({ ...drag, end });
   };
 
-  const endDrag = (dayIdx) => {
+  const endDrag = (dayIdx, pos) => {
     if (!drag) return;
     if (drag.day !== dayIdx) {
       setDrag(null);
@@ -159,9 +161,14 @@ export default function Calendar({
       0,
       0
     );
+    let endMinutes = drag.end;
+    if (typeof pos === 'number') {
+      if (pos < 0) endMinutes = 0;
+      else if (pos > drag.rect.height) endMinutes = hours.length * 60;
+    }
     endDate.setHours(
-      settings.startHour + Math.floor(drag.end / 60),
-      drag.end % 60,
+      settings.startHour + Math.floor(endMinutes / 60),
+      endMinutes % 60,
       0,
       0
     );
@@ -179,7 +186,10 @@ export default function Calendar({
   useEffect(() => {
     if (!drag) return;
     const move = (e) => onDrag(e);
-    const up = () => endDrag(drag.day);
+    const up = (e) => {
+      const pos = e.clientY - drag.rect.top;
+      endDrag(drag.day, pos);
+    };
     window.addEventListener('mousemove', move);
     window.addEventListener('mouseup', up);
     return () => {
@@ -456,7 +466,10 @@ export default function Calendar({
               style={{ height: `${hours.length * hourHeight}px` }}
               onMouseDown={(e) => startDrag(e, dayIdx)}
               onMouseMove={onDrag}
-              onMouseUp={() => endDrag(dayIdx)}
+              onMouseUp={(e) => {
+                const pos = e.clientY - e.currentTarget.getBoundingClientRect().top;
+                endDrag(dayIdx, pos);
+              }}
             >
               <div className="absolute inset-0 pointer-events-none flex flex-col">
                 {hours.map((h, i) => (
