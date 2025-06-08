@@ -268,8 +268,8 @@ function App() {
   };
 
   return (
-    <div className="p-4 flex min-h-screen bg-yellow-50 text-gray-800 dark:bg-gray-900 dark:text-gray-100">
-      <div className="flex-grow">
+    <div className="p-4 flex h-full w-full overflow-hidden bg-yellow-50 text-gray-800 dark:bg-gray-900 dark:text-gray-100">
+      <div className="flex flex-col flex-grow overflow-y-auto">
         <h1 className="text-2xl font-bold mb-4">Calendar-Ado MVP</h1>
         <div className="mb-2 flex items-center space-x-2">
           <button className="week-nav-button" onClick={prevWeek}>
@@ -296,7 +296,7 @@ function App() {
           projectColors={settings.projectColors}
         />
       </div>
-      <div className="w-64 pl-4 space-y-4 flex flex-col h-full">
+      <div className="w-64 pl-4 space-y-4 flex flex-col h-full overflow-y-auto">
         <Settings settings={settings} setSettings={setSettings} />
         <HoursSummary blocks={blocks} weekStart={weekStart} />
         <div>
