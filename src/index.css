@@ -48,3 +48,9 @@ body,
 .scroll-container::-webkit-scrollbar-thumb:hover {
   background-color: rgba(100, 100, 100, 0.7);
 }
+
+.resizer {
+  width: 4px;
+  cursor: col-resize;
+  @apply bg-gray-300 dark:bg-gray-700;
+}
