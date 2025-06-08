@@ -176,6 +176,18 @@ export default function Calendar({
     setDrag(null);
   };
 
+  useEffect(() => {
+    if (!drag) return;
+    const move = (e) => onDrag(e);
+    const up = () => endDrag(drag.day);
+    window.addEventListener('mousemove', move);
+    window.addEventListener('mouseup', up);
+    return () => {
+      window.removeEventListener('mousemove', move);
+      window.removeEventListener('mouseup', up);
+    };
+  }, [drag]);
+
   const duplicateBlockToDay = (block, targetIndex) => {
     const weekOffset = Math.floor(targetIndex / days.length);
     const indexInWeek = ((targetIndex % days.length) + days.length) % days.length;
