@@ -383,10 +383,11 @@ function App() {
         <HoursSummary blocks={blocks} weekStart={weekStart} items={items} />
         <div>
           <button
-            className="w-full px-2 py-1 bg-green-600 text-white"
+            className="w-full flex items-center justify-center gap-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-full shadow"
             onClick={startSubmitSession}
           >
-            Start Submit Session
+            <span role="img" aria-label="rocket">🚀</span>
+            <span>Start Submit Session</span>
           </button>
         </div>
         <WorkItems
