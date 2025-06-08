@@ -14,10 +14,11 @@
   "scripts": {
     "react-start": "react-scripts start",
     "electron": "ELECTRON_START_URL=http://localhost:3000 electron .",
-    "start": "concurrently \"npm run react-start\" \"npm run electron\"",
-    "build": "react-scripts build",
-    "electron-pack": "npm run build && electron-builder",
-    "test": "jest"
+  "start": "concurrently \"npm run react-start\" \"npm run electron\"",
+  "build": "react-scripts build",
+  "electron-pack": "npm run build && electron-builder",
+    "test": "jest",
+    "postinstall": "electron-builder install-app-deps"
   },
   "dependencies": {
     "react": "^18.2.0",
