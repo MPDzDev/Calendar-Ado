@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import WorkItem from './WorkItem';
 
 function buildTree(items) {
@@ -41,14 +41,16 @@ export default function WorkItems({
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
   const [collapsed, setCollapsed] = useState({});
-  const [filterCollapsed, setFilterCollapsed] = useState({
-    tags: false,
-    areas: false,
-    iterations: false,
-  });
+  const [activeFilterGroup, setActiveFilterGroup] = useState(null);
+
+  const groupRefs = {
+    tags: useRef(null),
+    areas: useRef(null),
+    iterations: useRef(null),
+  };
 
   const toggleFilterGroup = (group) =>
-    setFilterCollapsed((prev) => ({ ...prev, [group]: !prev[group] }));
+    setActiveFilterGroup((prev) => (prev === group ? null : group));
 
   const updateSettings = (changes) =>
     setSettings((prev) => ({ ...prev, ...changes }));
@@ -80,6 +82,20 @@ export default function WorkItems({
       return next;
     });
   }, [filtered]);
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (
+        activeFilterGroup &&
+        groupRefs[activeFilterGroup]?.current &&
+        !groupRefs[activeFilterGroup].current.contains(e.target)
+      ) {
+        setActiveFilterGroup(null);
+      }
+    };
+    document.addEventListener('click', handler);
+    return () => document.removeEventListener('click', handler);
+  }, [activeFilterGroup]);
 
   const toggle = (project) =>
     setCollapsed((prev) => {
@@ -153,15 +169,15 @@ export default function WorkItems({
           <option value="task">Tasks</option>
         </select>
       </div>
-      <div className="mb-2">
+      <div className="mb-2 relative" ref={groupRefs.tags}>
         <div
           className="font-semibold cursor-pointer"
           onClick={() => toggleFilterGroup('tags')}
         >
           Tags
         </div>
-        {!filterCollapsed.tags && (
-          <div className="flex flex-wrap gap-1 mt-1">
+        {activeFilterGroup === 'tags' && (
+          <div className="absolute left-0 mt-1 bg-white dark:bg-gray-800 border p-2 z-10 flex flex-wrap gap-1">
             <button
               className={`px-2 py-1 text-xs border ${settings.azureTags.length === 0 ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-gray-700'}`}
               onClick={() => {
@@ -183,15 +199,15 @@ export default function WorkItems({
           </div>
         )}
       </div>
-      <div className="mb-2">
+      <div className="mb-2 relative" ref={groupRefs.areas}>
         <div
           className="font-semibold cursor-pointer"
           onClick={() => toggleFilterGroup('areas')}
         >
           Areas
         </div>
-        {!filterCollapsed.areas && (
-          <div className="flex flex-wrap gap-1 mt-1">
+        {activeFilterGroup === 'areas' && (
+          <div className="absolute left-0 mt-1 bg-white dark:bg-gray-800 border p-2 z-10 flex flex-wrap gap-1">
             <button
               className={`px-2 py-1 text-xs border ${settings.azureArea === '' ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-gray-700'}`}
               onClick={() => {
@@ -213,15 +229,15 @@ export default function WorkItems({
           </div>
         )}
       </div>
-      <div className="mb-2">
+      <div className="mb-2 relative" ref={groupRefs.iterations}>
         <div
           className="font-semibold cursor-pointer"
           onClick={() => toggleFilterGroup('iterations')}
         >
           Iterations
         </div>
-        {!filterCollapsed.iterations && (
-          <div className="flex flex-wrap gap-1 mt-1">
+        {activeFilterGroup === 'iterations' && (
+          <div className="absolute left-0 mt-1 bg-white dark:bg-gray-800 border p-2 z-10 flex flex-wrap gap-1">
             <button
               className={`px-2 py-1 text-xs border ${settings.azureIteration === '' ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-gray-700'}`}
               onClick={() => {
