@@ -9,7 +9,7 @@ export default function WorkItem({ item, level = 0, notes = [], onNoteDrop }) {
   };
 
   const icons = {
-    task: '✅',
+    task: '🛠',
     'user story': '📝',
     bug: '🐞',
     feature: '📂',
