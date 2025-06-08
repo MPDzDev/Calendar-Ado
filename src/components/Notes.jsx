@@ -19,6 +19,7 @@ export default function Notes({ notes, onAdd, onDelete }) {
           type="text"
           value={value}
           onChange={(e) => setValue(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && add()}
           className="border flex-grow px-1 text-sm"
         />
         <button
