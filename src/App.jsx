@@ -73,7 +73,20 @@ function App() {
       azureIteration
     );
     service.getWorkItems().then((data) => {
-      setItems(data);
+      setItems((prev) => {
+        const map = new Map(data.map((i) => [i.id, i]));
+        const blockIds = new Set();
+        blocks.forEach((b) => {
+          if (b.itemId) blockIds.add(b.itemId);
+          if (b.taskId) blockIds.add(b.taskId);
+        });
+        prev.forEach((i) => {
+          if (blockIds.has(i.id) && !map.has(i.id)) {
+            map.set(i.id, i);
+          }
+        });
+        return Array.from(map.values());
+      });
       setItemsFetched(true);
     });
   }, [
@@ -84,6 +97,7 @@ function App() {
     settings.azureArea,
     settings.azureIteration,
     setItems,
+    blocks,
   ]);
 
   useEffect(() => {
