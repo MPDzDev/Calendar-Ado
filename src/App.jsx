@@ -298,18 +298,25 @@ function App() {
         map[b.taskId].days[dayKey] = (map[b.taskId].days[dayKey] || 0) + hours;
       }
     });
-    const items = Object.entries(map).map(([id, data]) => ({
-      id,
-      hours: data.total,
-      days: data.days,
-      url: settings.azureOrg
-        ? `https://dev.azure.com/${settings.azureOrg}/_workitems/edit/${id}`
-        : `https://dev.azure.com/_workitems/edit/${id}`,
-    }));
+    const itemsToOpen = Object.entries(map).map(([id, data]) => {
+      const task = items.find((it) => it.id === id) || {};
+      const message = !task.area
+        ? `Please assign area path ${settings.azureArea || '(set area path)'} before logging time.`
+        : '';
+      return {
+        id,
+        hours: data.total,
+        days: data.days,
+        url: settings.azureOrg
+          ? `https://dev.azure.com/${settings.azureOrg}/_workitems/edit/${id}`
+          : `https://dev.azure.com/_workitems/edit/${id}`,
+        message,
+      };
+    });
     if (window.api && window.api.openWorkItems) {
-      window.api.openWorkItems(items);
+      window.api.openWorkItems(itemsToOpen);
     } else {
-      items.forEach((i) => window.open(i.url, '_blank'));
+      itemsToOpen.forEach((i) => window.open(i.url, '_blank'));
     }
   };
 
@@ -361,7 +368,7 @@ function App() {
         style={{ width: sidebarWidth }}
       >
         <Settings settings={settings} setSettings={setSettings} />
-        <HoursSummary blocks={blocks} weekStart={weekStart} />
+        <HoursSummary blocks={blocks} weekStart={weekStart} items={items} />
         <div>
           <button
             className="w-full px-2 py-1 bg-green-600 text-white"
