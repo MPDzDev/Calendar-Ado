@@ -204,20 +204,20 @@ export default function WorkItems({
     const tags = settings.azureTags.includes(tag)
       ? settings.azureTags.filter((t) => t !== tag)
       : [...settings.azureTags, tag];
+    // Update local filter state without refetching from the API.
     updateSettings({ azureTags: tags });
-    onRefresh && onRefresh();
   };
 
   const toggleArea = (area) => {
     const value = settings.azureArea === area ? '' : area;
+    // Update local filter state without triggering a refresh.
     updateSettings({ azureArea: value });
-    onRefresh && onRefresh();
   };
 
   const toggleIteration = (it) => {
     const value = settings.azureIteration === it ? '' : it;
+    // Update local filter state without refetching.
     updateSettings({ azureIteration: value });
-    onRefresh && onRefresh();
   };
 
   return (
@@ -269,8 +269,8 @@ export default function WorkItems({
                   <button
                     className="ml-1"
                     onClick={() => {
+                      // Clear all tag filters locally.
                       updateSettings({ azureTags: [] });
-                      onRefresh && onRefresh();
                     }}
                   >
                     x
@@ -296,8 +296,8 @@ export default function WorkItems({
             <button
               className={`px-2 py-1 text-xs border ${settings.azureTags.length === 0 ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-gray-700'}`}
               onClick={() => {
+                // Reset tag filters without refetching.
                 updateSettings({ azureTags: [] });
-                onRefresh && onRefresh();
               }}
             >
               All
@@ -338,8 +338,8 @@ export default function WorkItems({
             <button
               className={`px-2 py-1 text-xs border ${settings.azureArea === '' ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-gray-700'}`}
               onClick={() => {
+                // Clear area filter locally without refreshing.
                 updateSettings({ azureArea: '' });
-                onRefresh && onRefresh();
               }}
             >
               All
@@ -380,8 +380,8 @@ export default function WorkItems({
             <button
               className={`px-2 py-1 text-xs border ${settings.azureIteration === '' ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-gray-700'}`}
               onClick={() => {
+                // Reset iteration filter locally without refetching.
                 updateSettings({ azureIteration: '' });
-                onRefresh && onRefresh();
               }}
             >
               All
