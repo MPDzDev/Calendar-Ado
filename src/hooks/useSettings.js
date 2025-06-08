@@ -18,6 +18,14 @@ const defaultSettings = {
   azureArea: '',
   azureIteration: '',
   sidebarWidth: 256,
+  stateOrder: [
+    'New',
+    'Ready',
+    'Active',
+    'Installed in Test',
+    'Verified',
+    'Closed',
+  ],
 };
 
 export default function useSettings() {
