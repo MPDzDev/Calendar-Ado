@@ -329,6 +329,21 @@ export default function WorkItems({
       <div className="flex-grow overflow-y-auto space-y-2 scroll-container min-h-0">
         {Object.entries(grouped).map(([project, list]) => {
           const tree = buildTree(list);
+          const allowGroupDrop = (e) => {
+            if (e.dataTransfer.types.includes('application/x-note')) {
+              e.preventDefault();
+            }
+          };
+          const handleGroupDrop = (e) => {
+            const raw = e.dataTransfer.getData('application/x-note');
+            if (!raw) return;
+            e.preventDefault();
+            const note = JSON.parse(raw);
+            const first = tree[0];
+            if (first) {
+              onNoteDrop && onNoteDrop(first.id, note);
+            }
+          };
           return (
             <div key={project} className="">
               <div
@@ -339,7 +354,11 @@ export default function WorkItems({
                 {project}
               </div>
               {!collapsed[project] && (
-                <div className="mt-1 ml-2 bg-white dark:bg-gray-800 border p-1">
+                <div
+                  className="mt-1 ml-2 bg-white dark:bg-gray-800 border p-1"
+                  onDragOver={allowGroupDrop}
+                  onDrop={handleGroupDrop}
+                >
                   {renderTree(tree, 0, onNoteDrop, itemNotes)}
                 </div>
               )}
