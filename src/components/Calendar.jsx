@@ -511,8 +511,8 @@ export default function Calendar({
                 {isDayLocked(dayIdx) ? '🔒' : '🔓'}
               </button>
             )}
-            <h2 className="font-semibold mb-2">
-              {weekDays[dayIdx]} {weekDates[idx].getMonth() + 1}/{weekDates[idx].getDate()}
+            <h2 className="font-semibold mb-2 text-center bg-blue-600 dark:bg-blue-700 text-white rounded py-1">
+              {weekDays[dayIdx]}
             </h2>
             <div
               className="relative select-none"

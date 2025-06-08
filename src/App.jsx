@@ -17,6 +17,7 @@ import {
   adjustForOverlap,
   splitByLunch,
 } from './utils/timeAdjust';
+import { getWeekNumber } from './utils/date';
 
 function App() {
   const { blocks, setBlocks } = useWorkBlocks();
@@ -201,6 +202,7 @@ function App() {
   };
 
   const [weekStart, setWeekStart] = useState(getWeekStart(new Date()));
+  const weekNumber = getWeekNumber(weekStart);
 
   const prevWeek = () =>
     setWeekStart((w) => new Date(w.getTime() - 7 * 24 * 60 * 60 * 1000));
@@ -345,6 +347,7 @@ function App() {
             Next ▶
           </button>
           <span className="week-range ml-4 font-semibold">{formatRange()}</span>
+          <span className="ml-2 font-semibold text-blue-600 dark:text-blue-400">Week {weekNumber}</span>
           <YearHint
             weekStart={weekStart}
             blocks={blocks}
