@@ -30,11 +30,20 @@ function renderTree(nodes, level = 0) {
   });
 }
 
-export default function WorkItems({ items, onRefresh, projectColors = {} }) {
+export default function WorkItems({
+  items,
+  onRefresh,
+  projectColors = {},
+  settings,
+  setSettings,
+}) {
 
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
   const [collapsed, setCollapsed] = useState({});
+
+  const updateSettings = (changes) =>
+    setSettings((prev) => ({ ...prev, ...changes }));
 
   const filtered = items.filter((i) => {
     const matchesSearch = i.title
@@ -73,6 +82,25 @@ export default function WorkItems({ items, onRefresh, projectColors = {} }) {
       return next;
     });
 
+  const handleTags = (e) => {
+    const tags = e.target.value
+      .split(',')
+      .map((t) => t.trim())
+      .filter((t) => t);
+    updateSettings({ azureTags: tags });
+    onRefresh && onRefresh();
+  };
+
+  const handleArea = (e) => {
+    updateSettings({ azureArea: e.target.value });
+    onRefresh && onRefresh();
+  };
+
+  const handleIteration = (e) => {
+    updateSettings({ azureIteration: e.target.value });
+    onRefresh && onRefresh();
+  };
+
   return (
     <div className="mb-4 flex flex-col flex-grow overflow-y-auto min-h-0">
       <div className="flex items-center justify-between mb-1">
@@ -105,6 +133,33 @@ export default function WorkItems({ items, onRefresh, projectColors = {} }) {
           <option value="bug">Bugs</option>
           <option value="task">Tasks</option>
         </select>
+      </div>
+      <div className="flex space-x-2 mb-2">
+        <input
+          type="text"
+          placeholder="Tags"
+          value={settings.azureTags.join(', ')}
+          onChange={handleTags}
+          className="border px-1 text-sm flex-grow"
+        />
+      </div>
+      <div className="flex space-x-2 mb-2">
+        <input
+          type="text"
+          placeholder="Area Path"
+          value={settings.azureArea}
+          onChange={handleArea}
+          className="border px-1 text-sm flex-grow"
+        />
+      </div>
+      <div className="flex space-x-2 mb-2">
+        <input
+          type="text"
+          placeholder="Iteration Path"
+          value={settings.azureIteration}
+          onChange={handleIteration}
+          className="border px-1 text-sm flex-grow"
+        />
       </div>
       <div className="flex-grow overflow-y-auto space-y-2 scroll-container min-h-0">
         {Object.entries(grouped).map(([project, list]) => {

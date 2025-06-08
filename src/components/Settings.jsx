@@ -252,6 +252,45 @@ export default function Settings({ settings, setSettings }) {
                       ))}
                     </ul>
                   </div>
+                  <div>
+                    <label className="mr-1">Tags:</label>
+                    <input
+                      type="text"
+                      value={temp.azureTags.join(', ')}
+                      onChange={(e) =>
+                        setTemp({
+                          ...temp,
+                          azureTags: e.target.value
+                            .split(',')
+                            .map((t) => t.trim())
+                            .filter((t) => t),
+                        })
+                      }
+                      className="border w-full px-1"
+                    />
+                  </div>
+                  <div>
+                    <label className="mr-1">Area Path:</label>
+                    <input
+                      type="text"
+                      value={temp.azureArea}
+                      onChange={(e) =>
+                        setTemp({ ...temp, azureArea: e.target.value })
+                      }
+                      className="border w-full px-1"
+                    />
+                  </div>
+                  <div>
+                    <label className="mr-1">Iteration Path:</label>
+                    <input
+                      type="text"
+                      value={temp.azureIteration}
+                      onChange={(e) =>
+                        setTemp({ ...temp, azureIteration: e.target.value })
+                      }
+                      className="border w-full px-1"
+                    />
+                  </div>
                 </>
               )}
               <div className="flex space-x-2 pt-2">
