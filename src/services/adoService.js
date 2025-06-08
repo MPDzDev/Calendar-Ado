@@ -1,23 +1,83 @@
-// Placeholder for Azure DevOps API interactions
 import WorkItem from '../models/workItem';
 
 export default class AdoService {
-  constructor(token) {
+  constructor(org = '', token = '', projects = []) {
+    this.org = org;
     this.token = token;
+    this.projects = projects;
+    this._b64 =
+      typeof btoa === 'function'
+        ? (str) => btoa(str)
+        : (str) => Buffer.from(str).toString('base64');
+  }
+
+  _buildQuery() {
+    const projectFilter = this.projects.length
+      ? `[System.TeamProject] in (${this.projects
+          .map((p) => `'${p}'`)
+          .join(',')}) and `
+      : '';
+    return (
+      'Select [System.Id] From WorkItems Where ' +
+      projectFilter +
+      '[System.ChangedDate] >= @Today - 30 order by [System.ChangedDate] desc'
+    );
   }
 
   async getWorkItems() {
-    // TODO: implement fetch from Azure DevOps
-    const data = [
-      { id: '2001', title: 'Authentication feature', type: 'feature' },
-      { id: '2002', title: 'Login user story', type: 'user story', parentId: '2001' },
-      { id: '2003', title: 'Implement login page', type: 'task', parentId: '2002' },
-      { id: '2004', title: 'Fix login bug', type: 'bug', parentId: '2002' },
-      { id: '2005', title: 'Profile feature', type: 'feature' },
-      { id: '2006', title: 'Update avatar story', type: 'user story', parentId: '2005' },
-      { id: '2007', title: 'Add file uploader', type: 'task', parentId: '2006' },
-      { id: '2008', title: 'Validate image size', type: 'task', parentId: '2006' },
-    ];
-    return data.map((d) => new WorkItem(d));
+    if (!this.org || !this.token) {
+      return [];
+    }
+
+    const auth = `Basic ${this._b64(':' + this.token)}`;
+    try {
+      const wiqlRes = await fetch(
+        `https://dev.azure.com/${this.org}/_apis/wit/wiql?api-version=7.0`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: auth,
+          },
+          body: JSON.stringify({
+            query: this._buildQuery(),
+          }),
+        }
+      );
+
+      if (!wiqlRes.ok) {
+        return [];
+      }
+
+      const wiql = await wiqlRes.json();
+      const ids = wiql.workItems.map((w) => w.id).join(',');
+      if (!ids) return [];
+
+      const itemsRes = await fetch(
+        `https://dev.azure.com/${this.org}/_apis/wit/workitems?ids=${ids}&fields=System.Id,System.Title,System.WorkItemType,System.Parent&api-version=7.0`,
+        {
+          headers: { Authorization: auth },
+        }
+      );
+      if (!itemsRes.ok) {
+        return [];
+      }
+
+      const data = await itemsRes.json();
+      return data.value.map(
+        (d) =>
+          new WorkItem({
+            id: d.id.toString(),
+            title: d.fields['System.Title'],
+            type: d.fields['System.WorkItemType'],
+            parentId: d.fields['System.Parent']
+              ? d.fields['System.Parent'].toString()
+              : null,
+          })
+      );
+    } catch (e) {
+      console.error('Failed to fetch work items', e);
+      return [];
+    }
   }
 }

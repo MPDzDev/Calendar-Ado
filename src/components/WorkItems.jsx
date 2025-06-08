@@ -1,5 +1,4 @@
-import React, { useEffect, useState } from 'react';
-import AdoService from '../services/adoService';
+import React, { useState } from 'react';
 import WorkItem from './WorkItem';
 
 function buildTree(items) {
@@ -31,13 +30,7 @@ function renderTree(nodes, level = 0) {
   });
 }
 
-export default function WorkItems({ items, setItems }) {
-  useEffect(() => {
-    if (items.length === 0) {
-      const service = new AdoService();
-      service.getWorkItems().then(setItems);
-    }
-  }, [items, setItems]);
+export default function WorkItems({ items }) {
 
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
