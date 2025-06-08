@@ -94,9 +94,11 @@ export default function WorkItems({
   });
 
   const grouped = filtered.reduce((acc, item) => {
-    const key = item.project || 'Unknown';
-    if (!acc[key]) acc[key] = [];
-    acc[key].push(item);
+    const projectKey = item.project || 'Unknown';
+    const stateKey = item.state || 'Unknown';
+    if (!acc[projectKey]) acc[projectKey] = {};
+    if (!acc[projectKey][stateKey]) acc[projectKey][stateKey] = [];
+    acc[projectKey][stateKey].push(item);
     return acc;
   }, {});
 
@@ -327,8 +329,7 @@ export default function WorkItems({
         )}
       </div>
       <div className="flex-grow overflow-y-auto space-y-2 scroll-container min-h-0">
-        {Object.entries(grouped).map(([project, list]) => {
-          const tree = buildTree(list);
+        {Object.entries(grouped).map(([project, states]) => {
           const allowGroupDrop = (e) => {
             if (e.dataTransfer.types.includes('application/x-note')) {
               e.preventDefault();
@@ -339,7 +340,9 @@ export default function WorkItems({
             if (!raw) return;
             e.preventDefault();
             const note = JSON.parse(raw);
-            const first = tree[0];
+            const firstState = Object.values(states)[0] || [];
+            const firstTree = buildTree(firstState);
+            const first = firstTree[0];
             if (first) {
               onNoteDrop && onNoteDrop(first.id, note);
             }
@@ -359,7 +362,15 @@ export default function WorkItems({
                   onDragOver={allowGroupDrop}
                   onDrop={handleGroupDrop}
                 >
-                  {renderTree(tree, 0, onNoteDrop, itemNotes)}
+                  {Object.entries(states).map(([state, list]) => {
+                    const tree = buildTree(list);
+                    return (
+                      <div key={state} className="mb-2">
+                        <div className="font-semibold italic">{state}</div>
+                        {renderTree(tree, 0, onNoteDrop, itemNotes)}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
