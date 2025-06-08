@@ -17,7 +17,7 @@ const defaultSettings = {
   azureTags: [],
   azureArea: '',
   azureIteration: '',
-  sidebarWidth: 256,
+  sidebarWidth: 320,
   enableReminders: true,
   stateOrder: [
     'New',

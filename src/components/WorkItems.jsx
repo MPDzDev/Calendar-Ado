@@ -49,6 +49,7 @@ export default function WorkItems({
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
   const [collapsed, setCollapsed] = useState({});
+  const [stateCollapsed, setStateCollapsed] = useState({});
   const [activeFilterGroup, setActiveFilterGroup] = useState(null);
 
   const groupRefs = {
@@ -165,6 +166,19 @@ export default function WorkItems({
       });
       return next;
     });
+    const stateKeys = [];
+    keys.forEach((project) => {
+      Object.keys(grouped[project]).forEach((state) => {
+        stateKeys.push(`${project}|${state}`);
+      });
+    });
+    setStateCollapsed((prev) => {
+      const next = { ...prev };
+      stateKeys.forEach((k) => {
+        if (!(k in next)) next[k] = false;
+      });
+      return next;
+    });
   }, [items]);
 
   useEffect(() => {
@@ -189,6 +203,14 @@ export default function WorkItems({
       });
       return next;
     });
+
+  const toggleState = (project, state) => {
+    const key = `${project}|${state}`;
+    setStateCollapsed((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+    }));
+  };
 
   const availableTags = Array.from(
     new Set(items.flatMap((i) => i.tags || []))
@@ -222,39 +244,40 @@ export default function WorkItems({
 
   return (
     <div className="mb-4 flex flex-col flex-grow overflow-y-auto min-h-0">
-      <div className="flex items-center justify-between mb-1">
-        <h2 className="font-semibold">Work Items</h2>
-        {onRefresh && (
-          <button
-            className="px-2 py-1 text-xs bg-gray-200 dark:bg-gray-700"
-            onClick={onRefresh}
+      <div className="sticky top-0 bg-white dark:bg-gray-800 pb-2">
+        <div className="flex items-center justify-between mb-1">
+          <h2 className="font-semibold">Work Items</h2>
+          {onRefresh && (
+            <button
+              className="px-2 py-1 text-xs bg-gray-200 dark:bg-gray-700"
+              onClick={onRefresh}
+            >
+              Refresh
+            </button>
+          )}
+        </div>
+        <div className="flex space-x-2 mb-2">
+          <input
+            type="text"
+            placeholder="Search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="border px-1 text-sm flex-grow"
+          />
+          <select
+            value={typeFilter}
+            onChange={(e) => setTypeFilter(e.target.value)}
+            className="border text-sm"
           >
-            Refresh
-          </button>
-        )}
-      </div>
-      <div className="flex space-x-2 mb-2">
-        <input
-          type="text"
-          placeholder="Search"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="border px-1 text-sm flex-grow"
-        />
-        <select
-          value={typeFilter}
-          onChange={(e) => setTypeFilter(e.target.value)}
-          className="border text-sm"
-        >
-          <option value="all">All</option>
-          <option value="feature">Features</option>
-          <option value="user story">User Stories</option>
-          <option value="bug">Bugs</option>
-          <option value="task">Tasks</option>
-        </select>
-      </div>
-      <div className="mb-2 relative" ref={groupRefs.tags}>
-        <div className="flex items-center flex-wrap" ref={pillRowRefs.tags}>
+            <option value="all">All</option>
+            <option value="feature">Features</option>
+            <option value="user story">User Stories</option>
+            <option value="bug">Bugs</option>
+            <option value="task">Tasks</option>
+          </select>
+        </div>
+        <div className="mb-2 relative" ref={groupRefs.tags}>
+          <div className="flex items-center flex-wrap" ref={pillRowRefs.tags}>
           <div
             className="font-semibold cursor-pointer"
             onClick={() => toggleFilterGroup('tags')}
@@ -449,10 +472,19 @@ export default function WorkItems({
                     .map((state) => {
                       const list = states[state];
                       const tree = buildTree(list);
+                      const key = `${project}|${state}`;
+                      const collapsedState = stateCollapsed[key];
                       return (
                         <div key={state} className="mb-2">
-                          <div className="font-semibold italic">{state}</div>
-                          {renderTree(tree, 0, onNoteDrop, itemNotes)}
+                          <div
+                            className="font-semibold italic cursor-pointer flex items-center justify-between"
+                            onClick={() => toggleState(project, state)}
+                          >
+                            <span>{state}</span>
+                            <span>{collapsedState ? '▶' : '▼'}</span>
+                          </div>
+                          {!collapsedState &&
+                            renderTree(tree, 0, onNoteDrop, itemNotes)}
                         </div>
                       );
                     })}
