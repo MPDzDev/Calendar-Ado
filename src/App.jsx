@@ -59,23 +59,10 @@ function App() {
   };
 
   const fetchWorkItems = useCallback(() => {
-    const {
-      azureOrg,
-      azurePat,
-      azureProjects,
-      azureTags,
-      azureArea,
-      azureIteration,
-    } = settings;
+    const { azureOrg, azurePat } = settings;
     if (!azureOrg || !azurePat) return;
-    const service = new AdoService(
-      azureOrg,
-      azurePat,
-      azureProjects,
-      azureTags,
-      azureArea,
-      azureIteration
-    );
+    // Fetch all work items without applying stored filters.
+    const service = new AdoService(azureOrg, azurePat);
     service.getWorkItems().then((data) => {
       setItems((prev) => {
         const map = new Map(data.map((i) => [i.id, i]));
@@ -93,16 +80,7 @@ function App() {
       });
       setItemsFetched(true);
     });
-  }, [
-    settings.azureOrg,
-    settings.azurePat,
-    settings.azureProjects,
-    settings.azureTags,
-    settings.azureArea,
-    settings.azureIteration,
-    setItems,
-    blocks,
-  ]);
+  }, [settings.azureOrg, settings.azurePat, setItems, blocks]);
 
   useEffect(() => {
     if (settings.darkMode) {
