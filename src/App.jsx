@@ -291,7 +291,7 @@ function App() {
             Next ▶
           </button>
           <span className="ml-4 font-semibold">{formatRange()}</span>
-          <YearHint weekStart={weekStart} blocks={blocks} />
+          <YearHint weekStart={weekStart} blocks={blocks} settings={settings} />
         </div>
         <Calendar
           blocks={blocks}
