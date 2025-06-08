@@ -10,6 +10,11 @@ import useSettings from './hooks/useSettings';
 import useAdoItems from './hooks/useAdoItems';
 import useNotes from './hooks/useNotes';
 import AdoService from './services/adoService';
+import {
+  trimLunchOverlap,
+  hasOverlap,
+  adjustForOverlap,
+} from './utils/timeAdjust';
 
 function App() {
   const { blocks, setBlocks } = useWorkBlocks();
@@ -142,98 +147,19 @@ function App() {
     }/${end.getDate()}`;
   };
 
-  const isOverlappingLunch = (block) => {
-    const start = new Date(block.start);
-    const end = new Date(block.end);
-    const lunchStart = new Date(start);
-    lunchStart.setHours(settings.lunchStart, 0, 0, 0);
-    const lunchEnd = new Date(start);
-    lunchEnd.setHours(settings.lunchEnd, 0, 0, 0);
-    return start < lunchEnd && end > lunchStart;
-  };
-
-  const trimLunchOverlap = (block) => {
-    if (!isOverlappingLunch(block)) return block;
-    const start = new Date(block.start);
-    const end = new Date(block.end);
-    const lunchStart = new Date(start);
-    lunchStart.setHours(settings.lunchStart, 0, 0, 0);
-    const lunchEnd = new Date(start);
-    lunchEnd.setHours(settings.lunchEnd, 0, 0, 0);
-
-    if (start >= lunchStart && end <= lunchEnd) {
-      return null;
-    }
-
-    if (start < lunchStart && end > lunchStart && end <= lunchEnd) {
-      end.setTime(lunchStart.getTime());
-    } else if (start >= lunchStart && start < lunchEnd && end > lunchEnd) {
-      start.setTime(lunchEnd.getTime());
-    } else if (start < lunchStart && end > lunchEnd) {
-      const before = lunchStart - start;
-      const after = end - lunchEnd;
-      if (before >= after) {
-        end.setTime(lunchStart.getTime());
-      } else {
-        start.setTime(lunchEnd.getTime());
-      }
-    }
-
-    if (end <= start) return null;
-
-    return { ...block, start: start.toISOString(), end: end.toISOString() };
-  };
-
-  const hasOverlap = (newBlock) => {
-    const newStart = new Date(newBlock.start);
-    const newEnd = new Date(newBlock.end);
-    return blocks.some((b) => {
-      const start = new Date(b.start);
-      const end = new Date(b.end);
-      return newStart < end && newEnd > start;
-    });
-  };
-
-  const adjustForOverlap = (newBlock) => {
-    let start = new Date(newBlock.start);
-    let end = new Date(newBlock.end);
-
-    const sorted = [...blocks].sort(
-      (a, b) => new Date(a.start) - new Date(b.start)
-    );
-
-    for (const b of sorted) {
-      const bStart = new Date(b.start);
-      const bEnd = new Date(b.end);
-
-      if (end > bStart && start < bEnd) {
-        if (start < bStart) {
-          // overlap at the end of the new block, trim the end
-          end = new Date(Math.min(end, bStart));
-        } else {
-          // new block starts inside an existing one, move start after it
-          start = new Date(Math.max(start, bEnd));
-        }
-      }
-    }
-
-    if (end <= start) {
-      return null;
-    }
-
-    return { ...newBlock, start: start.toISOString(), end: end.toISOString() };
-  };
 
   const addBlock = (block) => {
-    let adjusted = trimLunchOverlap(block);
+    let adjusted = trimLunchOverlap(block, settings);
     if (!adjusted) return;
 
-    adjusted = hasOverlap(adjusted) ? adjustForOverlap(adjusted) : adjusted;
-    adjusted = adjusted ? trimLunchOverlap(adjusted) : null;
+    adjusted = hasOverlap(blocks, adjusted)
+      ? adjustForOverlap(blocks, adjusted)
+      : adjusted;
+    adjusted = adjusted ? trimLunchOverlap(adjusted, settings) : null;
 
-    while (adjusted && hasOverlap(adjusted)) {
-      adjusted = adjustForOverlap(adjusted);
-      adjusted = adjusted ? trimLunchOverlap(adjusted) : null;
+    while (adjusted && hasOverlap(blocks, adjusted)) {
+      adjusted = adjustForOverlap(blocks, adjusted);
+      adjusted = adjusted ? trimLunchOverlap(adjusted, settings) : null;
     }
 
     if (!adjusted) {
@@ -255,55 +181,20 @@ function App() {
 
     const others = blocks.filter((b) => b.id !== id);
 
-    const hasOverlapLocal = (newBlock) => {
-      const newStart = new Date(newBlock.start);
-      const newEnd = new Date(newBlock.end);
-      return others.some((b) => {
-        const start = new Date(b.start);
-        const end = new Date(b.end);
-        return newStart < end && newEnd > start;
-      });
-    };
-
-    const adjustForOverlapLocal = (newBlock) => {
-      let start = new Date(newBlock.start);
-      let end = new Date(newBlock.end);
-
-      const sorted = [...others].sort(
-        (a, b) => new Date(a.start) - new Date(b.start)
-      );
-
-      for (const b of sorted) {
-        const bStart = new Date(b.start);
-        const bEnd = new Date(b.end);
-
-        if (end > bStart && start < bEnd) {
-          if (start < bStart) {
-            end = new Date(Math.min(end, bStart));
-          } else {
-            start = new Date(Math.max(start, bEnd));
-          }
-        }
-      }
-
-      if (end <= start) {
-        return null;
-      }
-
-      return { ...newBlock, start: start.toISOString(), end: end.toISOString() };
-    };
-
-    let adjusted = trimLunchOverlap({ ...current, start: startISO, end: endISO });
+    let adjusted = trimLunchOverlap(
+      { ...current, start: startISO, end: endISO },
+      settings
+    );
     if (!adjusted) return;
 
-    adjusted = hasOverlapLocal(adjusted)
-      ? adjustForOverlapLocal(adjusted)
+    adjusted = hasOverlap(others, adjusted)
+      ? adjustForOverlap(others, adjusted)
       : adjusted;
-    adjusted = adjusted ? trimLunchOverlap(adjusted) : null;
+    adjusted = adjusted ? trimLunchOverlap(adjusted, settings) : null;
 
-    while (adjusted && hasOverlapLocal(adjusted)) {
-      adjusted = adjustForOverlapLocal(adjusted);
-      adjusted = adjusted ? trimLunchOverlap(adjusted) : null;
+    while (adjusted && hasOverlap(others, adjusted)) {
+      adjusted = adjustForOverlap(others, adjusted);
+      adjusted = adjusted ? trimLunchOverlap(adjusted, settings) : null;
     }
 
     if (!adjusted) return;
