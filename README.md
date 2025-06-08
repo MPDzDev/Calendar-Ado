@@ -281,3 +281,9 @@ Additionally, by making ADO updates a prerequisite for seamless time logging, th
    npm run electron-pack
    ```
    This command first builds the React app and then packages the Electron application.
+
+4. Run the unit tests:
+   ```bash
+   npm test
+   ```
+   Executes the Jest test suite.
