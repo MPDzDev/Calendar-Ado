@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Calendar from './components/Calendar';
 import HoursSummary from './components/HoursSummary';
 import WorkItems from './components/WorkItems';
@@ -12,6 +12,17 @@ function App() {
   const { blocks, setBlocks } = useWorkBlocks();
   const { settings, setSettings } = useSettings();
   const { items, setItems } = useAdoItems();
+  const [itemsFetched, setItemsFetched] = useState(false);
+
+  const fetchWorkItems = useCallback(() => {
+    const { azureOrg, azurePat, azureProjects } = settings;
+    if (!azureOrg || !azurePat) return;
+    const service = new AdoService(azureOrg, azurePat, azureProjects);
+    service.getWorkItems().then((data) => {
+      setItems(data);
+      setItemsFetched(true);
+    });
+  }, [settings.azureOrg, settings.azurePat, settings.azureProjects, setItems]);
 
   useEffect(() => {
     if (settings.darkMode) {
@@ -22,11 +33,10 @@ function App() {
   }, [settings.darkMode]);
 
   useEffect(() => {
-    const { azureOrg, azurePat, azureProjects } = settings;
-    if (!azureOrg || !azurePat) return;
-    const service = new AdoService(azureOrg, azurePat, azureProjects);
-    service.getWorkItems().then(setItems);
-  }, [settings.azureOrg, settings.azurePat, settings.azureProjects, setItems]);
+    if (!itemsFetched) {
+      fetchWorkItems();
+    }
+  }, [fetchWorkItems, itemsFetched]);
 
   const getWeekStart = (date) => {
     const d = new Date(date);
@@ -290,7 +300,7 @@ function App() {
             Start Submit Session
           </button>
         </div>
-        <WorkItems items={items} />
+        <WorkItems items={items} onRefresh={fetchWorkItems} />
       </div>
     </div>
   );
