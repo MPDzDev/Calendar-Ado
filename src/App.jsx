@@ -14,6 +14,7 @@ import {
   trimLunchOverlap,
   hasOverlap,
   adjustForOverlap,
+  splitByLunch,
 } from './utils/timeAdjust';
 
 function App() {
@@ -213,24 +214,27 @@ function App() {
 
 
   const addBlock = (block) => {
-    let adjusted = trimLunchOverlap(block, settings);
-    if (!adjusted) return;
+    const pieces = splitByLunch(block, settings);
+    let updated = [...blocks];
+    for (const part of pieces) {
+      let adjusted = trimLunchOverlap(part, settings);
+      if (!adjusted) continue;
 
-    adjusted = hasOverlap(blocks, adjusted)
-      ? adjustForOverlap(blocks, adjusted)
-      : adjusted;
-    adjusted = adjusted ? trimLunchOverlap(adjusted, settings) : null;
-
-    while (adjusted && hasOverlap(blocks, adjusted)) {
-      adjusted = adjustForOverlap(blocks, adjusted);
+      adjusted = hasOverlap(updated, adjusted)
+        ? adjustForOverlap(updated, adjusted)
+        : adjusted;
       adjusted = adjusted ? trimLunchOverlap(adjusted, settings) : null;
-    }
 
-    if (!adjusted) {
-      return;
-    }
+      while (adjusted && hasOverlap(updated, adjusted)) {
+        adjusted = adjustForOverlap(updated, adjusted);
+        adjusted = adjusted ? trimLunchOverlap(adjusted, settings) : null;
+      }
 
-    setBlocks((prev) => [...prev, adjusted]);
+      if (adjusted) {
+        updated.push(adjusted);
+      }
+    }
+    setBlocks(updated);
   };
 
   const updateBlock = (id, data) => {
@@ -244,26 +248,33 @@ function App() {
     if (!current) return;
 
     const others = blocks.filter((b) => b.id !== id);
-
-    let adjusted = trimLunchOverlap(
+    const pieces = splitByLunch(
       { ...current, start: startISO, end: endISO },
       settings
     );
-    if (!adjusted) return;
 
-    adjusted = hasOverlap(others, adjusted)
-      ? adjustForOverlap(others, adjusted)
-      : adjusted;
-    adjusted = adjusted ? trimLunchOverlap(adjusted, settings) : null;
+    let updated = [...others];
+    pieces.forEach((part, index) => {
+      const blockData = { ...part, id: index === 0 ? id : Date.now() + index };
+      let adjusted = trimLunchOverlap(blockData, settings);
+      if (!adjusted) return;
 
-    while (adjusted && hasOverlap(others, adjusted)) {
-      adjusted = adjustForOverlap(others, adjusted);
+      adjusted = hasOverlap(updated, adjusted)
+        ? adjustForOverlap(updated, adjusted)
+        : adjusted;
       adjusted = adjusted ? trimLunchOverlap(adjusted, settings) : null;
-    }
 
-    if (!adjusted) return;
+      while (adjusted && hasOverlap(updated, adjusted)) {
+        adjusted = adjustForOverlap(updated, adjusted);
+        adjusted = adjusted ? trimLunchOverlap(adjusted, settings) : null;
+      }
 
-    setBlocks([...others, adjusted]);
+      if (adjusted) {
+        updated.push(adjusted);
+      }
+    });
+
+    setBlocks(updated);
   };
 
   const deleteBlock = (id) => {
