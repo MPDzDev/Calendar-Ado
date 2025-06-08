@@ -8,6 +8,7 @@ export default function Settings({ settings, setSettings }) {
   const [tab, setTab] = useState('general');
   const [temp, setTemp] = useState(settings);
   const [newProject, setNewProject] = useState('');
+  const [newColor, setNewColor] = useState('#cccccc');
 
   useEffect(() => {
     setTemp(settings);
@@ -27,6 +28,7 @@ export default function Settings({ settings, setSettings }) {
     setSettings(temp);
     setOpen(false);
     setNewProject('');
+    setNewColor('#cccccc');
   };
 
   return (
@@ -187,6 +189,12 @@ export default function Settings({ settings, setSettings }) {
                         onChange={(e) => setNewProject(e.target.value)}
                         className="border flex-grow px-1"
                       />
+                      <input
+                        type="color"
+                        value={newColor}
+                        onChange={(e) => setNewColor(e.target.value)}
+                        className="ml-1"
+                      />
                       <button
                         className="ml-1 px-2 bg-blue-500 text-white"
                         onClick={() => {
@@ -195,8 +203,13 @@ export default function Settings({ settings, setSettings }) {
                             setTemp({
                               ...temp,
                               azureProjects: [...temp.azureProjects, name],
+                              projectColors: {
+                                ...temp.projectColors,
+                                [name]: newColor,
+                              },
                             });
                             setNewProject('');
+                            setNewColor('#cccccc');
                           }
                         }}
                       >
@@ -207,12 +220,29 @@ export default function Settings({ settings, setSettings }) {
                       {temp.azureProjects.map((p, idx) => (
                         <li key={idx} className="flex items-center justify-between border px-1">
                           <span>{p}</span>
+                          <input
+                            type="color"
+                            value={temp.projectColors[p] || '#cccccc'}
+                            onChange={(e) =>
+                              setTemp({
+                                ...temp,
+                                projectColors: {
+                                  ...temp.projectColors,
+                                  [p]: e.target.value,
+                                },
+                              })
+                            }
+                            className="mx-1"
+                          />
                           <button
                             className="text-xs text-red-600"
                             onClick={() =>
                               setTemp({
                                 ...temp,
                                 azureProjects: temp.azureProjects.filter((_, i) => i !== idx),
+                                projectColors: Object.fromEntries(
+                                  Object.entries(temp.projectColors).filter(([key]) => key !== p)
+                                ),
                               })
                             }
                           >
@@ -234,6 +264,7 @@ export default function Settings({ settings, setSettings }) {
                     setTemp(settings);
                     setOpen(false);
                     setNewProject('');
+                    setNewColor('#cccccc');
                   }}
                 >
                   Cancel

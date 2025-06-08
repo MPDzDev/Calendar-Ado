@@ -13,6 +13,7 @@ const defaultSettings = {
   azureOrg: '',
   azurePat: '',
   azureProjects: [],
+  projectColors: {},
 };
 
 export default function useSettings() {

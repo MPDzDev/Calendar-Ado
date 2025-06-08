@@ -30,7 +30,7 @@ function renderTree(nodes, level = 0) {
   });
 }
 
-export default function WorkItems({ items, onRefresh }) {
+export default function WorkItems({ items, onRefresh, projectColors = {} }) {
 
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
@@ -106,7 +106,8 @@ export default function WorkItems({ items, onRefresh }) {
           return (
             <div key={project}>
               <div
-                className="px-2 py-1 bg-gray-200 dark:bg-gray-700 cursor-pointer font-semibold"
+                className="px-2 py-1 cursor-pointer font-semibold"
+                style={{ backgroundColor: projectColors[project] || undefined }}
                 onClick={() => toggle(project)}
               >
                 {project}
