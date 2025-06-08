@@ -98,15 +98,19 @@ export default function YearHint({ weekStart, blocks = [], settings = {} }) {
             strokeWidth="1"
           />
         ))}
-        <rect
-          x={currentIndex * weekWidth}
-          y={0}
-          width={weekWidth}
-          height={totalHeight}
-          fill="none"
-          stroke="#facc15"
-          strokeWidth="2"
-        />
+        <g
+          className="minimap-highlight"
+          style={{ transform: `translateX(${currentIndex * weekWidth}px)` }}
+        >
+          <rect
+            x={0}
+            y={0}
+            width={weekWidth}
+            height={totalHeight}
+            fill="none"
+            strokeWidth="2"
+          />
+        </g>
       </svg>
     </div>
   );

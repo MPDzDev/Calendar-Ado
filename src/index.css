@@ -2,6 +2,20 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --week-range-width: 9rem;
+  --minimap-highlight-color: #facc15;
+}
+
+.week-range {
+  @apply inline-block w-week-range;
+}
+
+.minimap-highlight {
+  stroke: var(--minimap-highlight-color);
+  @apply transition-transform;
+}
+
 /* modern scrollbars for work item lists */
 .scroll-container {
   scrollbar-width: thin;
