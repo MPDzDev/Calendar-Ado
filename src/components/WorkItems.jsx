@@ -70,15 +70,20 @@ export default function WorkItems({
     const matchesType =
       typeFilter === 'all' || i.type?.toLowerCase() === typeFilter;
 
+    const ignoreToggles = search.trim() !== '';
+
     const matchesTags =
+      ignoreToggles ||
       settings.azureTags.length === 0 ||
       settings.azureTags.every((t) => (i.tags || []).includes(t));
 
     const matchesArea =
+      ignoreToggles ||
       !settings.azureArea ||
       (i.area || '').toLowerCase().startsWith(settings.azureArea.toLowerCase());
 
     const matchesIteration =
+      ignoreToggles ||
       !settings.azureIteration ||
       (i.iteration || '')
         .toLowerCase()
