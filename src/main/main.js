@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, shell } = require('electron');
 const path = require('path');
 
 function createWindow() {
@@ -22,27 +22,35 @@ function createWindow() {
   }
 }
 
-function openWorkItemWindow({ id, hours, url }) {
-  const win = new BrowserWindow({ width: 1000, height: 800 });
-  win.loadURL(url);
+function openWorkItemWindow({ hours, url }) {
+  // Open work item in the user's default browser to avoid rendering issues
+  // inside an Electron BrowserWindow.
+  shell.openExternal(url);
 
-  win.webContents.on('did-finish-load', () => {
-    const script = `
-      const banner = document.createElement('div');
-      banner.style.position = 'fixed';
-      banner.style.top = '0';
-      banner.style.left = '0';
-      banner.style.right = '0';
-      banner.style.zIndex = '10000';
-      banner.style.background = '#fffae6';
-      banner.style.padding = '10px';
-      banner.style.textAlign = 'center';
-      banner.textContent = 'Suggested hours to log: ${hours.toFixed(2)}';
-      document.body.appendChild(banner);
-      document.body.style.marginTop = (banner.offsetHeight + 10) + 'px';
-    `;
-    win.webContents.executeJavaScript(script).catch(() => {});
+  // Show an always-on-top banner window with the suggested hours since we
+  // can no longer inject the banner directly into the ADO page.
+  const bannerWin = new BrowserWindow({
+    width: 420,
+    height: 60,
+    frame: false,
+    resizable: false,
+    movable: false,
+    alwaysOnTop: true,
+    skipTaskbar: true,
   });
+
+  const bannerHtml = `<!DOCTYPE html>
+    <html><body style="margin:0;display:flex;align-items:center;justify-content:center;font-family:sans-serif;background:#fffae6;padding:10px;">
+    Suggested hours to log: ${hours.toFixed(2)}
+    </body></html>`;
+
+  bannerWin.loadURL('data:text/html,' + encodeURIComponent(bannerHtml));
+
+  setTimeout(() => {
+    if (!bannerWin.isDestroyed()) {
+      bannerWin.close();
+    }
+  }, 5000);
 }
 
 app.whenReady().then(() => {
