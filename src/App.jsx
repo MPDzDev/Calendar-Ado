@@ -329,7 +329,7 @@ function App() {
     >
       <div className="flex flex-col flex-grow overflow-y-auto">
         {showReminder && (
-          <div className="mb-2 p-2 bg-yellow-200 text-center text-sm text-red-800">
+          <div className="mb-2 p-2 bg-yellow-200 text-center text-sm text-red-800 fade-in">
             No time logged today. Don't forget to log your work!
           </div>
         )}
