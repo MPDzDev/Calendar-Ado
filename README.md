@@ -103,7 +103,7 @@ Additionally, by making ADO updates a prerequisite for seamless time logging, th
 3. Drags on calendar to create a shell block.
 4. System suggests work items; user confirms or drags a task manually.
 5. User can click a task to auto-link it to selected time block.
-6. Notes can be added per block.
+6. Notes appear as draggable comment pills that can be dropped into work blocks.
 
 ### 4.2 Review & Submit
 

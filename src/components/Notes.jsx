@@ -28,19 +28,19 @@ export default function Notes({ notes, onAdd, onDelete }) {
           Add
         </button>
       </div>
-      <div className="flex flex-col space-y-1 overflow-y-auto max-h-40">
+      <div className="flex flex-wrap gap-1 overflow-y-auto max-h-40">
         {notes.map((n) => (
           <div
             key={n.id}
-            className="p-1 border bg-gray-200 dark:bg-gray-700 text-xs flex justify-between"
+            className="px-2 py-1 border rounded-full bg-gray-200 dark:bg-gray-700 text-xs flex items-center"
             draggable
             onDragStart={(e) =>
               e.dataTransfer.setData('application/x-note', JSON.stringify(n))
             }
           >
-            <span className="flex-grow truncate">{n.text}</span>
+            <span className="truncate mr-1">{n.text}</span>
             <button
-              className="ml-2 text-red-600 text-xs"
+              className="ml-auto text-red-600 text-xs"
               onClick={() => onDelete(n.id)}
             >
               x
