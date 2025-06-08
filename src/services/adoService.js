@@ -49,7 +49,7 @@ export default class AdoService {
   async _fetchItems(ids, auth) {
     const batch = ids.join(',');
     const res = await fetch(
-      `https://dev.azure.com/${this.org}/_apis/wit/workitems?ids=${batch}&fields=System.Id,System.Title,System.WorkItemType,System.Parent,System.TeamProject&api-version=7.0`,
+      `https://dev.azure.com/${this.org}/_apis/wit/workitems?ids=${batch}&fields=System.Id,System.Title,System.WorkItemType,System.Parent,System.TeamProject,System.Tags,System.AreaPath,System.IterationPath&api-version=7.0`,
       {
         headers: { Authorization: auth },
       }
@@ -69,6 +69,11 @@ export default class AdoService {
             ? d.fields['System.Parent'].toString()
             : null,
           project: d.fields['System.TeamProject'] || '',
+          tags: d.fields['System.Tags']
+            ? d.fields['System.Tags'].split(';').map((t) => t.trim())
+            : [],
+          area: d.fields['System.AreaPath'] || '',
+          iteration: d.fields['System.IterationPath'] || '',
         })
     );
   }

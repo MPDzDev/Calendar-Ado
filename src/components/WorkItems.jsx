@@ -82,22 +82,33 @@ export default function WorkItems({
       return next;
     });
 
-  const handleTags = (e) => {
-    const tags = e.target.value
-      .split(',')
-      .map((t) => t.trim())
-      .filter((t) => t);
+  const availableTags = Array.from(
+    new Set(items.flatMap((i) => i.tags || []))
+  ).sort();
+  const availableAreas = Array.from(
+    new Set(items.map((i) => i.area).filter(Boolean))
+  ).sort();
+  const availableIterations = Array.from(
+    new Set(items.map((i) => i.iteration).filter(Boolean))
+  ).sort();
+
+  const toggleTag = (tag) => {
+    const tags = settings.azureTags.includes(tag)
+      ? settings.azureTags.filter((t) => t !== tag)
+      : [...settings.azureTags, tag];
     updateSettings({ azureTags: tags });
     onRefresh && onRefresh();
   };
 
-  const handleArea = (e) => {
-    updateSettings({ azureArea: e.target.value });
+  const toggleArea = (area) => {
+    const value = settings.azureArea === area ? '' : area;
+    updateSettings({ azureArea: value });
     onRefresh && onRefresh();
   };
 
-  const handleIteration = (e) => {
-    updateSettings({ azureIteration: e.target.value });
+  const toggleIteration = (it) => {
+    const value = settings.azureIteration === it ? '' : it;
+    updateSettings({ azureIteration: value });
     onRefresh && onRefresh();
   };
 
@@ -134,32 +145,38 @@ export default function WorkItems({
           <option value="task">Tasks</option>
         </select>
       </div>
-      <div className="flex space-x-2 mb-2">
-        <input
-          type="text"
-          placeholder="Tags"
-          value={settings.azureTags.join(', ')}
-          onChange={handleTags}
-          className="border px-1 text-sm flex-grow"
-        />
+      <div className="flex flex-wrap gap-1 mb-2">
+        {availableTags.map((tag) => (
+          <button
+            key={tag}
+            className={`px-2 py-1 text-xs border ${settings.azureTags.includes(tag) ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-gray-700'}`}
+            onClick={() => toggleTag(tag)}
+          >
+            {tag}
+          </button>
+        ))}
       </div>
-      <div className="flex space-x-2 mb-2">
-        <input
-          type="text"
-          placeholder="Area Path"
-          value={settings.azureArea}
-          onChange={handleArea}
-          className="border px-1 text-sm flex-grow"
-        />
+      <div className="flex flex-wrap gap-1 mb-2">
+        {availableAreas.map((area) => (
+          <button
+            key={area}
+            className={`px-2 py-1 text-xs border ${settings.azureArea === area ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-gray-700'}`}
+            onClick={() => toggleArea(area)}
+          >
+            {area}
+          </button>
+        ))}
       </div>
-      <div className="flex space-x-2 mb-2">
-        <input
-          type="text"
-          placeholder="Iteration Path"
-          value={settings.azureIteration}
-          onChange={handleIteration}
-          className="border px-1 text-sm flex-grow"
-        />
+      <div className="flex flex-wrap gap-1 mb-2">
+        {availableIterations.map((it) => (
+          <button
+            key={it}
+            className={`px-2 py-1 text-xs border ${settings.azureIteration === it ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-gray-700'}`}
+            onClick={() => toggleIteration(it)}
+          >
+            {it}
+          </button>
+        ))}
       </div>
       <div className="flex-grow overflow-y-auto space-y-2 scroll-container min-h-0">
         {Object.entries(grouped).map(([project, list]) => {
