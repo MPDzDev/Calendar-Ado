@@ -495,5 +495,6 @@ export default function WorkItems({
           })}
       </div>
     </div>
+  </div>
   );
 }
