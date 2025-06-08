@@ -49,6 +49,22 @@ export default function Calendar({
     return () => window.removeEventListener('resize', updateHeight);
   }, [hours.length]);
 
+  useEffect(() => {
+    if (!drag) return;
+    const cancel = (e) => {
+      if (e.button === 2) {
+        e.preventDefault();
+        setDrag(null);
+      }
+    };
+    window.addEventListener('mousedown', cancel);
+    window.addEventListener('contextmenu', cancel);
+    return () => {
+      window.removeEventListener('mousedown', cancel);
+      window.removeEventListener('contextmenu', cancel);
+    };
+  }, [drag]);
+
   const findItem = (id) => items?.find((i) => i.id === id);
   const getDescendantTasks = (id) => {
     const tasks = [];
@@ -98,6 +114,7 @@ export default function Calendar({
   };
 
   const startDrag = (e, dayIdx) => {
+    if (e.button !== 0) return; // only start on left click
     // ignore drags that originate from interactive elements or existing blocks
     if (
       e.target.closest('button') ||
