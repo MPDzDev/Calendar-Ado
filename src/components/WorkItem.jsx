@@ -68,7 +68,7 @@ export default function WorkItem({ item, level = 0, notes = [], onNoteDrop }) {
       style={{ marginLeft: `${level * 1}rem` }}
       title={item.title}
     >
-      <span className="font-mono mr-1">{item.id}</span>
+      <span className="font-mono mr-1 text-gray-500 dark:text-gray-400">{item.id}</span>
       <span className="mr-1">{icons[item.type?.toLowerCase()]}</span>
       {item.title}
       {notes.length > 0 && (
