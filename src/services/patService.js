@@ -1,8 +1,21 @@
 // Service to store PAT securely
 let keytar = null;
 try {
-  if (typeof window !== 'undefined' && window.require) {
-    keytar = window.require('keytar');
+  if (typeof window !== 'undefined') {
+    if (window.api && window.api.getPassword) {
+      // Access to keytar via context bridge
+      keytar = {
+        getPassword: window.api.getPassword,
+        setPassword: window.api.setPassword,
+        deletePassword: window.api.deletePassword,
+      };
+    } else if (window.require) {
+      // Fallback when nodeIntegration is enabled
+      keytar = window.require('keytar');
+    }
+  } else if (typeof require !== 'undefined') {
+    // Node environment (tests)
+    keytar = require('keytar');
   }
 } catch (e) {
   keytar = null;
