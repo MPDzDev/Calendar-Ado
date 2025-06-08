@@ -27,6 +27,7 @@ function App() {
   );
   const containerRef = useRef(null);
   const [resizing, setResizing] = useState(false);
+  const [showReminder, setShowReminder] = useState(false);
 
   const addNote = (text) =>
     setNotes((prev) => [...prev, { id: Date.now(), text }]);
@@ -121,6 +122,44 @@ function App() {
       window.removeEventListener('mouseup', handleUp);
     };
   }, [resizing, sidebarWidth, setSettings]);
+
+  useEffect(() => {
+    if (!settings.enableReminders) {
+      setShowReminder(false);
+      return;
+    }
+
+    const checkDay = () => {
+      const now = new Date();
+      const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const end = new Date(start);
+      end.setDate(start.getDate() + 1);
+      const hasBlocks = blocks.some((b) => {
+        const bs = new Date(b.start);
+        return bs >= start && bs < end;
+      });
+      setShowReminder(!hasBlocks);
+    };
+
+    let timeoutId;
+    const schedule = () => {
+      const now = new Date();
+      let checkTime = new Date(now);
+      checkTime.setHours(18, 0, 0, 0);
+      if (now >= checkTime) {
+        checkDay();
+        checkTime.setDate(checkTime.getDate() + 1);
+      }
+      const delay = checkTime - now;
+      timeoutId = setTimeout(() => {
+        checkDay();
+        schedule();
+      }, delay);
+    };
+
+    schedule();
+    return () => clearTimeout(timeoutId);
+  }, [blocks, settings.enableReminders]);
 
   const getWeekStart = (date) => {
     const d = new Date(date);
@@ -242,6 +281,11 @@ function App() {
       className="p-4 flex h-full w-full overflow-hidden bg-yellow-50 text-gray-800 dark:bg-gray-900 dark:text-gray-100"
     >
       <div className="flex flex-col flex-grow overflow-y-auto">
+        {showReminder && (
+          <div className="mb-2 p-2 bg-yellow-200 text-center text-sm text-red-800">
+            No time logged today. Don't forget to log your work!
+          </div>
+        )}
         <h1 className="text-2xl font-bold mb-4">Calendar-Ado MVP</h1>
         <div className="mb-2 flex items-center space-x-2">
           <button className="week-nav-button" onClick={prevWeek}>
