@@ -17,7 +17,7 @@ export default function PATrakLoading() {
       <div className="relative w-[200px] h-[200px]">
         {/* Stem of Y */}
         <div
-          className={`absolute top-[50%] left-[50%] h-[80px] w-[6px] bg-white transform origin-top ${
+          className={`absolute top-[50%] left-[80%] h-[80px] w-[6px] bg-white transform origin-top ${
             stage !== 'start' ? 'opacity-0' : ''
           }`}
           style={{ transform: 'translate(-50%, -10%)' }}
@@ -25,7 +25,7 @@ export default function PATrakLoading() {
 
         {/* Left arm of Y */}
         <div
-          className={`absolute top-[30%] left-[50%] w-[6px] h-[60px] bg-white transform origin-bottom ${
+          className={`absolute top-[30%] left-[80%] w-[6px] h-[60px] bg-white transform origin-bottom ${
             stage === 'start' ? 'animate-flipY' : stage === 'break' ? 'animate-breakLeft' : 'hidden'
           }`}
           style={{ transform: 'translate(-60%, 0%) rotate(-45deg)' }}
@@ -33,7 +33,7 @@ export default function PATrakLoading() {
 
         {/* Right arm of Y */}
         <div
-          className={`absolute top-[30%] left-[50%] w-[6px] h-[60px] bg-white transform origin-bottom ${
+          className={`absolute top-[30%] left-[80%] w-[6px] h-[60px] bg-white transform origin-bottom ${
             stage === 'start' ? 'animate-flipY' : stage === 'break' ? 'animate-breakRight' : 'hidden'
           }`}
           style={{ transform: 'translate(60%, 0%) rotate(45deg)' }}
@@ -69,13 +69,18 @@ export default function PATrakLoading() {
               <g>
                 {/* T */}
                 <path d="M70 4h20M80 4v52" />
-                {/* r */}
-                <path d="M102 32v24" />
-                <path d="M102 32q6-8 12 0" />
-                {/* a */}
-                <circle cx="126" cy="46" r="8" />
-                <path d="M134 46v10" />
-                {/* k */}
+                {/* R */}
+                <path d="M102 56V4h16v24h-16l16 28" />
+                {/* A */}
+                <path d="M118 56L128 4l10 52" />
+                <line
+                  x1="122"
+                  y1="32"
+                  x2="134"
+                  y2="32"
+                  className={`origin-center transition-transform ${stage === 'done' ? 'rotate-90' : 'rotate-0'}`}
+                />
+                {/* K */}
                 <path d="M144 4v52" />
                 <path d="M144 32l10-28" />
                 <path d="M144 32l10 24" />
