@@ -1,4 +1,4 @@
-# Calendar-Ado
+# Patrak
 **Blueprint: ADO Calendar-Based Work Logger**
 
 ---
