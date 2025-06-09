@@ -1,36 +1,36 @@
 import React, { useEffect, useState } from 'react';
 
 export default function PatrakLogo({ className = '' }) {
-  const [flipping, setFlipping] = useState(false);
+  const [rotating, setRotating] = useState(false);
 
   useEffect(() => {
-    let flipTimeout;
+    let rotateTimeout;
     let scheduleTimeout;
 
     const schedule = () => {
       scheduleTimeout = setTimeout(() => {
-        setFlipping(true);
-        flipTimeout = setTimeout(() => {
-          setFlipping(false);
+        setRotating(true);
+        rotateTimeout = setTimeout(() => {
+          setRotating(false);
           schedule();
-        }, 2300);
+        }, 2000);
       }, 15000);
     };
 
     schedule();
     return () => {
-      clearTimeout(flipTimeout);
+      clearTimeout(rotateTimeout);
       clearTimeout(scheduleTimeout);
     };
   }, []);
 
   return (
-    <h1 className={`text-2xl font-bold mb-4 font-oswald ${className}`}>
-      <span className="logo-letter">P</span>
-      <span className="logo-letter">A</span>
+    <h1 className={`text-3xl font-bold mb-4 font-oswald ${className}`}>
+      <span className="logo-letter text-blue-500">P</span>
+      <span className="logo-letter text-blue-500">A</span>
       <span className="logo-letter">T</span>
       <span className="logo-letter">R</span>
-      <span className={`logo-letter ${flipping ? 'flip-a' : ''}`}>A</span>
+      <span className={`logo-letter ${rotating ? 'rotate-a' : ''}`}>A</span>
       <span className="logo-letter">K</span>
     </h1>
   );
