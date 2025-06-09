@@ -112,22 +112,25 @@ body,
   display: inline-block;
 }
 
-@keyframes flipA {
-  0%, 100% {
-    transform: rotateX(0deg);
-    color: inherit;
+@keyframes rotateA {
+  0% {
+    transform: rotate(0deg);
   }
-  40% {
-    transform: rotateX(-140deg);
-    color: #3b82f6;
+  25% {
+    transform: rotate(5deg);
   }
-  60% {
-    transform: rotateX(-60deg);
-    color: #3b82f6;
+  50% {
+    transform: rotate(-3deg);
+  }
+  75% {
+    transform: rotate(4deg);
+  }
+  100% {
+    transform: rotate(0deg);
   }
 }
 
-.flip-a {
-  animation: flipA 2.3s ease-in-out;
-  transform-origin: center;
+.rotate-a {
+  animation: rotateA 2s ease-in-out;
+  transform-origin: top center;
 }
