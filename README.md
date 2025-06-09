@@ -1,5 +1,5 @@
-# Calendar-Ado
-**Blueprint: ADO Calendar-Based Work Logger**
+# PATrak
+**Personal Assistance Tracker** *(play on the name Patryk)*
 
 ---
 
