@@ -5,6 +5,7 @@ import WorkItems from './components/WorkItems';
 import Settings from './components/Settings';
 import YearHint from './components/YearHint';
 import Notes from './components/Notes';
+import PatrakLogo from './components/PatrakLogo';
 import useWorkBlocks from './hooks/useWorkBlocks';
 import useSettings from './hooks/useSettings';
 import useAdoItems from './hooks/useAdoItems';
@@ -348,7 +349,7 @@ function App() {
             No time logged today. Don't forget to log your work!
           </div>
         )}
-        <h1 className="text-2xl font-bold mb-4">Calendar-Ado</h1>
+        <PatrakLogo />
         <div className="mb-2 flex items-center space-x-2">
           <button className="week-nav-button" onClick={prevWeek}>
             ◀ Prev

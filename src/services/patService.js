@@ -22,7 +22,7 @@ try {
 }
 
 export default class PatService {
-  constructor(service = 'calendar-ado', account = 'azure-pat') {
+  constructor(service = 'patrak', account = 'azure-pat') {
     this.service = service;
     this.account = account;
   }
