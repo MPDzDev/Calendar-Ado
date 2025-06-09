@@ -54,13 +54,45 @@ export default function PATrakLogo({ className = '' }) {
 
       {/* PATrak label */}
       {stage === 'done' && (
-        <div className="absolute inset-0 flex items-center justify-center font-bold text-2xl tracking-wide select-none">
-          <span className="text-[#38bdf8]">PA</span>
-          <span className="relative">
-            <span className="inline-block w-[3px] h-[20px] bg-current absolute top-2 left-[6px] rotate-90 origin-left" />
-            <span>Trak</span>
-          </span>
-        </div>
+        <svg
+          className="absolute inset-0"
+          viewBox="0 0 150 60"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="6"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <g stroke="#38bdf8">
+            {/* P */}
+            <path d="M4 56V4h16v24H4z" />
+            {/* A without crossbar */}
+            <path d="M38 56L48 4l10 52" />
+            {/* crossbar */}
+            <line
+              x1="42"
+              y1="32"
+              x2="54"
+              y2="32"
+              stroke="#38bdf8"
+              className="origin-left rotate-90"
+            />
+          </g>
+          <g>
+            {/* T */}
+            <path d="M70 4h20M80 4v52" />
+            {/* r */}
+            <path d="M102 32v24" />
+            <path d="M102 32q6-8 12 0" />
+            {/* a */}
+            <circle cx="126" cy="46" r="8" />
+            <path d="M134 46v10" />
+            {/* k */}
+            <path d="M144 4v52" />
+            <path d="M144 32l10-28" />
+            <path d="M144 32l10 24" />
+          </g>
+        </svg>
       )}
     </div>
   );
