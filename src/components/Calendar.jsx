@@ -452,13 +452,21 @@ export default function Calendar({
     if (!raw) return;
     const item = JSON.parse(raw);
     if (!item) return;
-    if (item.type?.toLowerCase() === 'task') {
+    const type = item.type?.toLowerCase();
+    if (type === 'task') {
       const display = findDisplayItem(item);
       if (onUpdate)
         onUpdate(blockId, {
           workItem: display.title,
           taskId: item.id,
           itemId: display.id,
+        });
+    } else if (type === 'bug' || type === 'transversal activity') {
+      if (onUpdate)
+        onUpdate(blockId, {
+          workItem: item.title,
+          taskId: item.id,
+          itemId: item.id,
         });
     } else {
       const tasks = getDescendantTasks(item.id);

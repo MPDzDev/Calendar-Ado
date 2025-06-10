@@ -7,6 +7,7 @@ export default function ItemBubble({ item, full = false, showArea = false }) {
     'user story': 'border-blue-400',
     bug: 'border-red-400',
     feature: 'border-purple-400',
+    'transversal activity': 'border-green-400',
   };
   const colorClass = colors[item.type?.toLowerCase()] || 'border-gray-400';
   const displayClass = full ? 'block w-full' : 'block';

@@ -5,7 +5,7 @@
 
 ## 1. Overview
 
-A productivity tool to help software engineers and technical professionals track work in real-time, using a calendar-based interface. It integrates with Azure DevOps (ADO) and allows users to log time against tasks efficiently, even when tasks aren't yet created.
+A productivity tool to help software engineers and technical professionals track work in real-time, using a calendar-based interface. It integrates with Azure DevOps (ADO) and allows users to log time against tasks, bugs, and transversal activities efficiently, even when tasks aren't yet created.
 
 This tool aims to reduce friction in time logging, ensure compliance with area path and job order constraints, and streamline weekly reporting.
 
@@ -60,7 +60,7 @@ Additionally, by making ADO updates a prerequisite for seamless time logging, th
 
 * Personal Access Token (PAT) authentication
 * Read work items and area paths
-* Write time logs to tasks (PATCH work item updates with time + comment)
+* Write time logs to tasks, bugs, and transversal activities (PATCH work item updates with time + comment)
 * Read-only enforcement on already-submitted blocks
 
 ### 3.5 Sync & Review
