@@ -12,6 +12,11 @@ Based on recent design feedback, here are prioritized tasks for refreshing the a
 - **Revise color palette and layout**
   - Swap bright yellows/blues for muted or pastel tones.
   - Use CSS grid or flexbox for a responsive layout with consistent column alignment.
+- **Improve Time Summoning UI**
+  - When a day is locked or a previous context is loaded, display a sliding panel from above with time data.
+  - Group time entries by area rather than presenting an hour‑by‑hour breakdown.
+- **Fix lunch splitting bug**
+  - When a block spans the lunch period, splitting should create two separate work blocks in distinct sections rather than only a visual split.
 
 ## Medium Priority
 - **Improve work item panel**
@@ -22,6 +27,8 @@ Based on recent design feedback, here are prioritized tasks for refreshing the a
   - "Review Week" modal before time submission.
   - Progress bar hover details showing hour breakdown.
   - Confirmation toast after submission.
+- **Support splitting across blocks**
+  - Allow splitting a dragged block when it overlaps any locked period, not just lunch.
 
 ## Low Priority
 - **Controls and settings**
@@ -30,5 +37,7 @@ Based on recent design feedback, here are prioritized tasks for refreshing the a
   - Optional dark mode toggle.
   - Drag‑and‑drop calendar block rearranging and keyboard shortcuts.
   - Ensure layout adapts well on tablets.
+- **Refactor refresh button**
+  - Change the refresh logic to fetch only the most recently updated work items to avoid overwhelming the UI.
 
 These tasks can be implemented incrementally to modernize the interface and streamline user workflows.
