@@ -9,11 +9,20 @@ export default function ItemBubble({ item, full = false, showArea = false }) {
     feature: 'border-purple-400',
     'transversal activity': 'border-green-400',
   };
+  const icons = {
+    task: '🛠',
+    'user story': '📝',
+    bug: '🐞',
+    feature: '📂',
+    // icon for transversal activities
+    'transversal activity': '🔧',
+  };
   const colorClass = colors[item.type?.toLowerCase()] || 'border-gray-400';
   const displayClass = full ? 'block w-full' : 'block';
   return (
     <div className={`${displayClass} pl-1 border-l-4 ${colorClass} text-xs`}>
       <div className="font-medium truncate" title={item.title}>
+        <span className="mr-1">{icons[item.type?.toLowerCase()]}</span>
         {item.title}
       </div>
       {showArea && item.area && (

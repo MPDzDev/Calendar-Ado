@@ -274,6 +274,7 @@ export default function WorkItems({
             <option value="user story">User Stories</option>
             <option value="bug">Bugs</option>
             <option value="task">Tasks</option>
+            <option value="transversal activity">Transversal Activity</option>
           </select>
         </div>
         <div className="mb-2 relative" ref={groupRefs.tags}>
