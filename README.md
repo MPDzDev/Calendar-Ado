@@ -314,7 +314,11 @@ Additionally, by making ADO updates a prerequisite for seamless time logging, th
    ```bash
    npm run electron-pack
    ```
-   This command first builds the React app and then packages the Electron application.
+This command first builds the React app and then packages the Electron application.
+
+### Scheduling Work Items
+
+Only **Tasks** and **Bugs/Transversal Activities** can be scheduled directly on the calendar. Items like **Features** and **User Stories** act as containers and must have child tasks created before you can plan them. Work items are color coded by type (e.g., yellow for tasks, red for bugs, purple for features) so you can quickly distinguish them. This restriction keeps effort reporting aligned at the task level in ADO.
 
 
 ## License
