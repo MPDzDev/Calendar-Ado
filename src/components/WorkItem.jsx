@@ -6,6 +6,7 @@ export default function WorkItem({ item, level = 0, notes = [], onNoteDrop }) {
     'user story': 'bg-blue-100 dark:bg-blue-700',
     bug: 'bg-red-100 dark:bg-red-700',
     feature: 'bg-purple-100 dark:bg-purple-700',
+    'transversal activity': 'bg-green-100 dark:bg-green-700',
   };
 
   const icons = {
@@ -13,6 +14,7 @@ export default function WorkItem({ item, level = 0, notes = [], onNoteDrop }) {
     'user story': '📝',
     bug: '🐞',
     feature: '📂',
+    'transversal activity': '🔧',
   };
 
   const colorClass = colors[item.type?.toLowerCase()] || 'bg-gray-100 dark:bg-gray-700';
