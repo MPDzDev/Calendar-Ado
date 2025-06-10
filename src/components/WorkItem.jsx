@@ -1,6 +1,12 @@
 import React from 'react';
 
-export default function WorkItem({ item, level = 0, notes = [], onNoteDrop }) {
+export default function WorkItem({
+  item,
+  level = 0,
+  notes = [],
+  onNoteDrop,
+  highlight = false,
+}) {
   const colors = {
     task: 'bg-yellow-100 dark:bg-yellow-700',
     'user story': 'bg-blue-100 dark:bg-blue-700',
@@ -43,9 +49,11 @@ export default function WorkItem({ item, level = 0, notes = [], onNoteDrop }) {
     onNoteDrop && onNoteDrop(item.id, note);
   };
 
+  const highlightClass = highlight ? 'ring-2 ring-red-500' : '';
+
   return isFeature ? (
     <div
-      className="inline-block rounded-full px-2 py-1 bg-purple-200 dark:bg-purple-700 text-xs font-semibold mr-2 mb-2"
+      className={`inline-block rounded-full px-2 py-1 bg-purple-200 dark:bg-purple-700 text-xs font-semibold mr-2 mb-2 ${highlightClass}`}
       draggable
       onDragStart={dragStart}
       onDragOver={allowDrop}
@@ -68,7 +76,7 @@ export default function WorkItem({ item, level = 0, notes = [], onNoteDrop }) {
       onDragStart={dragStart}
       onDragOver={allowDrop}
       onDrop={handleDrop}
-      className={`p-1 mb-1 border ${colorClass} text-xs truncate`}
+      className={`p-1 mb-1 border ${colorClass} text-xs truncate ${highlightClass}`}
       style={{ marginLeft: `${level * 1}rem` }}
       title={item.title}
     >

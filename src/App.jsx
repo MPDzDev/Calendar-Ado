@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Calendar from './components/Calendar';
 import HoursSummary from './components/HoursSummary';
 import WorkItems from './components/WorkItems';
+import DevOpsReview from './components/DevOpsReview';
 import Settings from './components/Settings';
 import YearHint from './components/YearHint';
 import Notes from './components/Notes';
@@ -33,6 +34,7 @@ function App() {
   const containerRef = useRef(null);
   const [resizing, setResizing] = useState(false);
   const [showReminder, setShowReminder] = useState(false);
+  const [panelTab, setPanelTab] = useState('workItems');
 
   const addNote = (text) =>
     setNotes((prev) => [...prev, { id: Date.now(), text }]);
@@ -338,6 +340,26 @@ function App() {
     }
   };
 
+  const reviewService = new AdoService(
+    settings.azureOrg,
+    settings.azurePat,
+    settings.azureProjects,
+    settings.azureTags,
+    settings.azureArea,
+    settings.azureIteration
+  );
+  const missingArea = reviewService.findMissingArea(items);
+  const missingIteration = reviewService.findMissingIteration(items);
+  const invalidState = reviewService.findIncorrectState(
+    items,
+    settings.stateOrder
+  );
+  const highlightedIds = new Set([
+    ...missingArea.map((i) => i.id),
+    ...missingIteration.map((i) => i.id),
+    ...invalidState.map((i) => i.id),
+  ]);
+
   return (
     <div
       ref={containerRef}
@@ -405,15 +427,43 @@ function App() {
             <span>Start Submit Session</span>
           </button>
         </div>
-        <WorkItems
-          items={items}
-          onRefresh={fetchWorkItems}
-          projectColors={settings.projectColors}
-          settings={settings}
-          setSettings={setSettings}
-          onNoteDrop={handleNoteDrop}
-          itemNotes={itemNotes}
-        />
+        <div className="flex space-x-2">
+          <button
+            className={`px-2 py-1 text-xs ${
+              panelTab === 'workItems'
+                ? 'bg-blue-500 text-white'
+                : 'bg-gray-200 dark:bg-gray-700'
+            }`}
+            onClick={() => setPanelTab('workItems')}
+          >
+            Work Items
+          </button>
+          <button
+            className={`px-2 py-1 text-xs ${
+              panelTab === 'review'
+                ? 'bg-blue-500 text-white'
+                : 'bg-gray-200 dark:bg-gray-700'
+            }`}
+            onClick={() => setPanelTab('review')}
+          >
+            DevOps Review
+          </button>
+        </div>
+        {panelTab === 'workItems' && (
+          <WorkItems
+            items={items}
+            onRefresh={fetchWorkItems}
+            projectColors={settings.projectColors}
+            settings={settings}
+            setSettings={setSettings}
+            onNoteDrop={handleNoteDrop}
+            itemNotes={itemNotes}
+            highlightedIds={highlightedIds}
+          />
+        )}
+        {panelTab === 'review' && (
+          <DevOpsReview items={items} settings={settings} />
+        )}
       </div>
     </div>
   );

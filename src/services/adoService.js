@@ -120,4 +120,20 @@ export default class AdoService {
       return [];
     }
   }
+
+  findMissingArea(items = []) {
+    return items.filter((i) => !(i.area && i.area.trim()));
+  }
+
+  findMissingIteration(items = []) {
+    return items.filter((i) => !(i.iteration && i.iteration.trim()));
+  }
+
+  findIncorrectState(items = [], validStates = []) {
+    if (!Array.isArray(validStates) || validStates.length === 0) return [];
+    const states = validStates.map((s) => s.toLowerCase());
+    return items.filter(
+      (i) => !states.includes((i.state || '').toLowerCase())
+    );
+  }
 }
