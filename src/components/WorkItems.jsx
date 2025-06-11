@@ -260,12 +260,20 @@ export default function WorkItems({
         <div className="flex items-center justify-between mb-1">
           <h2 className="font-semibold">Work Items</h2>
           {onRefresh && (
-            <button
-              className="px-2 py-1 text-xs bg-gray-200 dark:bg-gray-700"
-              onClick={onRefresh}
-            >
-              Refresh
-            </button>
+            <div className="space-x-2">
+              <button
+                className="px-2 py-1 text-xs bg-gray-200 dark:bg-gray-700"
+                onClick={() => onRefresh(false)}
+              >
+                Refresh
+              </button>
+              <button
+                className="px-2 py-1 text-xs bg-gray-200 dark:bg-gray-700"
+                onClick={() => onRefresh(true)}
+              >
+                Full Refresh
+              </button>
+            </div>
           )}
         </div>
         <div className="flex space-x-2 mb-2">

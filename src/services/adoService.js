@@ -21,7 +21,7 @@ export default class AdoService {
         : (str) => Buffer.from(str).toString('base64');
   }
 
-  _buildQuery(since = null) {
+  _buildQuery(days = null) {
     const projectFilter = this.projects.length
       ? `[System.TeamProject] in (${this.projects
           .map((p) => `'${p}'`)
@@ -36,8 +36,8 @@ export default class AdoService {
     const iterationFilter = this.iteration
       ? `[System.IterationPath] under '${this.iteration}' and `
       : '';
-    const dateFilter = since
-      ? `[System.ChangedDate] >= '${since.toISOString()}'`
+    const dateFilter = typeof days === 'number'
+      ? `[System.ChangedDate] >= @Today - ${days}`
       : '[System.ChangedDate] >= @Today - 30';
     return (
       'Select [System.Id] From WorkItems Where ' +
@@ -82,7 +82,7 @@ export default class AdoService {
     );
   }
 
-  async getWorkItems(since = null) {
+  async getWorkItems(days = null) {
     if (!this.org || !this.token) {
       return [];
     }
@@ -98,7 +98,7 @@ export default class AdoService {
             Authorization: auth,
           },
           body: JSON.stringify({
-            query: this._buildQuery(since),
+            query: this._buildQuery(days),
           }),
         }
       );

@@ -73,7 +73,7 @@ function App() {
     deleteNote(note.id);
   };
 
-  const fetchWorkItems = useCallback(() => {
+  const fetchWorkItems = useCallback((full = false) => {
     const {
       azureOrg,
       azurePat,
@@ -91,8 +91,14 @@ function App() {
       azureArea,
       azureIteration
     );
-    const since = lastFetch ? new Date(lastFetch) : null;
-    service.getWorkItems(since).then((data) => {
+    const DAY_MS = 24 * 60 * 60 * 1000;
+    let days = null;
+    if (!full && lastFetch) {
+      const last = new Date(lastFetch);
+      days = Math.ceil((Date.now() - last.getTime()) / DAY_MS);
+      if (days === 0) days = 1;
+    }
+    service.getWorkItems(days).then((data) => {
       setItems((prev) => {
         const map = new Map(prev.map((i) => [i.id, i]));
         data.forEach((item) => {
