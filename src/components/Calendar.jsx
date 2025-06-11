@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import ItemBubble from './ItemBubble';
 import { lightenColor } from '../utils/color';
+import { summarizeByArea } from '../utils/summary';
 
 export default function Calendar({
   blocks,
@@ -112,6 +113,12 @@ export default function Calendar({
   };
 
   const isDayLocked = (idx) => lockedDays[dayKey(idx)];
+
+  const areaSummaryForDay = (idx) => {
+    const date = new Date(weekStart);
+    date.setDate(weekStart.getDate() + idx);
+    return summarizeByArea(blocks, items, date);
+  };
 
   const toggleDayLock = (idx) => {
     if (!setLockedDays) return;
@@ -531,8 +538,16 @@ export default function Calendar({
             }}
           >
             {isDayLocked(dayIdx) && (
-              <div className="absolute inset-0 bg-gray-500/50 dark:bg-gray-600/50 flex items-center justify-center pointer-events-none z-20">
+              <div className="absolute inset-0 bg-gray-500/50 dark:bg-gray-600/50 pointer-events-none z-20 curtain-slide-down flex flex-col items-center pt-2">
                 <span className="text-4xl text-gray-700 dark:text-gray-300">🔒</span>
+                <div className="mt-2 bg-white/80 dark:bg-gray-700/80 text-[10px] rounded px-2 py-1">
+                  {Object.entries(areaSummaryForDay(dayIdx)).map(([area, hrs]) => (
+                    <div key={area} className="flex justify-between gap-2 whitespace-nowrap">
+                      <span>{area}</span>
+                      <span>{hrs.toFixed(1)}h</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
             {hoverDay === dayIdx && (
