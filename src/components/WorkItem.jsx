@@ -7,6 +7,7 @@ export default function WorkItem({
   onNoteDrop,
   highlight = false,
   pill = false,
+  onOpen,
 }) {
   const colors = {
     task: 'bg-yellow-100 dark:bg-yellow-700',
@@ -54,6 +55,11 @@ export default function WorkItem({
   const highlightClass = highlight ? 'ring-2 ring-red-500' : '';
   const asPill = pill;
 
+  const handleDoubleClick = (e) => {
+    e.stopPropagation();
+    if (onOpen) onOpen(item);
+  };
+
   return asPill ? (
     <div
       className={`inline-block task-pill px-2 py-1 ${colorClass} text-xs font-semibold mr-2 mb-2 ${highlightClass}`}
@@ -61,6 +67,7 @@ export default function WorkItem({
       onDragStart={dragStart}
       onDragOver={allowDrop}
       onDrop={handleDrop}
+      onDoubleClick={handleDoubleClick}
       title={item.title}
       style={{ marginLeft: `${level * 0.5}rem` }}
     >
@@ -80,6 +87,7 @@ export default function WorkItem({
       onDragStart={dragStart}
       onDragOver={allowDrop}
       onDrop={handleDrop}
+      onDoubleClick={handleDoubleClick}
       className={`p-1 mb-1 border ${colorClass} text-xs truncate ${highlightClass}`}
       style={{ marginLeft: `${level * 1}rem` }}
       title={item.title}
