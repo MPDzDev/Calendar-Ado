@@ -847,27 +847,27 @@ export default function Calendar({
             style={{ gridColumn: `${g.start + 1} / ${g.end + 2}` }}
           >
             <span className="text-4xl text-gray-700 dark:text-gray-300">🔒</span>
-            <div className="mt-2 bg-white/80 dark:bg-gray-700/80 text-[10px] rounded px-2 py-1 pointer-events-auto w-full overflow-hidden">
+            <div className="mt-2 bg-white/80 dark:bg-gray-700/80 text-xs rounded px-2 py-1 pointer-events-auto w-full overflow-hidden">
               {Object.entries(g.summary).map(([area, hrs]) => (
-                <div key={area} className="flex justify-between gap-2 whitespace-nowrap w-full">
-                  <span
-                    className="truncate cursor-pointer max-w-full"
-                    onContextMenu={(e) => {
-                      e.preventDefault();
-                      if (!setAreaAliases) return;
-                      const current = areaAliases[area] || area;
-                      const name = window.prompt('Custom name for area', current);
-                      if (name === null) return;
-                      if (name.trim() === '') {
-                        const { [area]: _removed, ...rest } = areaAliases;
-                        setAreaAliases(rest);
-                      } else {
-                        setAreaAliases({ ...areaAliases, [area]: name.trim() });
-                      }
-                    }}
-                  >
-                    {areaAliases[area] || area}
-                  </span>
+                <div
+                  key={area}
+                  className="flex justify-between gap-2 whitespace-nowrap w-full cursor-pointer"
+                  onContextMenu={(e) => {
+                    e.preventDefault();
+                    if (!setAreaAliases) return;
+                    const currentAlias = areaAliases[area] || '';
+                    const name = window.prompt(`Custom name for area \"${area}\"`, currentAlias || area);
+                    if (name === null) return;
+                    if (name.trim() === '') {
+                      const { [area]: _removed, ...rest } = areaAliases;
+                      setAreaAliases(rest);
+                    } else {
+                      setAreaAliases({ ...areaAliases, [area]: name.trim() });
+                    }
+                  }}
+                  title={area}
+                >
+                  <span className="truncate max-w-full">{areaAliases[area] || area}</span>
                   <span>{hrs.toFixed(1)}h</span>
                 </div>
               ))}
