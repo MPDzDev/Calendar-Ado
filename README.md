@@ -60,6 +60,7 @@ Additionally, by making ADO updates a prerequisite for seamless time logging, th
 
 * Personal Access Token (PAT) authentication
 * Read work items and area paths
+* Work items are cached locally; refresh only fetches updates since the last sync
 * Write time logs to tasks, bugs, and transversal activities (PATCH work item updates with time + comment)
 * Read-only enforcement on already-submitted blocks
 
@@ -237,6 +238,7 @@ Additionally, by making ADO updates a prerequisite for seamless time logging, th
 
    * `storageService.js`: read/write JSON or SQLite
    * Store: `workBlocks`, `workItemCache`
+   * Cache tracks the last fetch time so only updated work items are requested
 
 4. **Calendar UI**
 
