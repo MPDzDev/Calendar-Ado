@@ -52,11 +52,11 @@ export default function WorkItem({
   };
 
   const highlightClass = highlight ? 'ring-2 ring-red-500' : '';
-  const asPill = isFeature || pill;
+  const asPill = pill;
 
   return asPill ? (
     <div
-      className={`inline-block rounded-full px-2 py-1 ${colorClass} text-xs font-semibold mr-2 mb-2 ${highlightClass}`}
+      className={`inline-block task-pill px-2 py-1 ${colorClass} text-xs font-semibold mr-2 mb-2 ${highlightClass}`}
       draggable
       onDragStart={dragStart}
       onDragOver={allowDrop}
