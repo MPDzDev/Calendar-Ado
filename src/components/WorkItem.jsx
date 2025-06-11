@@ -14,6 +14,7 @@ export default function WorkItem({
     'user story': 'bg-blue-100 dark:bg-blue-700',
     bug: 'bg-red-100 dark:bg-red-700',
     feature: 'bg-purple-100 dark:bg-purple-700',
+    epic: 'bg-indigo-100 dark:bg-indigo-700',
     // color for transversal activities
     'transversal activity': 'bg-green-100 dark:bg-green-700',
   };
@@ -23,13 +24,20 @@ export default function WorkItem({
     'user story': '📝',
     bug: '🐞',
     feature: '📂',
+    epic: '🚀',
     // icon for transversal activities
     'transversal activity': '🔧',
   };
 
-  const colorClass = colors[item.type?.toLowerCase()] || 'bg-gray-100 dark:bg-gray-700';
-  const isFeature = item.type?.toLowerCase() === 'feature';
-  const isTask = item.type?.toLowerCase() === 'task';
+  const type = item.type?.toLowerCase();
+  const colorClass = colors[type] || 'bg-gray-100 dark:bg-gray-700';
+  const isFeature = type === 'feature';
+  const isEpic = type === 'epic';
+  const isTask = type === 'task';
+
+  let sizeClass = 'text-xs';
+  if (isFeature) sizeClass = 'text-sm font-semibold';
+  if (isEpic) sizeClass = 'text-lg font-bold';
 
   const dragStart = (e) => {
     e.dataTransfer.setData(
@@ -88,7 +96,7 @@ export default function WorkItem({
       onDragOver={allowDrop}
       onDrop={handleDrop}
       onDoubleClick={handleDoubleClick}
-      className={`p-1 mb-1 border ${colorClass} text-xs truncate ${highlightClass}`}
+      className={`p-1 mb-1 border ${colorClass} ${sizeClass} truncate ${highlightClass}`}
       style={{ marginLeft: `${level * 1}rem` }}
       title={item.title}
     >

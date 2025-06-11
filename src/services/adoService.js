@@ -117,7 +117,28 @@ export default class AdoService {
         const items = await this._fetchItems(batchIds, auth);
         results.push(...items);
       }
-      return results;
+      const map = new Map(results.map((i) => [i.id, i]));
+      let missing = new Set();
+      results.forEach((item) => {
+        if (item.parentId && !map.has(item.parentId)) {
+          missing.add(item.parentId);
+        }
+      });
+
+      while (missing.size > 0) {
+        const batch = Array.from(missing).slice(0, 200);
+        const parents = await this._fetchItems(batch, auth);
+        parents.forEach((p) => {
+          if (!map.has(p.id)) {
+            map.set(p.id, p);
+            results.push(p);
+            if (p.parentId && !map.has(p.parentId)) missing.add(p.parentId);
+          }
+          missing.delete(p.id);
+        });
+      }
+
+      return Array.from(map.values());
     } catch (e) {
       console.error('Failed to fetch work items', e);
       return [];
