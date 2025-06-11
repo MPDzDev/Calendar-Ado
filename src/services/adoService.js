@@ -37,7 +37,7 @@ export default class AdoService {
       ? `[System.IterationPath] under '${this.iteration}' and `
       : '';
     const dateFilter = since
-      ? `[System.ChangedDate] >= '${since.toISOString()}'`
+      ? `[System.ChangedDate] >= '${since.toISOString().split('T')[0]}'`
       : '[System.ChangedDate] >= @Today - 30';
     return (
       'Select [System.Id] From WorkItems Where ' +
