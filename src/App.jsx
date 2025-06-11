@@ -12,7 +12,7 @@ import useSettings from './hooks/useSettings';
 import useAdoItems from './hooks/useAdoItems';
 import useNotes from './hooks/useNotes';
 import useDayLocks from './hooks/useDayLocks';
-import AdoService from './services/adoService';
+import AdoService from './services/adoService.js';
 import {
   trimLunchOverlap,
   hasOverlap,
@@ -350,14 +350,11 @@ function App() {
   );
   const missingArea = reviewService.findMissingArea(items);
   const missingIteration = reviewService.findMissingIteration(items);
-  const invalidState = reviewService.findIncorrectState(
-    items,
-    settings.stateOrder
-  );
+  const treeProblems = reviewService.findTreeProblems(items);
   const highlightedIds = new Set([
     ...missingArea.map((i) => i.id),
     ...missingIteration.map((i) => i.id),
-    ...invalidState.map((i) => i.id),
+    ...treeProblems.map((i) => i.id),
   ]);
 
   return (
