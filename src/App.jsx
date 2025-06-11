@@ -12,7 +12,8 @@ import useSettings from './hooks/useSettings';
 import useAdoItems from './hooks/useAdoItems';
 import useNotes from './hooks/useNotes';
 import useDayLocks from './hooks/useDayLocks';
-import AdoService from './services/adoService.js';
+import useAreaAliases from './hooks/useAreaAliases';
+import AdoService from './services/adoService';
 import {
   trimLunchOverlap,
   splitByLunch,
@@ -26,6 +27,7 @@ function App() {
   const { items, setItems } = useAdoItems();
   const { notes, setNotes, itemNotes, setItemNotes } = useNotes();
   const { lockedDays, setLockedDays } = useDayLocks();
+  const { aliases: areaAliases, setAliases: setAreaAliases } = useAreaAliases();
   const [itemsFetched, setItemsFetched] = useState(false);
   const [sidebarWidth, setSidebarWidth] = useState(
     settings.sidebarWidth || 320
@@ -383,6 +385,8 @@ function App() {
           onCommentDrop={handleBlockCommentDrop}
           lockedDays={lockedDays}
           setLockedDays={setLockedDays}
+          areaAliases={areaAliases}
+          setAreaAliases={setAreaAliases}
           animDirection={weekAnim}
         />
         <Notes notes={notes} onAdd={addNote} onDelete={deleteNote} />
