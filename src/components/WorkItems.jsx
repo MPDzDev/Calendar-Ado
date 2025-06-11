@@ -24,7 +24,8 @@ function renderTree(
   notesMap,
   highlightIds,
   featureCollapsed,
-  toggleFeature
+  toggleFeature,
+  openItem
 ) {
   return nodes.map((node) => {
     const isFeature = node.type?.toLowerCase() === 'feature';
@@ -40,6 +41,7 @@ function renderTree(
             onNoteDrop={onNoteDrop}
             highlight={highlightIds?.has(node.id)}
             pill={node.type?.toLowerCase() === 'task' && level > 0}
+            onOpen={openItem}
           />
           {isFeature && node.children.length > 0 && (
             <span className="ml-1 text-xs">{collapsed ? '▶' : '▼'}</span>
@@ -53,7 +55,8 @@ function renderTree(
             notesMap,
             highlightIds,
             featureCollapsed,
-            toggleFeature
+            toggleFeature,
+            openItem
           )}
       </div>
     );
@@ -252,6 +255,19 @@ export default function WorkItems({
     const value = settings.azureIteration === it ? '' : it;
     // Update local filter state without refetching.
     updateSettings({ azureIteration: value });
+  };
+
+  const openItem = (item) => {
+    const org = settings.azureOrg;
+    const url = org
+      ? `https://dev.azure.com/${org}/_workitems/edit/${item.id}`
+      : `https://dev.azure.com/_workitems/edit/${item.id}`;
+    const payload = { id: item.id, hours: 0, days: {}, url };
+    if (window.api && window.api.openWorkItems) {
+      window.api.openWorkItems([payload]);
+    } else {
+      window.open(url, '_blank');
+    }
   };
 
   return (
@@ -482,7 +498,8 @@ export default function WorkItems({
                     itemNotes,
                     highlightedIds,
                     featureCollapsed,
-                    toggleFeature
+                    toggleFeature,
+                    openItem
                   )}
                 </div>
               )}
