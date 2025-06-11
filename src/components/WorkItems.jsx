@@ -29,7 +29,7 @@ function renderTree(
   return nodes.map((node) => {
     const isFeature = node.type?.toLowerCase() === 'feature';
     const collapsed = featureCollapsed[node.id];
-    const containerClass = isFeature ? 'block' : 'inline-block';
+    const containerClass = isFeature ? 'block w-full' : 'inline-block';
     return (
       <div key={node.id} className={containerClass}>
         <div className={isFeature ? 'flex items-center cursor-pointer' : ''} onClick={() => isFeature && toggleFeature(node.id)}>
@@ -41,7 +41,7 @@ function renderTree(
             highlight={highlightIds?.has(node.id)}
             pill={node.type?.toLowerCase() === 'task' && level > 0}
           />
-          {isFeature && (
+          {isFeature && node.children.length > 0 && (
             <span className="ml-1 text-xs">{collapsed ? '▶' : '▼'}</span>
           )}
         </div>

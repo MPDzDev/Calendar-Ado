@@ -147,3 +147,6 @@ body,
   animation: rotateA 2s ease-in-out;
   transform-origin: top center;
 }
+
+.task-pill { @apply rounded-b-full rounded-t-md; }
+
