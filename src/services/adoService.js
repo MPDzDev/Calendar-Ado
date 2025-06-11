@@ -21,7 +21,7 @@ export default class AdoService {
         : (str) => Buffer.from(str).toString('base64');
   }
 
-  _buildQuery() {
+  _buildQuery(since = null) {
     const projectFilter = this.projects.length
       ? `[System.TeamProject] in (${this.projects
           .map((p) => `'${p}'`)
@@ -36,13 +36,16 @@ export default class AdoService {
     const iterationFilter = this.iteration
       ? `[System.IterationPath] under '${this.iteration}' and `
       : '';
+    const dateFilter = since
+      ? `[System.ChangedDate] >= '${since.toISOString()}'`
+      : '[System.ChangedDate] >= @Today - 30';
     return (
       'Select [System.Id] From WorkItems Where ' +
       projectFilter +
       tagFilter +
       areaFilter +
       iterationFilter +
-      '[System.ChangedDate] >= @Today - 30 order by [System.ChangedDate] desc'
+      `${dateFilter} order by [System.ChangedDate] desc`
     );
   }
 
@@ -79,7 +82,7 @@ export default class AdoService {
     );
   }
 
-  async getWorkItems() {
+  async getWorkItems(since = null) {
     if (!this.org || !this.token) {
       return [];
     }
@@ -95,7 +98,7 @@ export default class AdoService {
             Authorization: auth,
           },
           body: JSON.stringify({
-            query: this._buildQuery(),
+            query: this._buildQuery(since),
           }),
         }
       );

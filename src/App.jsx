@@ -24,7 +24,7 @@ import { getWeekNumber } from './utils/date';
 function App() {
   const { blocks, setBlocks } = useWorkBlocks();
   const { settings, setSettings } = useSettings();
-  const { items, setItems } = useAdoItems();
+  const { items, setItems, lastFetch, setLastFetch } = useAdoItems();
   const { notes, setNotes, itemNotes, setItemNotes } = useNotes();
   const { lockedDays, setLockedDays } = useDayLocks();
   const { aliases: areaAliases, setAliases: setAreaAliases } = useAreaAliases();
@@ -80,7 +80,8 @@ function App() {
       azureArea,
       azureIteration
     );
-    service.getWorkItems().then((data) => {
+    const since = lastFetch ? new Date(lastFetch) : null;
+    service.getWorkItems(since).then((data) => {
       setItems((prev) => {
         const map = new Map(data.map((i) => [i.id, i]));
         const blockIds = new Set();
@@ -96,6 +97,7 @@ function App() {
         return Array.from(map.values());
       });
       setItemsFetched(true);
+      setLastFetch(Date.now());
     });
   }, [
     settings.azureOrg,
@@ -106,6 +108,7 @@ function App() {
     settings.azureIteration,
     setItems,
     blocks,
+    lastFetch,
   ]);
 
   useEffect(() => {
