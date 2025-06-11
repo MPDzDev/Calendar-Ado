@@ -94,16 +94,9 @@ function App() {
     const since = lastFetch ? new Date(lastFetch) : null;
     service.getWorkItems(since).then((data) => {
       setItems((prev) => {
-        const map = new Map(data.map((i) => [i.id, i]));
-        const blockIds = new Set();
-        blocks.forEach((b) => {
-          if (b.itemId) blockIds.add(b.itemId);
-          if (b.taskId) blockIds.add(b.taskId);
-        });
-        prev.forEach((i) => {
-          if (blockIds.has(i.id) && !map.has(i.id)) {
-            map.set(i.id, i);
-          }
+        const map = new Map(prev.map((i) => [i.id, i]));
+        data.forEach((item) => {
+          map.set(item.id, item);
         });
         return Array.from(map.values());
       });
