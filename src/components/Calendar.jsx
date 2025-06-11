@@ -836,16 +836,17 @@ export default function Calendar({
           </div>
         ))}
       </div>
-      <div
-        className="pointer-events-auto absolute inset-0 grid gap-2 z-20"
-        style={{ gridTemplateColumns: `repeat(${days.length}, minmax(0, 1fr))` }}
-      >
-        {groups.map((g, i) => (
-          <div
-            key={i}
-            className="bg-gray-500/40 dark:bg-gray-600/40 curtain-slide-down flex flex-col items-center pt-2 rounded"
-            style={{ gridColumn: `${g.start + 1} / ${g.end + 2}` }}
-          >
+      {groups.length > 0 && (
+        <div
+          className="pointer-events-auto absolute inset-0 grid gap-2 z-20"
+          style={{ gridTemplateColumns: `repeat(${days.length}, minmax(0, 1fr))` }}
+        >
+          {groups.map((g, i) => (
+            <div
+              key={i}
+              className="bg-gray-500/40 dark:bg-gray-600/40 curtain-slide-down flex flex-col items-center pt-2 rounded"
+              style={{ gridColumn: `${g.start + 1} / ${g.end + 2}` }}
+            >
             <span
               className="text-4xl text-gray-700 dark:text-gray-300 cursor-pointer"
               onClick={() => {
@@ -882,8 +883,9 @@ export default function Calendar({
               ))}
             </div>
           </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
       {taskSelect && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-yellow-50 dark:bg-gray-800 dark:text-white p-4 max-h-64 overflow-y-auto">
