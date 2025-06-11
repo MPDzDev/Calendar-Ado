@@ -846,7 +846,16 @@ export default function Calendar({
             className="bg-gray-500/40 dark:bg-gray-600/40 curtain-slide-down flex flex-col items-center pt-2 rounded"
             style={{ gridColumn: `${g.start + 1} / ${g.end + 2}` }}
           >
-            <span className="text-4xl text-gray-700 dark:text-gray-300">🔒</span>
+            <span
+              className="text-4xl text-gray-700 dark:text-gray-300 cursor-pointer"
+              onClick={() => {
+                for (let d = g.start; d <= g.end; d++) {
+                  toggleDayLock(days[d]);
+                }
+              }}
+            >
+              🔒
+            </span>
             <div className="mt-2 bg-white/80 dark:bg-gray-700/80 text-xs rounded px-2 py-1 pointer-events-auto w-full overflow-hidden divide-y divide-gray-300 dark:divide-gray-600">
               {Object.entries(g.summary).map(([area, hrs]) => (
                 <div
