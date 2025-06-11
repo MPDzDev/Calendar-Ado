@@ -322,6 +322,8 @@ This command first builds the React app and then packages the Electron applicati
 
 Only **Tasks** and **Bugs/Transversal Activities** can be scheduled directly on the calendar. Items like **Features** and **User Stories** act as containers and must have child tasks created before you can plan them. Work items are color coded by type (e.g., yellow for tasks, red for bugs, purple for features) so you can quickly distinguish them. This restriction keeps effort reporting aligned at the task level in ADO.
 
+Test Case and Test Suite work items are ignored and will not appear in the work item list.
+
 
 ## License
 

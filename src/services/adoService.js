@@ -36,6 +36,8 @@ export default class AdoService {
     const iterationFilter = this.iteration
       ? `[System.IterationPath] under '${this.iteration}' and `
       : '';
+    const typeFilter =
+      "[System.WorkItemType] not in ('Test Case','Test Suite') and ";
     const dateFilter = since
       ? `[System.ChangedDate] >= '${since.toISOString().split('T')[0]}'`
       : '[System.ChangedDate] >= @Today - 30';
@@ -45,6 +47,7 @@ export default class AdoService {
       tagFilter +
       areaFilter +
       iterationFilter +
+      typeFilter +
       `${dateFilter} order by [System.ChangedDate] desc`
     );
   }
