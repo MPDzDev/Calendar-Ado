@@ -28,12 +28,13 @@ function renderTree(
   openItem
 ) {
   return nodes.map((node) => {
-    const isFeature = node.type?.toLowerCase() === 'feature';
+    const type = node.type?.toLowerCase();
+    const isCollapsible = type === 'feature' || type === 'epic';
     const collapsed = featureCollapsed[node.id];
-    const containerClass = isFeature ? 'block w-full' : 'inline-block';
+    const containerClass = isCollapsible ? 'block w-full' : 'inline-block';
     return (
       <div key={node.id} className={containerClass}>
-        <div className={isFeature ? 'flex items-center cursor-pointer' : ''} onClick={() => isFeature && toggleFeature(node.id)}>
+        <div className={isCollapsible ? 'flex items-center cursor-pointer' : ''} onClick={() => isCollapsible && toggleFeature(node.id)}>
           <WorkItem
             item={node}
             level={level}
@@ -43,7 +44,7 @@ function renderTree(
             pill={node.type?.toLowerCase() === 'task' && level > 0}
             onOpen={openItem}
           />
-          {isFeature && node.children.length > 0 && (
+          {isCollapsible && node.children.length > 0 && (
             <span className="ml-1 text-xs">{collapsed ? '▶' : '▼'}</span>
           )}
         </div>
@@ -186,7 +187,7 @@ export default function WorkItems({
     });
 
     const featureIds = items
-      .filter((i) => i.type?.toLowerCase() === 'feature')
+      .filter((i) => ['feature', 'epic'].includes(i.type?.toLowerCase()))
       .map((i) => i.id);
 
     setFeatureCollapsed((prev) => {
@@ -307,6 +308,7 @@ export default function WorkItems({
           >
             <option value="all">All</option>
             <option value="feature">Features</option>
+            <option value="epic">Epics</option>
             <option value="user story">User Stories</option>
             <option value="bug">Bugs</option>
             <option value="task">Tasks</option>
