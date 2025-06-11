@@ -93,3 +93,38 @@ export function adjustForOverlap(blocks, newBlock) {
   return { ...newBlock, start: start.toISOString(), end: end.toISOString() };
 }
 
+export function splitForOverlaps(blocks, newBlock) {
+  let segments = [newBlock];
+  const sorted = [...blocks].sort(
+    (a, b) => new Date(a.start) - new Date(b.start)
+  );
+  for (const b of sorted) {
+    const bStart = new Date(b.start);
+    const bEnd = new Date(b.end);
+    const newSegments = [];
+    for (const seg of segments) {
+      let start = new Date(seg.start);
+      let end = new Date(seg.end);
+      if (end <= bStart || start >= bEnd) {
+        newSegments.push(seg);
+        continue;
+      }
+      if (start < bStart) {
+        if (end > bEnd) {
+          newSegments.push({ ...seg, end: bStart.toISOString() });
+          newSegments.push({ ...seg, start: bEnd.toISOString() });
+        } else {
+          newSegments.push({ ...seg, end: bStart.toISOString() });
+        }
+      } else if (start >= bStart && start < bEnd) {
+        if (end > bEnd) {
+          newSegments.push({ ...seg, start: bEnd.toISOString() });
+        }
+      }
+    }
+    segments = newSegments;
+    if (!segments.length) break;
+  }
+  return segments;
+}
+

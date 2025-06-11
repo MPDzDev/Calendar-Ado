@@ -15,9 +15,8 @@ import useDayLocks from './hooks/useDayLocks';
 import AdoService from './services/adoService';
 import {
   trimLunchOverlap,
-  hasOverlap,
-  adjustForOverlap,
   splitByLunch,
+  splitForOverlaps,
 } from './utils/timeAdjust';
 import { getWeekNumber } from './utils/date';
 
@@ -238,22 +237,13 @@ function App() {
       const pieces = splitByLunch(block, settings);
       let updated = [...prev];
       for (const part of pieces) {
-        let adjusted = trimLunchOverlap(part, settings);
-        if (!adjusted) continue;
-
-        adjusted = hasOverlap(updated, adjusted)
-          ? adjustForOverlap(updated, adjusted)
-          : adjusted;
-        adjusted = adjusted ? trimLunchOverlap(adjusted, settings) : null;
-
-        while (adjusted && hasOverlap(updated, adjusted)) {
-          adjusted = adjustForOverlap(updated, adjusted);
-          adjusted = adjusted ? trimLunchOverlap(adjusted, settings) : null;
-        }
-
-        if (adjusted) {
-          updated.push(adjusted);
-        }
+        let segments = splitForOverlaps(updated, part);
+        segments.forEach((seg) => {
+          let adjusted = trimLunchOverlap(seg, settings);
+          if (adjusted) {
+            updated.push(adjusted);
+          }
+        });
       }
       return updated;
     });
@@ -277,23 +267,15 @@ function App() {
 
     let updated = [...others];
     pieces.forEach((part, index) => {
-      const blockData = { ...part, id: index === 0 ? id : Date.now() + index };
-      let adjusted = trimLunchOverlap(blockData, settings);
-      if (!adjusted) return;
-
-      adjusted = hasOverlap(updated, adjusted)
-        ? adjustForOverlap(updated, adjusted)
-        : adjusted;
-      adjusted = adjusted ? trimLunchOverlap(adjusted, settings) : null;
-
-      while (adjusted && hasOverlap(updated, adjusted)) {
-        adjusted = adjustForOverlap(updated, adjusted);
-        adjusted = adjusted ? trimLunchOverlap(adjusted, settings) : null;
-      }
-
-      if (adjusted) {
-        updated.push(adjusted);
-      }
+      const baseId = index === 0 ? id : Date.now() + index;
+      const segments = splitForOverlaps(updated, part);
+      segments.forEach((seg, idx) => {
+        const blockData = { ...seg, id: idx === 0 ? baseId : Date.now() + index * 100 + idx };
+        const adjusted = trimLunchOverlap(blockData, settings);
+        if (adjusted) {
+          updated.push(adjusted);
+        }
+      });
     });
 
     setBlocks(updated);
