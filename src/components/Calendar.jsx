@@ -16,6 +16,8 @@ export default function Calendar({
   onCommentDrop,
   lockedDays = {},
   setLockedDays,
+  areaAliases = {},
+  setAreaAliases,
   animDirection = null,
 }) {
   const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -118,6 +120,30 @@ export default function Calendar({
     const date = new Date(weekStart);
     date.setDate(weekStart.getDate() + idx);
     return summarizeByArea(blocks, items, date);
+  };
+
+  const lockedDayGroups = () => {
+    const groups = [];
+    let i = 0;
+    while (i < days.length) {
+      const idx = days[i];
+      if (isDayLocked(idx)) {
+        const start = i;
+        const summary = {};
+        while (i < days.length && isDayLocked(days[i])) {
+          const s = areaSummaryForDay(days[i]);
+          for (const [area, hrs] of Object.entries(s)) {
+            summary[area] = (summary[area] || 0) + hrs;
+          }
+          i++;
+        }
+        const end = i - 1;
+        groups.push({ start, end, summary });
+      } else {
+        i++;
+      }
+    }
+    return groups;
   };
 
   const toggleDayLock = (idx) => {
@@ -512,8 +538,10 @@ export default function Calendar({
       ? 'week-slide-right'
       : '';
 
+  const groups = lockedDayGroups();
+
   return (
-    <div className="overflow-hidden">
+    <div className="overflow-hidden relative">
       <div
         key={weekStart.toISOString()}
         className={`grid gap-2 ${animClass}`}
@@ -537,19 +565,6 @@ export default function Calendar({
               if (!isDayLocked(dayIdx)) setActiveDay(dayIdx);
             }}
           >
-            {isDayLocked(dayIdx) && (
-              <div className="absolute inset-0 bg-gray-500/50 dark:bg-gray-600/50 pointer-events-none z-20 curtain-slide-down flex flex-col items-center pt-2">
-                <span className="text-4xl text-gray-700 dark:text-gray-300">🔒</span>
-                <div className="mt-2 bg-white/80 dark:bg-gray-700/80 text-[10px] rounded px-2 py-1">
-                  {Object.entries(areaSummaryForDay(dayIdx)).map(([area, hrs]) => (
-                    <div key={area} className="flex justify-between gap-2 whitespace-nowrap">
-                      <span>{area}</span>
-                      <span>{hrs.toFixed(1)}h</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
             {hoverDay === dayIdx && (
               <button
                 className="absolute top-0 right-0 p-1 text-sm"
@@ -817,6 +832,45 @@ export default function Calendar({
                   }}
                 />
               )}
+            </div>
+          </div>
+        ))}
+      </div>
+      <div
+        className="pointer-events-none absolute inset-0 grid gap-2"
+        style={{ gridTemplateColumns: `repeat(${days.length}, minmax(0, 1fr))` }}
+      >
+        {groups.map((g, i) => (
+          <div
+            key={i}
+            className="bg-gray-500/50 dark:bg-gray-600/50 curtain-slide-down flex flex-col items-center pt-2 rounded"
+            style={{ gridColumn: `${g.start + 1} / ${g.end + 2}` }}
+          >
+            <span className="text-4xl text-gray-700 dark:text-gray-300">🔒</span>
+            <div className="mt-2 bg-white/80 dark:bg-gray-700/80 text-[10px] rounded px-2 py-1 pointer-events-auto w-full overflow-hidden">
+              {Object.entries(g.summary).map(([area, hrs]) => (
+                <div key={area} className="flex justify-between gap-2 whitespace-nowrap w-full">
+                  <span
+                    className="truncate cursor-pointer max-w-full"
+                    onContextMenu={(e) => {
+                      e.preventDefault();
+                      if (!setAreaAliases) return;
+                      const current = areaAliases[area] || area;
+                      const name = window.prompt('Custom name for area', current);
+                      if (name === null) return;
+                      if (name.trim() === '') {
+                        const { [area]: _removed, ...rest } = areaAliases;
+                        setAreaAliases(rest);
+                      } else {
+                        setAreaAliases({ ...areaAliases, [area]: name.trim() });
+                      }
+                    }}
+                  >
+                    {areaAliases[area] || area}
+                  </span>
+                  <span>{hrs.toFixed(1)}h</span>
+                </div>
+              ))}
             </div>
           </div>
         ))}
