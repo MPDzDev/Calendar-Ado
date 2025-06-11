@@ -838,13 +838,13 @@ export default function Calendar({
       </div>
       {groups.length > 0 && (
         <div
-          className="pointer-events-auto absolute inset-0 grid gap-2 z-20"
+          className="pointer-events-none absolute inset-0 grid gap-2 z-20"
           style={{ gridTemplateColumns: `repeat(${days.length}, minmax(0, 1fr))` }}
         >
           {groups.map((g, i) => (
             <div
               key={i}
-              className="bg-gray-500/40 dark:bg-gray-600/40 curtain-slide-down flex flex-col items-center pt-2 rounded"
+              className="pointer-events-auto bg-gray-500/40 dark:bg-gray-600/40 curtain-slide-down flex flex-col items-center pt-2 rounded"
               style={{ gridColumn: `${g.start + 1} / ${g.end + 2}` }}
             >
             <span
