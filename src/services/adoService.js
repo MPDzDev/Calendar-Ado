@@ -1,4 +1,4 @@
-import WorkItem from '../models/workItem';
+import WorkItem from '../models/workItem.js';
 
 export default class AdoService {
   constructor(
@@ -135,5 +135,38 @@ export default class AdoService {
     return items.filter(
       (i) => !states.includes((i.state || '').toLowerCase())
     );
+  }
+
+  findTreeProblems(items = []) {
+    const map = new Map(items.map((i) => [i.id, i]));
+    const issues = [];
+    for (const item of items) {
+      const type = (item.type || '').toLowerCase();
+      const parent = item.parentId ? map.get(item.parentId) : null;
+      const parentType = (parent?.type || '').toLowerCase();
+
+      if (type === 'feature') {
+        if (!parent || parentType !== 'epic') {
+          issues.push({ ...item, issue: 'Feature should be under Epic' });
+        }
+      } else if (type === 'user story' || type === 'evolution') {
+        if (!parent || parentType !== 'feature') {
+          issues.push({ ...item, issue: 'User Story/Evolution should be under Feature' });
+        }
+      } else if (type === 'task') {
+        if (!parent || !['user story', 'evolution'].includes(parentType)) {
+          issues.push({ ...item, issue: 'Task should be under User Story or Evolution' });
+        }
+      } else if (type === 'bug') {
+        if (!parent || parentType !== 'feature') {
+          issues.push({ ...item, issue: 'Bug should be under Feature' });
+        }
+      } else if (type === 'transversal activity') {
+        if (!parent || parentType !== 'feature') {
+          issues.push({ ...item, issue: 'Transversal Activity should be under Feature' });
+        }
+      }
+    }
+    return issues;
   }
 }

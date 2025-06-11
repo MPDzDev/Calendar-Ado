@@ -1,5 +1,5 @@
 import React from 'react';
-import AdoService from '../services/adoService';
+import AdoService from '../services/adoService.js';
 
 export default function DevOpsReview({ items = [], settings }) {
   const service = new AdoService(
@@ -13,7 +13,7 @@ export default function DevOpsReview({ items = [], settings }) {
 
   const missingArea = service.findMissingArea(items);
   const missingIteration = service.findMissingIteration(items);
-  const invalidState = service.findIncorrectState(items, settings.stateOrder);
+  const treeProblems = service.findTreeProblems(items);
 
   const renderList = (list) => (
     <ul className="ml-4 list-disc text-xs mt-1">
@@ -44,9 +44,9 @@ export default function DevOpsReview({ items = [], settings }) {
         </div>
         <div>
           <div className="font-semibold text-sm">
-            Incorrect State ({invalidState.length})
+            DevOps Tree Problems ({treeProblems.length})
           </div>
-          {invalidState.length > 0 && renderList(invalidState)}
+          {treeProblems.length > 0 && renderList(treeProblems)}
         </div>
       </div>
     </div>
