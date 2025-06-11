@@ -6,6 +6,7 @@ export default function WorkItem({
   notes = [],
   onNoteDrop,
   highlight = false,
+  pill = false,
 }) {
   const colors = {
     task: 'bg-yellow-100 dark:bg-yellow-700',
@@ -27,6 +28,7 @@ export default function WorkItem({
 
   const colorClass = colors[item.type?.toLowerCase()] || 'bg-gray-100 dark:bg-gray-700';
   const isFeature = item.type?.toLowerCase() === 'feature';
+  const isTask = item.type?.toLowerCase() === 'task';
 
   const dragStart = (e) => {
     e.dataTransfer.setData(
@@ -50,15 +52,17 @@ export default function WorkItem({
   };
 
   const highlightClass = highlight ? 'ring-2 ring-red-500' : '';
+  const asPill = isFeature || pill;
 
-  return isFeature ? (
+  return asPill ? (
     <div
-      className={`inline-block rounded-full px-2 py-1 bg-purple-200 dark:bg-purple-700 text-xs font-semibold mr-2 mb-2 ${highlightClass}`}
+      className={`inline-block rounded-full px-2 py-1 ${colorClass} text-xs font-semibold mr-2 mb-2 ${highlightClass}`}
       draggable
       onDragStart={dragStart}
       onDragOver={allowDrop}
       onDrop={handleDrop}
       title={item.title}
+      style={{ marginLeft: `${level * 0.5}rem` }}
     >
       <span className="mr-1">{icons[item.type?.toLowerCase()]}</span>
       {item.title}

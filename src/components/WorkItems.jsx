@@ -17,21 +17,44 @@ function buildTree(items) {
   return roots;
 }
 
-function renderTree(nodes, level = 0, onNoteDrop, notesMap, highlightIds) {
+function renderTree(
+  nodes,
+  level = 0,
+  onNoteDrop,
+  notesMap,
+  highlightIds,
+  featureCollapsed,
+  toggleFeature
+) {
   return nodes.map((node) => {
     const isFeature = node.type?.toLowerCase() === 'feature';
-    const containerClass = isFeature ? 'inline-block' : '';
+    const collapsed = featureCollapsed[node.id];
+    const containerClass = isFeature ? 'block' : 'inline-block';
     return (
       <div key={node.id} className={containerClass}>
-        <WorkItem
-          item={node}
-          level={level}
-          notes={notesMap[node.id] || []}
-          onNoteDrop={onNoteDrop}
-          highlight={highlightIds?.has(node.id)}
-        />
-        {node.children.length > 0 &&
-          renderTree(node.children, level + 1, onNoteDrop, notesMap, highlightIds)}
+        <div className={isFeature ? 'flex items-center cursor-pointer' : ''} onClick={() => isFeature && toggleFeature(node.id)}>
+          <WorkItem
+            item={node}
+            level={level}
+            notes={notesMap[node.id] || []}
+            onNoteDrop={onNoteDrop}
+            highlight={highlightIds?.has(node.id)}
+            pill={node.type?.toLowerCase() === 'task' && level > 0}
+          />
+          {isFeature && (
+            <span className="ml-1 text-xs">{collapsed ? '▶' : '▼'}</span>
+          )}
+        </div>
+        {node.children.length > 0 && !collapsed &&
+          renderTree(
+            node.children,
+            level + 1,
+            onNoteDrop,
+            notesMap,
+            highlightIds,
+            featureCollapsed,
+            toggleFeature
+          )}
       </div>
     );
   });
@@ -51,7 +74,7 @@ export default function WorkItems({
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
   const [collapsed, setCollapsed] = useState({});
-  const [stateCollapsed, setStateCollapsed] = useState({});
+  const [featureCollapsed, setFeatureCollapsed] = useState({});
   const [activeFilterGroup, setActiveFilterGroup] = useState(null);
 
   const groupRefs = {
@@ -140,23 +163,13 @@ export default function WorkItems({
   );
 
   const grouped = allProjects.reduce((acc, project) => {
-    acc[project] = {};
+    acc[project] = [];
     return acc;
   }, {});
 
   filtered.forEach((item) => {
     const projectKey = item.project || 'Unknown';
-    let stateKey = item.state || 'Unknown';
-    if (
-      item.type?.toLowerCase() === 'task' &&
-      item.parentId &&
-      itemMap.has(item.parentId)
-    ) {
-      const parent = itemMap.get(item.parentId);
-      stateKey = parent.state || stateKey;
-    }
-    if (!grouped[projectKey][stateKey]) grouped[projectKey][stateKey] = [];
-    grouped[projectKey][stateKey].push(item);
+    grouped[projectKey].push(item);
   });
 
   useEffect(() => {
@@ -168,16 +181,15 @@ export default function WorkItems({
       });
       return next;
     });
-    const stateKeys = [];
-    keys.forEach((project) => {
-      Object.keys(grouped[project]).forEach((state) => {
-        stateKeys.push(`${project}|${state}`);
-      });
-    });
-    setStateCollapsed((prev) => {
+
+    const featureIds = items
+      .filter((i) => i.type?.toLowerCase() === 'feature')
+      .map((i) => i.id);
+
+    setFeatureCollapsed((prev) => {
       const next = { ...prev };
-      stateKeys.forEach((k) => {
-        if (!(k in next)) next[k] = false;
+      featureIds.forEach((id) => {
+        if (!(id in next)) next[id] = false;
       });
       return next;
     });
@@ -206,13 +218,11 @@ export default function WorkItems({
       return next;
     });
 
-  const toggleState = (project, state) => {
-    const key = `${project}|${state}`;
-    setStateCollapsed((prev) => ({
+  const toggleFeature = (id) =>
+    setFeatureCollapsed((prev) => ({
       ...prev,
-      [key]: !prev[key],
+      [id]: !prev[id],
     }));
-  };
 
   const availableTags = Array.from(
     new Set(items.flatMap((i) => i.tags || []))
@@ -425,7 +435,7 @@ export default function WorkItems({
         )}
       </div>
       <div className="flex-grow overflow-y-auto space-y-2 scroll-container min-h-0">
-        {Object.entries(grouped).map(([project, states]) => {
+        {Object.entries(grouped).map(([project, list]) => {
           const allowGroupDrop = (e) => {
             if (e.dataTransfer.types.includes('application/x-note')) {
               e.preventDefault();
@@ -436,8 +446,7 @@ export default function WorkItems({
             if (!raw) return;
             e.preventDefault();
             const note = JSON.parse(raw);
-            const firstState = Object.values(states)[0] || [];
-            const firstTree = buildTree(firstState);
+            const firstTree = buildTree(list);
             const first = firstTree[0];
             if (first) {
               onNoteDrop && onNoteDrop(first.id, note);
@@ -458,44 +467,20 @@ export default function WorkItems({
                   onDragOver={allowGroupDrop}
                   onDrop={handleGroupDrop}
                 >
-                  {Object.keys(states)
-                    .sort((a, b) => {
-                      const order = settings.stateOrder || [];
-                      const ia = order.findIndex(
-                        (s) => s.toLowerCase() === a.toLowerCase()
-                      );
-                      const ib = order.findIndex(
-                        (s) => s.toLowerCase() === b.toLowerCase()
-                      );
-                      if (ia === -1 && ib === -1) return a.localeCompare(b);
-                      if (ia === -1) return 1;
-                      if (ib === -1) return -1;
-                      return ia - ib;
-                    })
-                    .map((state) => {
-                      const list = states[state];
-                      const tree = buildTree(list);
-                      const key = `${project}|${state}`;
-                      const collapsedState = stateCollapsed[key];
-                      return (
-                        <div key={state} className="mb-2">
-                          <div
-                            className="font-semibold italic cursor-pointer flex items-center justify-between"
-                            onClick={() => toggleState(project, state)}
-                          >
-                            <span>{state}</span>
-                            <span>{collapsedState ? '▶' : '▼'}</span>
-                          </div>
-                          {!collapsedState &&
-                            renderTree(tree, 0, onNoteDrop, itemNotes, highlightedIds)}
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            );
-          })}
+                  {renderTree(
+                    buildTree(list),
+                    0,
+                    onNoteDrop,
+                    itemNotes,
+                    highlightedIds,
+                    featureCollapsed,
+                    toggleFeature
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   </div>
