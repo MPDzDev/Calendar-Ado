@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import Calendar from './components/Calendar';
 import HoursSummary from './components/HoursSummary';
 import WorkItems from './components/WorkItems';
@@ -36,6 +36,17 @@ function App() {
   const [resizing, setResizing] = useState(false);
   const [showReminder, setShowReminder] = useState(false);
   const [panelTab, setPanelTab] = useState('workItems');
+
+  const usedAreas = useMemo(() => {
+    const set = new Set();
+    const itemMap = Object.fromEntries(items.map((i) => [i.id, i]));
+    for (const b of blocks) {
+      const item = itemMap[b.itemId || b.taskId];
+      const area = item?.area || 'Unassigned';
+      if (area) set.add(area);
+    }
+    return Array.from(set).sort();
+  }, [blocks, items]);
 
   const addNote = (text) =>
     setNotes((prev) => [...prev, { id: Date.now(), text }]);
@@ -389,7 +400,14 @@ function App() {
           setAreaAliases={setAreaAliases}
           animDirection={weekAnim}
         />
-        <Notes notes={notes} onAdd={addNote} onDelete={deleteNote} />
+        <Notes
+          notes={notes}
+          onAdd={addNote}
+          onDelete={deleteNote}
+          areas={usedAreas}
+          areaAliases={areaAliases}
+          setAreaAliases={setAreaAliases}
+        />
       </div>
       <div
         className="resizer"
