@@ -857,7 +857,7 @@ export default function Calendar({
             >
               🔒
             </span>
-            <div className="mt-2 bg-white/80 dark:bg-gray-700/80 text-xs rounded px-2 py-1 pointer-events-auto w-full overflow-hidden divide-y divide-gray-300 dark:divide-gray-600">
+            <div className="mt-2 bg-white/80 dark:bg-gray-700/80 text-s rounded px-2 py-1 pointer-events-auto w-full overflow-hidden divide-y divide-gray-300 dark:divide-gray-600">
               {Object.entries(g.summary).map(([area, hrs]) => (
                 <div
                   key={area}
