@@ -53,11 +53,31 @@ export default class AdoService {
   }
 
   async _fetchItems(ids, auth) {
-    const batch = ids.join(',');
     const res = await fetch(
-      `https://dev.azure.com/${this.org}/_apis/wit/workitems?ids=${batch}&fields=System.Id,System.Title,System.WorkItemType,System.Parent,System.TeamProject,System.Tags,System.AreaPath,System.IterationPath,System.State,Microsoft.VSTS.Scheduling.StoryPoints,Microsoft.VSTS.Common.AcceptanceCriteria&api-version=7.0`,
+      `https://dev.azure.com/${this.org}/_apis/wit/workitemsbatch?api-version=7.0`,
       {
-        headers: { Authorization: auth },
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: auth,
+        },
+        body: JSON.stringify({
+          ids,
+          fields: [
+            'System.Id',
+            'System.Title',
+            'System.WorkItemType',
+            'System.Parent',
+            'System.TeamProject',
+            'System.Tags',
+            'System.AreaPath',
+            'System.IterationPath',
+            'System.State',
+            'Microsoft.VSTS.Scheduling.StoryPoints',
+            'Microsoft.VSTS.Common.AcceptanceCriteria',
+          ],
+          expand: 'relations',
+        }),
       }
     );
     if (!res.ok) {
@@ -191,8 +211,16 @@ export default class AdoService {
           issues.push({ ...item, issue: 'Task should be under User Story or Evolution' });
         }
       } else if (type === 'bug') {
-        if (!parent || parentType !== 'feature') {
-          issues.push({ ...item, issue: 'Bug should be under Feature' });
+        const linked = (item.dependencies || []).some((id) => {
+          const dep = map.get(id);
+          const depType = (dep?.type || '').toLowerCase();
+          return ['user story', 'feature'].includes(depType);
+        });
+        if (!linked) {
+          issues.push({
+            ...item,
+            issue: 'Bug should be related to User Story or Feature',
+          });
         }
       } else if (type === 'transversal activity') {
         if (!parent || parentType !== 'feature') {
