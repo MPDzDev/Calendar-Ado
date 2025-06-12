@@ -55,7 +55,7 @@ export default class AdoService {
   async _fetchItems(ids, auth) {
     const batch = ids.join(',');
     const res = await fetch(
-      `https://dev.azure.com/${this.org}/_apis/wit/workitems?ids=${batch}&fields=System.Id,System.Title,System.WorkItemType,System.Parent,System.TeamProject,System.Tags,System.AreaPath,System.IterationPath,System.State,Microsoft.VSTS.Scheduling.StoryPoints,Microsoft.VSTS.Common.AcceptanceCriteria&$expand=relations&api-version=7.0`,
+      `https://dev.azure.com/${this.org}/_apis/wit/workitems?ids=${batch}&fields=System.Id,System.Title,System.WorkItemType,System.Parent,System.TeamProject,System.Tags,System.AreaPath,System.IterationPath,System.State,Microsoft.VSTS.Scheduling.StoryPoints,Microsoft.VSTS.Common.AcceptanceCriteria&api-version=7.0`,
       {
         headers: { Authorization: auth },
       }
