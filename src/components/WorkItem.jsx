@@ -14,7 +14,7 @@ export default function WorkItem({
     'user story': 'bg-blue-100 dark:bg-blue-700',
     bug: 'bg-red-100 dark:bg-red-700',
     feature: 'bg-purple-100 dark:bg-purple-700',
-    epic: 'bg-indigo-100 dark:bg-indigo-700',
+    epic: 'bg-orange-100 dark:bg-orange-700',
     // color for transversal activities
     'transversal activity': 'bg-green-100 dark:bg-green-700',
   };
