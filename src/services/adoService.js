@@ -126,7 +126,11 @@ export default class AdoService {
     const map = {};
     data.value.forEach((d) => {
       map[d.id.toString()] = (d.relations || [])
-        .filter((r) => ['Predecessor', 'Successor'].includes(r.attributes?.name))
+        .filter(
+          (r) =>
+            ['Predecessor', 'Successor'].includes(r.attributes?.name) ||
+            r.rel === 'System.LinkTypes.Related'
+        )
         .map((r) => r.url.split('/').pop());
     });
     return map;
@@ -236,11 +240,16 @@ export default class AdoService {
           issues.push({ ...item, issue: 'Task should be under User Story or Evolution' });
         }
       } else if (type === 'bug') {
-        const linked = (item.dependencies || []).some((id) => {
+        let linked = (item.dependencies || []).some((id) => {
           const dep = map.get(id);
           const depType = (dep?.type || '').toLowerCase();
           return ['user story', 'feature'].includes(depType);
         });
+        if (!linked && item.parentId) {
+          const dep = map.get(item.parentId);
+          const depType = (dep?.type || '').toLowerCase();
+          linked = ['user story', 'feature'].includes(depType);
+        }
         if (!linked) {
           issues.push({
             ...item,
