@@ -53,33 +53,31 @@ export default class AdoService {
   }
 
   async _fetchItems(ids, auth) {
-    const res = await fetch(
-      `https://dev.azure.com/${this.org}/_apis/wit/workitemsbatch?api-version=7.0`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: auth,
-        },
-        body: JSON.stringify({
-          ids,
-          fields: [
-            'System.Id',
-            'System.Title',
-            'System.WorkItemType',
-            'System.Parent',
-            'System.TeamProject',
-            'System.Tags',
-            'System.AreaPath',
-            'System.IterationPath',
-            'System.State',
-            'Microsoft.VSTS.Scheduling.StoryPoints',
-            'Microsoft.VSTS.Common.AcceptanceCriteria',
-          ],
-          expand: 'relations',
-        }),
-      }
-    );
+    const fields = [
+      'System.Id',
+      'System.Title',
+      'System.WorkItemType',
+      'System.Parent',
+      'System.TeamProject',
+      'System.Tags',
+      'System.AreaPath',
+      'System.IterationPath',
+      'System.State',
+      'Microsoft.VSTS.Scheduling.StoryPoints',
+      'Microsoft.VSTS.Common.AcceptanceCriteria',
+    ];
+
+    const url =
+      `https://dev.azure.com/${this.org}/_apis/wit/workitems?` +
+      `ids=${ids.join(',')}` +
+      `&fields=${encodeURIComponent(fields.join(','))}` +
+      `&$expand=relations&api-version=7.0`;
+
+    const res = await fetch(url, {
+      headers: {
+        Authorization: auth,
+      },
+    });
     if (!res.ok) {
       return [];
     }
