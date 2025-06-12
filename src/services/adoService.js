@@ -148,13 +148,6 @@ export default class AdoService {
     }
   }
 
-  findMissingArea(items = []) {
-    return items.filter((i) => !(i.area && i.area.trim()));
-  }
-
-  findMissingIteration(items = []) {
-    return items.filter((i) => !(i.iteration && i.iteration.trim()));
-  }
 
   findIncorrectState(items = [], validStates = []) {
     if (!Array.isArray(validStates) || validStates.length === 0) return [];
