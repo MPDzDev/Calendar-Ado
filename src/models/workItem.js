@@ -9,7 +9,6 @@ export default class WorkItem {
     area = '',
     iteration = '',
     state = '',
-    startDate = '',
     targetDate = '',
     storyPoints = null,
     acceptanceCriteria = '',
@@ -24,7 +23,6 @@ export default class WorkItem {
     this.area = area;
     this.iteration = iteration;
     this.state = state;
-    this.startDate = startDate;
     this.targetDate = targetDate;
     this.storyPoints = storyPoints;
     this.acceptanceCriteria = acceptanceCriteria;
