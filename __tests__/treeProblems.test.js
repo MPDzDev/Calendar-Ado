@@ -14,6 +14,7 @@ test('detects invalid hierarchy', () => {
     { id: '9', title: 'Bug wrong relation type', type: 'Bug', dependencies: ['7'] },
     { id: '10', title: 'Bug ok story relation', type: 'Bug', dependencies: ['5'] },
     { id: '11', title: 'Bug ok feature relation', type: 'Bug', dependencies: ['3'] },
+    { id: '14', title: 'Bug with parent story', type: 'Bug', parentId: '5' },
     { id: '12', title: 'Transversal bad', type: 'Transversal Activity', parentId: '5' },
     { id: '13', title: 'Transversal ok', type: 'Transversal Activity', parentId: '3' },
   ];
@@ -25,5 +26,6 @@ test('detects invalid hierarchy', () => {
   expect(ids).not.toContain('7');
   expect(ids).not.toContain('10');
   expect(ids).not.toContain('11');
+  expect(ids).not.toContain('14');
   expect(ids).not.toContain('13');
 });
