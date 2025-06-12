@@ -252,17 +252,22 @@ function App() {
 
   const addBlock = (block) => {
     setBlocks((prev) => {
+      const baseTime = Date.now();
       const pieces = splitByLunch(block, settings);
       let updated = [...prev];
-      for (const part of pieces) {
-        let segments = splitForOverlaps(updated, part);
-        segments.forEach((seg) => {
-          let adjusted = trimLunchOverlap(seg, settings);
+      pieces.forEach((part, pIdx) => {
+        const segments = splitForOverlaps(updated, part);
+        segments.forEach((seg, idx) => {
+          const blockData = {
+            ...seg,
+            id: baseTime + pIdx * 100 + idx,
+          };
+          const adjusted = trimLunchOverlap(blockData, settings);
           if (adjusted) {
             updated.push(adjusted);
           }
         });
-      }
+      });
       return updated;
     });
   };
