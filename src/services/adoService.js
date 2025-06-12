@@ -55,7 +55,7 @@ export default class AdoService {
   async _fetchItems(ids, auth) {
     const batch = ids.join(',');
     const res = await fetch(
-      `https://dev.azure.com/${this.org}/_apis/wit/workitems?ids=${batch}&fields=System.Id,System.Title,System.WorkItemType,System.Parent,System.TeamProject,System.Tags,System.AreaPath,System.IterationPath,System.State&api-version=7.0`,
+      `https://dev.azure.com/${this.org}/_apis/wit/workitems?ids=${batch}&fields=System.Id,System.Title,System.WorkItemType,System.Parent,System.TeamProject,System.Tags,System.AreaPath,System.IterationPath,System.State,Microsoft.VSTS.Scheduling.StoryPoints,Microsoft.VSTS.Common.AcceptanceCriteria,Custom.StartDate,Custom.TargetDate&$expand=relations&api-version=7.0`,
       {
         headers: { Authorization: auth },
       }
@@ -81,6 +81,22 @@ export default class AdoService {
           area: d.fields['System.AreaPath'] || '',
           iteration: d.fields['System.IterationPath'] || '',
           state: d.fields['System.State'] || '',
+          startDate:
+            d.fields['Custom.StartDate'] ||
+            d.fields['Microsoft.VSTS.Common.StartDate'] ||
+            '',
+          targetDate:
+            d.fields['Custom.TargetDate'] ||
+            d.fields['Microsoft.VSTS.Common.TargetDate'] ||
+            '',
+          storyPoints: d.fields['Microsoft.VSTS.Scheduling.StoryPoints'] ?? null,
+          acceptanceCriteria:
+            d.fields['Microsoft.VSTS.Common.AcceptanceCriteria'] || '',
+          dependencies: (d.relations || [])
+            .filter((r) =>
+              ['Predecessor', 'Successor'].includes(r.attributes?.name)
+            )
+            .map((r) => r.url.split('/').pop()),
         })
     );
   }
@@ -148,6 +164,11 @@ export default class AdoService {
     }
   }
 
+  findMissingAcceptanceCriteria(items = []) {
+    return items.filter(
+      (i) => !(i.acceptanceCriteria && i.acceptanceCriteria.trim())
+    );
+  }
 
   findIncorrectState(items = [], validStates = []) {
     if (!Array.isArray(validStates) || validStates.length === 0) return [];
