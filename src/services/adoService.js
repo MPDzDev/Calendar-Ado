@@ -71,7 +71,7 @@ export default class AdoService {
       `https://dev.azure.com/${this.org}/_apis/wit/workitems?` +
       `ids=${ids.join(',')}` +
       `&fields=${encodeURIComponent(fields.join(','))}` +
-      `&$expand=relations&api-version=7.0`;
+      `&api-version=7.0`;
 
     const res = await fetch(url, {
       headers: {
@@ -102,13 +102,34 @@ export default class AdoService {
           storyPoints: d.fields['Microsoft.VSTS.Scheduling.StoryPoints'] ?? null,
           acceptanceCriteria:
             d.fields['Microsoft.VSTS.Common.AcceptanceCriteria'] || '',
-          dependencies: (d.relations || [])
-            .filter((r) =>
-              ['Predecessor', 'Successor'].includes(r.attributes?.name)
-            )
-            .map((r) => r.url.split('/').pop()),
+          dependencies: [],
         })
     );
+  }
+
+  async _fetchRelations(ids, auth) {
+    const url =
+      `https://dev.azure.com/${this.org}/_apis/wit/workitems?` +
+      `ids=${ids.join(',')}` +
+      `&$expand=relations&api-version=7.0`;
+
+    const res = await fetch(url, {
+      headers: {
+        Authorization: auth,
+      },
+    });
+    if (!res.ok) {
+      return {};
+    }
+
+    const data = await res.json();
+    const map = {};
+    data.value.forEach((d) => {
+      map[d.id.toString()] = (d.relations || [])
+        .filter((r) => ['Predecessor', 'Successor'].includes(r.attributes?.name))
+        .map((r) => r.url.split('/').pop());
+    });
+    return map;
   }
 
   async getWorkItems(since = null) {
@@ -144,6 +165,10 @@ export default class AdoService {
       for (let i = 0; i < ids.length; i += 200) {
         const batchIds = ids.slice(i, i + 200);
         const items = await this._fetchItems(batchIds, auth);
+        const deps = await this._fetchRelations(batchIds, auth);
+        items.forEach((it) => {
+          it.dependencies = deps[it.id] || [];
+        });
         results.push(...items);
       }
       const map = new Map(results.map((i) => [i.id, i]));
@@ -157,7 +182,9 @@ export default class AdoService {
       while (missing.size > 0) {
         const batch = Array.from(missing).slice(0, 200);
         const parents = await this._fetchItems(batch, auth);
+        const parentDeps = await this._fetchRelations(batch, auth);
         parents.forEach((p) => {
+          p.dependencies = parentDeps[p.id] || [];
           if (!map.has(p.id)) {
             map.set(p.id, p);
             results.push(p);
