@@ -348,14 +348,8 @@ function App() {
     settings.azureArea,
     settings.azureIteration
   );
-  const missingArea = reviewService.findMissingArea(items);
-  const missingIteration = reviewService.findMissingIteration(items);
   const treeProblems = reviewService.findTreeProblems(items);
-  const highlightedIds = new Set([
-    ...missingArea.map((i) => i.id),
-    ...missingIteration.map((i) => i.id),
-    ...treeProblems.map((i) => i.id),
-  ]);
+  const highlightedIds = new Set(treeProblems.map((i) => i.id));
 
   return (
     <div

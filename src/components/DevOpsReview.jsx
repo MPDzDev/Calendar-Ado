@@ -11,8 +11,6 @@ export default function DevOpsReview({ items = [], settings }) {
     settings.azureIteration
   );
 
-  const missingArea = service.findMissingArea(items);
-  const missingIteration = service.findMissingIteration(items);
   const treeProblems = service.findTreeProblems(items);
 
   const renderList = (list) => (
@@ -30,18 +28,6 @@ export default function DevOpsReview({ items = [], settings }) {
     <div className="flex flex-col h-full overflow-y-auto">
       <h2 className="font-semibold mb-2">DevOps Review</h2>
       <div className="space-y-4">
-        <div>
-          <div className="font-semibold text-sm">
-            Missing Area Path ({missingArea.length})
-          </div>
-          {missingArea.length > 0 && renderList(missingArea)}
-        </div>
-        <div>
-          <div className="font-semibold text-sm">
-            Missing Iteration ({missingIteration.length})
-          </div>
-          {missingIteration.length > 0 && renderList(missingIteration)}
-        </div>
         <div>
           <div className="font-semibold text-sm">
             DevOps Tree Problems ({treeProblems.length})
