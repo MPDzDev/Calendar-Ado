@@ -89,7 +89,8 @@ function App() {
       azureProjects,
       azureTags,
       azureArea,
-      azureIteration
+      azureIteration,
+      settings.enableDevOpsReview
     );
     let since = null;
     if (!full) {
@@ -351,9 +352,12 @@ function App() {
     settings.azureProjects,
     settings.azureTags,
     settings.azureArea,
-    settings.azureIteration
+    settings.azureIteration,
+    settings.enableDevOpsReview
   );
-  const treeProblems = reviewService.findTreeProblems(items);
+  const treeProblems = settings.enableDevOpsReview
+    ? reviewService.findTreeProblems(items)
+    : [];
   const highlightedIds = new Set(treeProblems.map((i) => i.id));
 
   return (
@@ -443,16 +447,18 @@ function App() {
           >
             Work Items
           </button>
-          <button
-            className={`px-2 py-1 text-xs ${
-              panelTab === 'review'
-                ? 'bg-blue-500 text-white'
-                : 'bg-gray-200 dark:bg-gray-700'
-            }`}
-            onClick={() => setPanelTab('review')}
-          >
-            DevOps Review
-          </button>
+          {settings.enableDevOpsReview && (
+            <button
+              className={`px-2 py-1 text-xs ${
+                panelTab === 'review'
+                  ? 'bg-blue-500 text-white'
+                  : 'bg-gray-200 dark:bg-gray-700'
+              }`}
+              onClick={() => setPanelTab('review')}
+            >
+              DevOps Review
+            </button>
+          )}
         </div>
         {panelTab === 'workItems' && (
           <WorkItems
@@ -466,7 +472,7 @@ function App() {
             highlightedIds={highlightedIds}
           />
         )}
-        {panelTab === 'review' && (
+        {panelTab === 'review' && settings.enableDevOpsReview && (
           <DevOpsReview items={items} settings={settings} />
         )}
       </div>

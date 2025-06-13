@@ -7,7 +7,8 @@ export default class AdoService {
     projects = [],
     tags = [],
     area = '',
-    iteration = ''
+    iteration = '',
+    includeRelations = false
   ) {
     this.org = org;
     this.token = token;
@@ -15,6 +16,7 @@ export default class AdoService {
     this.tags = tags;
     this.area = area;
     this.iteration = iteration;
+    this.includeRelations = includeRelations;
     this._b64 =
       typeof btoa === 'function'
         ? (str) => btoa(str)
@@ -169,7 +171,10 @@ export default class AdoService {
       for (let i = 0; i < ids.length; i += 200) {
         const batchIds = ids.slice(i, i + 200);
         const items = await this._fetchItems(batchIds, auth);
-        const deps = await this._fetchRelations(batchIds, auth);
+        let deps = {};
+        if (this.includeRelations) {
+          deps = await this._fetchRelations(batchIds, auth);
+        }
         items.forEach((it) => {
           it.dependencies = deps[it.id] || [];
         });
@@ -186,7 +191,10 @@ export default class AdoService {
       while (missing.size > 0) {
         const batch = Array.from(missing).slice(0, 200);
         const parents = await this._fetchItems(batch, auth);
-        const parentDeps = await this._fetchRelations(batch, auth);
+        let parentDeps = {};
+        if (this.includeRelations) {
+          parentDeps = await this._fetchRelations(batch, auth);
+        }
         parents.forEach((p) => {
           p.dependencies = parentDeps[p.id] || [];
           if (!map.has(p.id)) {
