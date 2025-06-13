@@ -29,6 +29,7 @@ function App() {
   const { lockedDays, setLockedDays } = useDayLocks();
   const { aliases: areaAliases, setAliases: setAreaAliases } = useAreaAliases();
   const [itemsFetched, setItemsFetched] = useState(false);
+  const [fetchFailed, setFetchFailed] = useState(false);
   const [sidebarWidth, setSidebarWidth] = useState(
     settings.sidebarWidth || 320
   );
@@ -73,7 +74,7 @@ function App() {
     deleteNote(note.id);
   };
 
-  const fetchWorkItems = useCallback((full = false) => {
+  const fetchWorkItems = useCallback(async (full = false, fromUser = false) => {
     const {
       azureOrg,
       azurePat,
@@ -83,6 +84,9 @@ function App() {
       azureIteration,
     } = settings;
     if (!azureOrg || !azurePat) return;
+    if (fromUser) {
+      setFetchFailed(false);
+    }
     const service = new AdoService(
       azureOrg,
       azurePat,
@@ -102,7 +106,8 @@ function App() {
         }
       }
     }
-    service.getWorkItems(since).then((data) => {
+    try {
+      const data = await service.getWorkItems(since);
       setItems((prev) => {
         const map = new Map(prev.map((i) => [i.id, i]));
         data.forEach((item) => {
@@ -112,7 +117,10 @@ function App() {
       });
       setItemsFetched(true);
       setLastFetch(Date.now());
-    });
+    } catch (e) {
+      console.error('Failed to fetch work items', e);
+      setFetchFailed(true);
+    }
   }, [
     settings.azureOrg,
     settings.azurePat,
@@ -138,10 +146,10 @@ function App() {
   }, [settings.sidebarWidth]);
 
   useEffect(() => {
-    if (!itemsFetched) {
+    if (!itemsFetched && !fetchFailed) {
       fetchWorkItems();
     }
-  }, [fetchWorkItems, itemsFetched]);
+  }, [fetchWorkItems, itemsFetched, fetchFailed]);
 
   // Previously we refetched work items whenever the Azure filter
   // settings changed. This caused unnecessary API requests when

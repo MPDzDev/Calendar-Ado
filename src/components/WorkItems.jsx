@@ -280,13 +280,13 @@ export default function WorkItems({
             <div className="space-x-2">
               <button
                 className="px-2 py-1 text-xs bg-gray-200 dark:bg-gray-700"
-                onClick={() => onRefresh(false)}
+                onClick={() => onRefresh(false, true)}
               >
                 Refresh
               </button>
               <button
                 className="px-2 py-1 text-xs bg-gray-200 dark:bg-gray-700"
-                onClick={() => onRefresh(true)}
+                onClick={() => onRefresh(true, true)}
               >
                 Full Refresh
               </button>
