@@ -19,6 +19,7 @@ const defaultSettings = {
   azureIteration: '',
   sidebarWidth: 320,
   enableReminders: true,
+  enableDevOpsReview: false,
   stateOrder: [
     'New',
     'Ready',

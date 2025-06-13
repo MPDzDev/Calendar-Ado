@@ -70,7 +70,7 @@ Additionally, by making ADO updates a prerequisite for seamless time logging, th
 * Displays total hours for the current week with red text when exceeding 40 hours
 * Bulk submit to ADO with preview
 * Option to export week as CSV for backup
-* DevOps Review panel highlights missing acceptance criteria
+* DevOps Review panel (disabled by default) highlights missing acceptance criteria and requires relations API; enable it under settings
 
 ### 3.6 Advanced Suggestions (Optional Phase 2)
 

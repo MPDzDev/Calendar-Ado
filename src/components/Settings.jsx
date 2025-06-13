@@ -317,12 +317,27 @@ export default function Settings({ settings, setSettings }) {
                             .filter((s) => s),
                         })
                       }
-                      className="border w-full px-1"
+                    className="border w-full px-1"
+                  />
+                </div>
+                <div className="flex items-center space-x-2 mt-1">
+                  <label className="flex items-center space-x-1">
+                    <input
+                      type="checkbox"
+                      checked={temp.enableDevOpsReview}
+                      onChange={() =>
+                        setTemp({
+                          ...temp,
+                          enableDevOpsReview: !temp.enableDevOpsReview,
+                        })
+                      }
                     />
-                  </div>
-                </>
-              )}
-              <div className="flex space-x-2 pt-2">
+                    <span>Enable DevOps Review</span>
+                  </label>
+                </div>
+              </>
+            )}
+            <div className="flex space-x-2 pt-2">
                 <button className="px-2 py-1 bg-blue-500 text-white text-xs" onClick={save}>
                   Save
                 </button>
