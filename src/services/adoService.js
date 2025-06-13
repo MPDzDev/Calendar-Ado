@@ -81,7 +81,7 @@ export default class AdoService {
       },
     });
     if (!res.ok) {
-      return [];
+      throw new Error('Failed to fetch items');
     }
 
     const data = await res.json();
@@ -121,7 +121,7 @@ export default class AdoService {
       },
     });
     if (!res.ok) {
-      return {};
+      throw new Error('Failed to fetch relations');
     }
 
     const data = await res.json();
@@ -144,8 +144,7 @@ export default class AdoService {
     }
 
     const auth = `Basic ${this._b64(':' + this.token)}`;
-    try {
-      const wiqlRes = await fetch(
+    const wiqlRes = await fetch(
         `https://dev.azure.com/${this.org}/_apis/wit/wiql?api-version=7.0`,
         {
           method: 'POST',
@@ -159,9 +158,9 @@ export default class AdoService {
         }
       );
 
-      if (!wiqlRes.ok) {
-        return [];
-      }
+    if (!wiqlRes.ok) {
+      throw new Error('Failed to query work items');
+    }
 
       const wiql = await wiqlRes.json();
       const ids = wiql.workItems.map((w) => w.id);
@@ -206,11 +205,7 @@ export default class AdoService {
         });
       }
 
-      return Array.from(map.values());
-    } catch (e) {
-      console.error('Failed to fetch work items', e);
-      return [];
-    }
+    return Array.from(map.values());
   }
 
   findMissingAcceptanceCriteria(items = []) {
