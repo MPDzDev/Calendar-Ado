@@ -9,17 +9,17 @@ export default function Notes({
   areaAliases = {},
   setAreaAliases,
   onAddTodo,
-}) {
+  }) {
   const [value, setValue] = useState('');
   const [tab, setTab] = useState('notes');
 
   const add = () => {
-    const text = value.trim();
-    if (text) {
-      onAdd(text);
-      setValue('');
-    }
-  };
+      const text = value.trim();
+      if (text) {
+        onAdd(text);
+        setValue('');
+      }
+    };
 
 
   const updateAlias = (area, value) => {
@@ -30,6 +30,13 @@ export default function Notes({
     } else {
       setAreaAliases({ ...areaAliases, [area]: value });
     }
+  };
+
+  const convertToTodo = (e, note) => {
+    if (!onAddTodo) return;
+    e.preventDefault();
+    onAddTodo(note.text);
+    if (!note.starred) onDelete(note.id);
   };
 
   return (
@@ -78,6 +85,8 @@ export default function Notes({
                 onDragStart={(e) =>
                   e.dataTransfer.setData('application/x-note', JSON.stringify(n))
                 }
+                onContextMenu={(e) => convertToTodo(e, n)}
+                title="Right click to create task"
               >
                 <button
                   className="mr-1 text-yellow-500"

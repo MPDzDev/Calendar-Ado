@@ -105,7 +105,8 @@ Additionally, by making ADO updates a prerequisite for seamless time logging, th
 4. System suggests work items; user confirms or drags a task manually.
 5. User can click a task to auto-link it to selected time block.
 6. Notes appear as draggable comment pills that can be dropped into work blocks
-   or onto the todo bar. Star a note to keep it available after dropping.
+   or onto the todo bar. Right-click a note to instantly turn it into a task.
+   Star a note to keep it available after dropping.
 
 ### 4.2 Review & Submit
 

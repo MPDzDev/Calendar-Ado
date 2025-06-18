@@ -471,6 +471,7 @@ function App() {
           onAdd={addNote}
           onDelete={deleteNote}
           onToggleStar={toggleNoteStar}
+          onAddTodo={addTodo}
           areas={usedAreas}
           areaAliases={areaAliases}
           setAreaAliases={setAreaAliases}
