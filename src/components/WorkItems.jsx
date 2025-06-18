@@ -110,6 +110,8 @@ export default function WorkItems({
   const [featureCollapsed, setFeatureCollapsed] = useState({});
   const [activeFilterGroup, setActiveFilterGroup] = useState(null);
 
+  const treeRef = useRef(null);
+
   const groupRefs = {
     tags: useRef(null),
     areas: useRef(null),
@@ -129,6 +131,18 @@ export default function WorkItems({
   });
 
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+  const handleTreeDragOver = (e) => {
+    if (!treeRef.current) return;
+    e.preventDefault();
+    const rect = treeRef.current.getBoundingClientRect();
+    const threshold = 40;
+    if (e.clientY - rect.top < threshold) {
+      treeRef.current.scrollTop -= threshold - (e.clientY - rect.top);
+    } else if (rect.bottom - e.clientY < threshold) {
+      treeRef.current.scrollTop += threshold - (rect.bottom - e.clientY);
+    }
+  };
 
   useEffect(() => {
     const handler = () => setWindowWidth(window.innerWidth);
@@ -500,7 +514,11 @@ export default function WorkItems({
           </div>
         )}
       </div>
-      <div className="flex-grow overflow-y-auto space-y-2 scroll-container min-h-0">
+      <div
+        ref={treeRef}
+        onDragOver={handleTreeDragOver}
+        className="flex-grow overflow-y-auto space-y-2 scroll-container min-h-0"
+      >
         {Object.entries(grouped).map(([project, list]) => {
           const allowGroupDrop = (e) => {
             if (e.dataTransfer.types.includes('application/x-note')) {
