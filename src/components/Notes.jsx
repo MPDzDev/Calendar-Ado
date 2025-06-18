@@ -86,15 +86,6 @@ export default function Notes({
                 >
                   {n.starred ? '★' : '☆'}
                 </button>
-                {onAddTodo && (
-                  <button
-                    className="mr-1 text-green-600"
-                    onClick={() => onAddTodo(n.text)}
-                    title="Add to Todos"
-                  >
-                    ✔
-                  </button>
-                )}
                 <span className="truncate mr-1">{n.text}</span>
                 <button
                   className="ml-auto text-red-600 text-xs"
