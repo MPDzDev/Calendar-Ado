@@ -31,6 +31,20 @@ function openWorkItemWindow({ id, hours, url, days, message }) {
     const messageSnippet = message
       ? `const note = document.createElement('div'); note.textContent = ${JSON.stringify(message)}; banner.appendChild(note);`
       : '';
+    const hoursSnippet =
+      hours > 0
+        ? `const header = document.createElement('div');
+           header.textContent = 'Suggested hours to log: ${hours.toFixed(2)}';
+           banner.appendChild(header);
+           const list = document.createElement('ul');
+           const breakdown = ${JSON.stringify(days || [])};
+           breakdown.forEach(([day, hrs]) => {
+             const li = document.createElement('li');
+             li.textContent = \`${day}: ${hrs.toFixed(2)}\`;
+             list.appendChild(li);
+           });
+           banner.appendChild(list);`
+        : '';
     const script = `
       const banner = document.createElement('div');
       banner.style.position = 'fixed';
@@ -41,17 +55,7 @@ function openWorkItemWindow({ id, hours, url, days, message }) {
       banner.style.background = '#fffae6';
       banner.style.padding = '10px';
       banner.style.textAlign = 'center';
-      const header = document.createElement('div');
-      header.textContent = 'Suggested hours to log: ${hours.toFixed(2)}';
-      banner.appendChild(header);
-      const list = document.createElement('ul');
-      const breakdown = ${JSON.stringify(days || {})};
-      Object.entries(breakdown).forEach(([day, hrs]) => {
-        const li = document.createElement('li');
-        li.textContent = \`\${day}: \${hrs.toFixed(2)}\`;
-        list.appendChild(li);
-      });
-      banner.appendChild(list);
+      ${hoursSnippet}
       ${messageSnippet}
       document.body.appendChild(banner);
       document.body.style.marginTop = (banner.offsetHeight + 10) + 'px';
