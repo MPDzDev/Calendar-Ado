@@ -2,6 +2,7 @@ export default class WorkItem {
   constructor({
     id,
     title,
+    description = '',
     type = 'task',
     parentId = null,
     project = '',
@@ -15,6 +16,7 @@ export default class WorkItem {
   }) {
     this.id = id;
     this.title = title;
+    this.description = description;
     this.type = type;
     this.parentId = parentId;
     this.project = project;
