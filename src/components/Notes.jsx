@@ -8,8 +8,13 @@ export default function Notes({
   areas = [],
   areaAliases = {},
   setAreaAliases,
+  todos = [],
+  onAddTodo,
+  onToggleTodo,
+  onDeleteTodo,
 }) {
   const [value, setValue] = useState('');
+  const [todoValue, setTodoValue] = useState('');
   const [tab, setTab] = useState('notes');
 
   const add = () => {
@@ -17,6 +22,14 @@ export default function Notes({
     if (text) {
       onAdd(text);
       setValue('');
+    }
+  };
+
+  const addTodo = () => {
+    const text = todoValue.trim();
+    if (text) {
+      onAddTodo && onAddTodo(text);
+      setTodoValue('');
     }
   };
 
@@ -40,6 +53,14 @@ export default function Notes({
           onClick={() => setTab('notes')}
         >
           Notes
+        </button>
+        <button
+          className={`px-2 py-1 text-xs ${
+            tab === 'todos' ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-gray-700'
+          }`}
+          onClick={() => setTab('todos')}
+        >
+          Todos
         </button>
         <button
           className={`px-2 py-1 text-xs ${
@@ -94,6 +115,44 @@ export default function Notes({
               </div>
             ))}
           </div>
+        </>
+      )}
+      {tab === 'todos' && (
+        <>
+          <div className="flex mb-2">
+            <input
+              type="text"
+              value={todoValue}
+              onChange={(e) => setTodoValue(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && addTodo()}
+              className="border flex-grow px-1 text-sm"
+            />
+            <button
+              className="ml-2 px-2 py-1 bg-blue-500 text-white text-xs"
+              onClick={addTodo}
+            >
+              Add
+            </button>
+          </div>
+          <ul className="flex flex-col gap-1 overflow-y-auto max-h-40 text-xs">
+            {todos.map((t) => (
+              <li key={t.id} className="flex items-center">
+                <input
+                  type="checkbox"
+                  className="mr-1"
+                  checked={t.done}
+                  onChange={() => onToggleTodo && onToggleTodo(t.id)}
+                />
+                <span className={`flex-grow truncate ${t.done ? 'line-through text-gray-500' : ''}`}>{t.text}</span>
+                <button
+                  className="ml-2 text-red-600 text-xs"
+                  onClick={() => onDeleteTodo && onDeleteTodo(t.id)}
+                >
+                  x
+                </button>
+              </li>
+            ))}
+          </ul>
         </>
       )}
       {tab === 'areas' && (

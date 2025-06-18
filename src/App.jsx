@@ -11,6 +11,7 @@ import useWorkBlocks from './hooks/useWorkBlocks';
 import useSettings from './hooks/useSettings';
 import useAdoItems from './hooks/useAdoItems';
 import useNotes from './hooks/useNotes';
+import useTodos from './hooks/useTodos';
 import useDayLocks from './hooks/useDayLocks';
 import useAreaAliases from './hooks/useAreaAliases';
 import AdoService from './services/adoService';
@@ -26,6 +27,7 @@ function App() {
   const { settings, setSettings } = useSettings();
   const { items, setItems, lastFetch, setLastFetch } = useAdoItems();
   const { notes, setNotes, itemNotes, setItemNotes } = useNotes();
+  const { todos, setTodos } = useTodos();
   const { lockedDays, setLockedDays } = useDayLocks();
   const { aliases: areaAliases, setAliases: setAreaAliases } = useAreaAliases();
   const [itemsFetched, setItemsFetched] = useState(false);
@@ -59,6 +61,17 @@ function App() {
 
   const deleteNote = (id) =>
     setNotes((prev) => prev.filter((n) => n.id !== id));
+
+  const addTodo = (text) =>
+    setTodos((prev) => [...prev, { id: Date.now(), text, done: false }]);
+
+  const toggleTodo = (id) =>
+    setTodos((prev) =>
+      prev.map((t) => (t.id === id ? { ...t, done: !t.done } : t))
+    );
+
+  const deleteTodo = (id) =>
+    setTodos((prev) => prev.filter((t) => t.id !== id));
 
   const handleNoteDrop = (itemId, note) => {
     setItemNotes((prev) => {
@@ -426,6 +439,10 @@ function App() {
           onAdd={addNote}
           onDelete={deleteNote}
           onToggleStar={toggleNoteStar}
+          todos={todos}
+          onAddTodo={addTodo}
+          onToggleTodo={toggleTodo}
+          onDeleteTodo={deleteTodo}
           areas={usedAreas}
           areaAliases={areaAliases}
           setAreaAliases={setAreaAliases}
