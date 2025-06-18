@@ -42,6 +42,14 @@ export function buildTree(items) {
   return roots;
 }
 
+function countDescendants(node) {
+  if (!node.children || node.children.length === 0) return 0;
+  return node.children.reduce(
+    (sum, child) => sum + 1 + countDescendants(child),
+    0
+  );
+}
+
 function renderTree(
   nodes,
   level = 0,
@@ -72,7 +80,11 @@ function renderTree(
             onOpen={openItem}
           />
           {isCollapsible && node.children.length > 0 && (
-            <span className="ml-1 text-xs">{collapsed ? '▶' : '▼'}</span>
+            <span className="ml-1 text-xs">
+              {collapsed
+                ? `▶ (${countDescendants(node)})`
+                : '▼'}
+            </span>
           )}
         </div>
         {node.children.length > 0 && !collapsed &&
@@ -257,6 +269,28 @@ export default function WorkItems({
       [id]: !prev[id],
     }));
 
+  const collapseAll = () => {
+    const next = {};
+    items.forEach((i) => {
+      const type = (i.type || '').toLowerCase();
+      if (type === 'feature' || type === 'epic') {
+        next[i.id] = true;
+      }
+    });
+    setFeatureCollapsed(next);
+  };
+
+  const expandAll = () => {
+    const next = {};
+    items.forEach((i) => {
+      const type = (i.type || '').toLowerCase();
+      if (type === 'feature' || type === 'epic') {
+        next[i.id] = false;
+      }
+    });
+    setFeatureCollapsed(next);
+  };
+
   const availableTags = Array.from(
     new Set(items.flatMap((i) => i.tags || []))
   ).sort();
@@ -329,6 +363,18 @@ export default function WorkItems({
                 onClick={() => onRefresh(true, true)}
               >
                 Full Refresh
+              </button>
+              <button
+                className="px-2 py-1 text-xs bg-gray-200 dark:bg-gray-700"
+                onClick={collapseAll}
+              >
+                Collapse All
+              </button>
+              <button
+                className="px-2 py-1 text-xs bg-gray-200 dark:bg-gray-700"
+                onClick={expandAll}
+              >
+                Expand All
               </button>
             </div>
           )}
