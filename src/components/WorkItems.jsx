@@ -1,19 +1,44 @@
 import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import WorkItem from './WorkItem';
 
-function buildTree(items) {
+export function buildTree(items) {
   const map = new Map();
   items.forEach((item) => {
     map.set(item.id, { ...item, children: [] });
   });
+
+  const placeholderEpic = {
+    id: '__placeholder_epic__',
+    title: 'Unassigned (No Epic)',
+    type: 'Epic',
+    children: [],
+  };
+  const placeholderFeature = {
+    id: '__placeholder_feature__',
+    title: 'Unassigned (No Feature)',
+    type: 'Feature',
+    children: [],
+  };
+
   const roots = [];
   map.forEach((item) => {
     if (item.parentId && map.has(item.parentId)) {
       map.get(item.parentId).children.push(item);
     } else {
-      roots.push(item);
+      const type = (item.type || '').toLowerCase();
+      if (type === 'feature') {
+        placeholderEpic.children.push(item);
+      } else if (type === 'epic') {
+        roots.push(item);
+      } else {
+        placeholderFeature.children.push(item);
+      }
     }
   });
+
+  if (placeholderEpic.children.length > 0) roots.push(placeholderEpic);
+  if (placeholderFeature.children.length > 0) roots.push(placeholderFeature);
+
   return roots;
 }
 
