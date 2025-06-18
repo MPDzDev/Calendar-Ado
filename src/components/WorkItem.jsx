@@ -5,6 +5,7 @@ export default function WorkItem({
   level = 0,
   notes = [],
   onNoteDrop,
+  onItemDrop,
   highlight = false,
   pill = false,
   onOpen,
@@ -47,17 +48,26 @@ export default function WorkItem({
   };
 
   const allowDrop = (e) => {
-    if (e.dataTransfer.types.includes('application/x-note')) {
+    if (
+      e.dataTransfer.types.includes('application/x-note') ||
+      e.dataTransfer.types.includes('application/x-work-item')
+    ) {
       e.preventDefault();
     }
   };
 
   const handleDrop = (e) => {
-    const raw = e.dataTransfer.getData('application/x-note');
-    if (!raw) return;
-    e.preventDefault();
-    const note = JSON.parse(raw);
-    onNoteDrop && onNoteDrop(item.id, note);
+    const noteRaw = e.dataTransfer.getData('application/x-note');
+    const itemRaw = e.dataTransfer.getData('application/x-work-item');
+    if (noteRaw) {
+      e.preventDefault();
+      const note = JSON.parse(noteRaw);
+      onNoteDrop && onNoteDrop(item.id, note);
+    } else if (itemRaw) {
+      e.preventDefault();
+      const dragged = JSON.parse(itemRaw);
+      onItemDrop && onItemDrop(item, dragged);
+    }
   };
 
   const highlightClass = highlight ? 'ring-2 ring-red-500' : '';
