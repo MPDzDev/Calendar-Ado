@@ -74,6 +74,11 @@ function App() {
   const deleteTodo = (id) =>
     setTodos((prev) => prev.filter((t) => t.id !== id));
 
+  const handleTodoDrop = (note) => {
+    addTodo(note.text);
+    if (!note.starred) deleteNote(note.id);
+  };
+
   const handleNoteDrop = (itemId, note) => {
     setItemNotes((prev) => {
       const list = prev[itemId] ? [...prev[itemId], note.text] : [note.text];
@@ -422,6 +427,7 @@ function App() {
             todos={todos}
             onToggleTodo={toggleTodo}
             onDeleteTodo={deleteTodo}
+            onNoteDrop={handleTodoDrop}
           />
         </div>
         <div className="mb-2 flex items-center space-x-2">
@@ -465,7 +471,6 @@ function App() {
           onAdd={addNote}
           onDelete={deleteNote}
           onToggleStar={toggleNoteStar}
-          onAddTodo={addTodo}
           areas={usedAreas}
           areaAliases={areaAliases}
           setAreaAliases={setAreaAliases}

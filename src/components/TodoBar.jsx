@@ -1,9 +1,34 @@
 import React from 'react';
 
-export default function TodoBar({ todos = [], onToggleTodo, onDeleteTodo }) {
-  if (!todos.length) return null;
+export default function TodoBar({
+  todos = [],
+  onToggleTodo,
+  onDeleteTodo,
+  onNoteDrop,
+}) {
+  const allowDrop = (e) => {
+    if (e.dataTransfer.types.includes('application/x-note')) {
+      e.preventDefault();
+    }
+  };
+
+  const handleDrop = (e) => {
+    const raw = e.dataTransfer.getData('application/x-note');
+    if (!raw) return;
+    e.preventDefault();
+    const note = JSON.parse(raw);
+    onNoteDrop && onNoteDrop(note);
+  };
+
   return (
-    <div className="flex flex-wrap gap-1 ml-4">
+    <div
+      className="flex flex-wrap gap-1 ml-4"
+      onDragOver={allowDrop}
+      onDrop={handleDrop}
+    >
+      {todos.length === 0 && (
+        <div className="text-xs text-gray-500">Drop notes here</div>
+      )}
       {todos.map((t) => (
         <div
           key={t.id}
