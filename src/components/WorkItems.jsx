@@ -46,6 +46,7 @@ function renderTree(
   nodes,
   level = 0,
   onNoteDrop,
+  itemDrop,
   notesMap,
   highlightIds,
   featureCollapsed,
@@ -65,6 +66,7 @@ function renderTree(
             level={level}
             notes={notesMap[node.id] || []}
             onNoteDrop={onNoteDrop}
+            onItemDrop={itemDrop}
             highlight={highlightIds?.has(node.id)}
             pill={node.type?.toLowerCase() === 'task' && level > 0}
             onOpen={openItem}
@@ -78,6 +80,7 @@ function renderTree(
             node.children,
             level + 1,
             onNoteDrop,
+            itemDrop,
             notesMap,
             highlightIds,
             featureCollapsed,
@@ -283,18 +286,25 @@ export default function WorkItems({
     updateSettings({ azureIteration: value });
   };
 
-  const openItem = (item) => {
+  const openItem = (item, message) => {
     const org = settings.azureOrg;
     const url = org
       ? `https://dev.azure.com/${org}/_workitems/edit/${item.id}`
       : `https://dev.azure.com/_workitems/edit/${item.id}`;
-    const payload = { id: item.id, hours: 0, days: {}, url };
+    const payload = { id: item.id, hours: 0, days: {}, url, message };
     if (window.api && window.api.openWorkItems) {
       window.api.openWorkItems([payload]);
     } else {
       window.open(url, '_blank');
     }
   };
+
+  const handleItemDrop = (target, dragged) => {
+    const msg = `Dropped item into \"${target.title}\" (${target.id}).`;
+    openItem(target, msg);
+  };
+
+  const dropHandler = handleItemDrop;
 
   return (
     <div className="mb-4 flex flex-col flex-grow overflow-y-auto min-h-0">
@@ -522,6 +532,7 @@ export default function WorkItems({
                     buildTree(list),
                     0,
                     onNoteDrop,
+                    dropHandler,
                     itemNotes,
                     highlightedIds,
                     featureCollapsed,
