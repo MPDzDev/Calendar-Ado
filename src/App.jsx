@@ -7,6 +7,7 @@ import Settings from './components/Settings';
 import YearHint from './components/YearHint';
 import Notes from './components/Notes';
 import PatrakLogo from './components/PatrakLogo';
+import TodoBar from './components/TodoBar';
 import useWorkBlocks from './hooks/useWorkBlocks';
 import useSettings from './hooks/useSettings';
 import useAdoItems from './hooks/useAdoItems';
@@ -415,7 +416,14 @@ function App() {
             No time logged today. Don't forget to log your work!
           </div>
         )}
-        <PatrakLogo />
+        <div className="flex items-start justify-between">
+          <PatrakLogo />
+          <TodoBar
+            todos={todos}
+            onToggleTodo={toggleTodo}
+            onDeleteTodo={deleteTodo}
+          />
+        </div>
         <div className="mb-2 flex items-center space-x-2">
           <button className="week-nav-button" onClick={prevWeek}>
             ◀ Prev
@@ -457,10 +465,7 @@ function App() {
           onAdd={addNote}
           onDelete={deleteNote}
           onToggleStar={toggleNoteStar}
-          todos={todos}
           onAddTodo={addTodo}
-          onToggleTodo={toggleTodo}
-          onDeleteTodo={deleteTodo}
           areas={usedAreas}
           areaAliases={areaAliases}
           setAreaAliases={setAreaAliases}
