@@ -58,6 +58,7 @@ export default class AdoService {
     const fields = [
       'System.Id',
       'System.Title',
+      'System.Description',
       'System.WorkItemType',
       'System.Parent',
       'System.TeamProject',
@@ -90,6 +91,7 @@ export default class AdoService {
         new WorkItem({
           id: d.id.toString(),
           title: d.fields['System.Title'],
+          description: d.fields['System.Description'] || '',
           type: d.fields['System.WorkItemType'],
           parentId: d.fields['System.Parent']
             ? d.fields['System.Parent'].toString()
@@ -208,10 +210,22 @@ export default class AdoService {
     return Array.from(map.values());
   }
 
-  findMissingAcceptanceCriteria(items = []) {
-    return items.filter(
-      (i) => !(i.acceptanceCriteria && i.acceptanceCriteria.trim())
-    );
+  findMissingAcceptanceCriteria(
+    items = [],
+    minLength = 0,
+    types = null
+  ) {
+    const allowed = types ? types.map((t) => t.toLowerCase()) : null;
+    return items.filter((i) => {
+      if (allowed && !allowed.includes((i.type || '').toLowerCase())) {
+        return false;
+      }
+      const ac = (i.acceptanceCriteria || '').trim();
+      if (minLength > 0) {
+        return !ac || ac.length < minLength;
+      }
+      return !ac;
+    });
   }
 
   findIncorrectState(items = [], validStates = []) {
@@ -234,6 +248,19 @@ export default class AdoService {
         allowed.includes((i.type || '').toLowerCase()) &&
         (i.storyPoints === undefined || i.storyPoints === null)
     );
+  }
+
+  findMissingOrShortDescription(
+    items = [],
+    minLength = 20,
+    types = ['feature', 'user story', 'evolution']
+  ) {
+    const allowed = types.map((t) => t.toLowerCase());
+    return items.filter((i) => {
+      if (!allowed.includes((i.type || '').toLowerCase())) return false;
+      const desc = (i.description || '').trim();
+      return !desc || desc.length < minLength;
+    });
   }
 
   findTreeProblems(items = []) {
