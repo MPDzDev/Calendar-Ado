@@ -344,25 +344,42 @@ function App() {
       if (start >= weekStart && start < weekEnd && b.taskId) {
         const end = new Date(b.end);
         const hours = (end - start) / (1000 * 60 * 60);
-        const dayKey = start.toLocaleDateString('en-US', { weekday: 'short', month: 'numeric', day: 'numeric' });
+        const iso = start.toISOString().split('T')[0];
+        const label = start.toLocaleDateString('en-US', {
+          weekday: 'short',
+          month: 'numeric',
+          day: 'numeric',
+        });
         if (!map[b.taskId]) map[b.taskId] = { total: 0, days: {} };
         map[b.taskId].total += hours;
-        map[b.taskId].days[dayKey] = (map[b.taskId].days[dayKey] || 0) + hours;
+        if (!map[b.taskId].days[iso]) {
+          map[b.taskId].days[iso] = { label, hours: 0 };
+        }
+        map[b.taskId].days[iso].hours += hours;
       }
     });
     const itemsToOpen = Object.entries(map).map(([id, data]) => {
       const task = items.find((it) => it.id === id) || {};
-      const message = !task.area
-        ? `Please assign area path ${settings.azureArea || '(set area path)'} before logging time.`
-        : '';
+      const messages = [];
+      if (!task.area) {
+        messages.push(
+          `Please assign area path ${settings.azureArea || '(set area path)'} before logging time.`
+        );
+      }
+      if (problemMap.has(id)) {
+        messages.push(problemMap.get(id));
+      }
+      const dayList = Object.values(data.days)
+        .sort((a, b) => (a.label > b.label ? 1 : -1))
+        .map((d) => [d.label, d.hours]);
       return {
         id,
         hours: data.total,
-        days: data.days,
+        days: dayList,
         url: settings.azureOrg
           ? `https://dev.azure.com/${settings.azureOrg}/_workitems/edit/${id}`
           : `https://dev.azure.com/_workitems/edit/${id}`,
-        message,
+        message: messages.join(' '),
       };
     });
     if (window.api && window.api.openWorkItems) {
@@ -385,6 +402,7 @@ function App() {
     ? reviewService.findTreeProblems(items)
     : [];
   const highlightedIds = new Set(treeProblems.map((i) => i.id));
+  const problemMap = new Map(treeProblems.map((p) => [p.id, p.issue]));
 
   return (
     <div
@@ -501,6 +519,7 @@ function App() {
             onNoteDrop={handleNoteDrop}
             itemNotes={itemNotes}
             highlightedIds={highlightedIds}
+            problems={problemMap}
           />
         )}
         {panelTab === 'review' && settings.enableDevOpsReview && (

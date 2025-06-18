@@ -101,6 +101,7 @@ export default function WorkItems({
   onNoteDrop,
   itemNotes = {},
   highlightedIds = new Set(),
+  problems = new Map(),
 }) {
 
   const [search, setSearch] = useState('');
@@ -291,7 +292,11 @@ export default function WorkItems({
     const url = org
       ? `https://dev.azure.com/${org}/_workitems/edit/${item.id}`
       : `https://dev.azure.com/_workitems/edit/${item.id}`;
-    const payload = { id: item.id, hours: 0, days: {}, url, message };
+    let msg = message || '';
+    if (problems.has(item.id)) {
+      msg = msg ? `${msg} ${problems.get(item.id)}` : problems.get(item.id);
+    }
+    const payload = { id: item.id, hours: 0, days: [], url, message: msg };
     if (window.api && window.api.openWorkItems) {
       window.api.openWorkItems([payload]);
     } else {
