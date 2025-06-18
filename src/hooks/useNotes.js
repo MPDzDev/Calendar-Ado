@@ -8,7 +8,8 @@ export default function useNotes() {
   useEffect(() => {
     const storage = new StorageService('notes', { notes: [], itemNotes: {} });
     const data = storage.read();
-    setNotes(data.notes || []);
+    const loaded = (data.notes || []).map((n) => ({ starred: false, ...n }));
+    setNotes(loaded);
     setItemNotes(data.itemNotes || {});
   }, []);
 
