@@ -50,7 +50,12 @@ function App() {
   }, [blocks, items]);
 
   const addNote = (text) =>
-    setNotes((prev) => [...prev, { id: Date.now(), text }]);
+    setNotes((prev) => [...prev, { id: Date.now(), text, starred: false }]);
+
+  const toggleNoteStar = (id) =>
+    setNotes((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, starred: !n.starred } : n))
+    );
 
   const deleteNote = (id) =>
     setNotes((prev) => prev.filter((n) => n.id !== id));
@@ -60,7 +65,7 @@ function App() {
       const list = prev[itemId] ? [...prev[itemId], note.text] : [note.text];
       return { ...prev, [itemId]: list };
     });
-    deleteNote(note.id);
+    if (!note.starred) deleteNote(note.id);
   };
 
   const handleBlockCommentDrop = (blockId, note) => {
@@ -71,7 +76,7 @@ function App() {
           : b
       )
     );
-    deleteNote(note.id);
+    if (!note.starred) deleteNote(note.id);
   };
 
   const fetchWorkItems = useCallback(async (full = false, fromUser = false) => {
@@ -420,6 +425,7 @@ function App() {
           notes={notes}
           onAdd={addNote}
           onDelete={deleteNote}
+          onToggleStar={toggleNoteStar}
           areas={usedAreas}
           areaAliases={areaAliases}
           setAreaAliases={setAreaAliases}

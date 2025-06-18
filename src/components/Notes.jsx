@@ -4,6 +4,7 @@ export default function Notes({
   notes,
   onAdd,
   onDelete,
+  onToggleStar,
   areas = [],
   areaAliases = {},
   setAreaAliases,
@@ -76,6 +77,13 @@ export default function Notes({
                   e.dataTransfer.setData('application/x-note', JSON.stringify(n))
                 }
               >
+                <button
+                  className="mr-1 text-yellow-500"
+                  onClick={() => onToggleStar && onToggleStar(n.id)}
+                  title={n.starred ? 'Unstar' : 'Star'}
+                >
+                  {n.starred ? '★' : '☆'}
+                </button>
                 <span className="truncate mr-1">{n.text}</span>
                 <button
                   className="ml-auto text-red-600 text-xs"
