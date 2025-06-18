@@ -222,6 +222,20 @@ export default class AdoService {
     );
   }
 
+  findMissingStoryPoints(items = [], types = [
+    'feature',
+    'user story',
+    'evolution',
+    'bug',
+  ]) {
+    const allowed = types.map((t) => t.toLowerCase());
+    return items.filter(
+      (i) =>
+        allowed.includes((i.type || '').toLowerCase()) &&
+        (i.storyPoints === undefined || i.storyPoints === null)
+    );
+  }
+
   findTreeProblems(items = []) {
     const map = new Map(items.map((i) => [i.id, i]));
     const issues = [];

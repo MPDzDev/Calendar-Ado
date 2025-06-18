@@ -14,6 +14,7 @@ export default function DevOpsReview({ items = [], settings }) {
 
   const treeProblems = service.findTreeProblems(items);
   const missingAcceptance = service.findMissingAcceptanceCriteria(items);
+  const missingStoryPoints = service.findMissingStoryPoints(items);
 
   const renderList = (list) => (
     <ul className="ml-4 list-disc text-xs mt-1">
@@ -41,6 +42,12 @@ export default function DevOpsReview({ items = [], settings }) {
             Missing Acceptance Criteria ({missingAcceptance.length})
           </div>
           {missingAcceptance.length > 0 && renderList(missingAcceptance)}
+        </div>
+        <div>
+          <div className="font-semibold text-sm">
+            Missing Story Points ({missingStoryPoints.length})
+          </div>
+          {missingStoryPoints.length > 0 && renderList(missingStoryPoints)}
         </div>
       </div>
     </div>
