@@ -40,7 +40,7 @@ function openWorkItemWindow({ id, hours, url, days, message }) {
            const breakdown = ${JSON.stringify(days || [])};
            breakdown.forEach(([day, hrs]) => {
              const li = document.createElement('li');
-             li.textContent = \`${day}: ${hrs.toFixed(2)}\`;
+             li.textContent = \`\${day}: \${hrs.toFixed(2)}\`;
              list.appendChild(li);
            });
            banner.appendChild(list);`
