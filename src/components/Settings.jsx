@@ -3,7 +3,7 @@ import PatService from '../services/patService';
 
 const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-export default function Settings({ settings, setSettings }) {
+export default function Settings({ settings, setSettings, onExport, onImport }) {
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState('general');
   const [temp, setTemp] = useState(settings);
@@ -337,7 +337,7 @@ export default function Settings({ settings, setSettings }) {
                 </div>
               </>
             )}
-            <div className="flex space-x-2 pt-2">
+              <div className="flex space-x-2 pt-2">
                 <button className="px-2 py-1 bg-blue-500 text-white text-xs" onClick={save}>
                   Save
                 </button>
@@ -351,6 +351,20 @@ export default function Settings({ settings, setSettings }) {
                   }}
                 >
                   Cancel
+                </button>
+              </div>
+              <div className="flex space-x-2 pt-2">
+                <button
+                  className="px-2 py-1 bg-gray-200 dark:bg-gray-700 text-xs"
+                  onClick={onExport}
+                >
+                  Export Data
+                </button>
+                <button
+                  className="px-2 py-1 bg-gray-200 dark:bg-gray-700 text-xs"
+                  onClick={onImport}
+                >
+                  Import Data
                 </button>
               </div>
             </div>
