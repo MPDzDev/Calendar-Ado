@@ -41,6 +41,45 @@ function App() {
   const [showReminder, setShowReminder] = useState(false);
   const [panelTab, setPanelTab] = useState('workItems');
 
+  const handleExport = async () => {
+    if (!window.api?.exportData) return;
+    const data = {
+      workBlocks: { workBlocks: blocks },
+      notes: { notes, itemNotes },
+      todos: { todos },
+      lockedDays: { lockedDays },
+      areaAliases: { aliases: areaAliases },
+      settings: { ...settings, azurePat: '' },
+    };
+    try {
+      await window.api.exportData(data);
+    } catch (e) {
+      console.error('Failed to export data', e);
+    }
+  };
+
+  const handleImport = async () => {
+    if (!window.api?.importData) return;
+    try {
+      const data = await window.api.importData();
+      if (!data) return;
+      if (data.workBlocks) setBlocks(data.workBlocks.workBlocks || []);
+      if (data.notes) {
+        const loaded = (data.notes.notes || []).map((n) => ({ starred: false, ...n }));
+        setNotes(loaded);
+        setItemNotes(data.notes.itemNotes || {});
+      }
+      if (data.todos) setTodos(data.todos.todos || []);
+      if (data.lockedDays) setLockedDays(data.lockedDays.lockedDays || {});
+      if (data.areaAliases) setAreaAliases(data.areaAliases.aliases || {});
+      if (data.settings) {
+        setSettings((prev) => ({ ...prev, ...data.settings, azurePat: prev.azurePat }));
+      }
+    } catch (e) {
+      console.error('Failed to import data', e);
+    }
+  };
+
   const usedAreas = useMemo(() => {
     const set = new Set();
     const itemMap = Object.fromEntries(items.map((i) => [i.id, i]));
@@ -485,7 +524,12 @@ function App() {
         className="pl-6 space-y-4 flex flex-col h-full overflow-y-auto bg-white dark:bg-gray-800 shadow rounded-md"
         style={{ width: sidebarWidth }}
       >
-        <Settings settings={settings} setSettings={setSettings} />
+        <Settings
+          settings={settings}
+          setSettings={setSettings}
+          onExport={handleExport}
+          onImport={handleImport}
+        />
         <HoursSummary blocks={blocks} weekStart={weekStart} items={items} />
         <div>
           <button

@@ -8,4 +8,6 @@ contextBridge.exposeInMainWorld('api', {
     ipcRenderer.invoke('keytar:set', service, account, password),
   deletePassword: (service, account) =>
     ipcRenderer.invoke('keytar:delete', service, account),
+  exportData: (data) => ipcRenderer.invoke('export-data', data),
+  importData: () => ipcRenderer.invoke('import-data'),
 });

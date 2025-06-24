@@ -1,6 +1,7 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const keytar = require('keytar');
 const path = require('path');
+const fs = require('fs');
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -84,6 +85,30 @@ app.whenReady().then(() => {
 
   ipcMain.handle('keytar:delete', async (_event, service, account) => {
     return keytar.deletePassword(service, account);
+  });
+
+  ipcMain.handle('export-data', async (_event, data) => {
+    const { canceled, filePath } = await dialog.showSaveDialog({
+      defaultPath: 'patrak-data.json',
+      filters: [{ name: 'JSON', extensions: ['json'] }],
+    });
+    if (canceled || !filePath) return false;
+    fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+    return true;
+  });
+
+  ipcMain.handle('import-data', async () => {
+    const { canceled, filePaths } = await dialog.showOpenDialog({
+      properties: ['openFile'],
+      filters: [{ name: 'JSON', extensions: ['json'] }],
+    });
+    if (canceled || !filePaths || filePaths.length === 0) return null;
+    const raw = fs.readFileSync(filePaths[0], 'utf-8');
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return null;
+    }
   });
 
   ipcMain.on('get-user-data-path', (event) => {
