@@ -6,8 +6,9 @@ export function summarizeByArea(blocks, items, dayDate) {
     if (start.toDateString() !== dateStr) continue;
     const end = new Date(b.end);
     const hrs = (end - start) / (1000 * 60 * 60);
-    const itemId = b.itemId || b.taskId;
-    const item = items?.find((i) => i.id === itemId);
+    const taskItem = b.taskId ? items?.find((i) => i.id === b.taskId) : null;
+    const displayItem = b.itemId ? items?.find((i) => i.id === b.itemId) : null;
+    const item = taskItem || displayItem;
     const area = item?.area || 'Unassigned';
     summary[area] = (summary[area] || 0) + hrs;
   }
