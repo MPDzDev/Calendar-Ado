@@ -1,4 +1,5 @@
 import WorkItem from '../models/workItem.js';
+import StorageService from './storageService.js';
 
 export default class AdoService {
   constructor(
@@ -21,6 +22,17 @@ export default class AdoService {
       typeof btoa === 'function'
         ? (str) => btoa(str)
         : (str) => Buffer.from(str).toString('base64');
+    const storage = new StorageService('workItemBlacklist', []);
+    this._blacklistStore = storage;
+    this.blacklist = new Set(storage.read() || []);
+  }
+
+  _addToBlacklist(id) {
+    const strId = id.toString();
+    if (!this.blacklist.has(strId)) {
+      this.blacklist.add(strId);
+      this._blacklistStore.write(Array.from(this.blacklist));
+    }
   }
 
   _buildQuery(since = null) {
@@ -164,23 +176,52 @@ export default class AdoService {
       throw new Error('Failed to query work items');
     }
 
-      const wiql = await wiqlRes.json();
-      const ids = wiql.workItems.map((w) => w.id);
-      if (!ids.length) return [];
+    const wiql = await wiqlRes.json();
+    const ids = wiql.workItems
+      .map((w) => w.id.toString())
+      .filter((id) => !this.blacklist.has(id));
+    if (!ids.length) return [];
 
-      const results = [];
-      for (let i = 0; i < ids.length; i += 200) {
-        const batchIds = ids.slice(i, i + 200);
-        const items = await this._fetchItems(batchIds, auth);
-        let deps = {};
-        if (this.includeRelations) {
-          deps = await this._fetchRelations(batchIds, auth);
+    const results = [];
+    for (let i = 0; i < ids.length; i += 200) {
+      const batchIds = ids.slice(i, i + 200);
+      let items = [];
+      try {
+        items = await this._fetchItems(batchIds, auth);
+      } catch (e) {
+        for (const id of batchIds) {
+          try {
+            const single = await this._fetchItems([id], auth);
+            items.push(...single);
+          } catch (err) {
+            this._addToBlacklist(id);
+          }
         }
-        items.forEach((it) => {
-          it.dependencies = deps[it.id] || [];
-        });
-        results.push(...items);
       }
+
+      const fetchedIds = items.map((it) => it.id);
+      batchIds
+        .map((id) => id.toString())
+        .forEach((id) => {
+          if (!fetchedIds.includes(id)) this._addToBlacklist(id);
+        });
+
+      let deps = {};
+      if (this.includeRelations && items.length) {
+        try {
+          deps = await this._fetchRelations(
+            items.map((i) => i.id),
+            auth
+          );
+        } catch (e) {
+          // ignore relation errors
+        }
+      }
+      items.forEach((it) => {
+        it.dependencies = deps[it.id] || [];
+      });
+      results.push(...items);
+    }
       const map = new Map(results.map((i) => [i.id, i]));
       let missing = new Set();
       results.forEach((item) => {
@@ -189,23 +230,49 @@ export default class AdoService {
         }
       });
 
-      while (missing.size > 0) {
-        const batch = Array.from(missing).slice(0, 200);
-        const parents = await this._fetchItems(batch, auth);
-        let parentDeps = {};
-        if (this.includeRelations) {
-          parentDeps = await this._fetchRelations(batch, auth);
-        }
-        parents.forEach((p) => {
-          p.dependencies = parentDeps[p.id] || [];
-          if (!map.has(p.id)) {
-            map.set(p.id, p);
-            results.push(p);
-            if (p.parentId && !map.has(p.parentId)) missing.add(p.parentId);
+    while (missing.size > 0) {
+      const batch = Array.from(missing).slice(0, 200);
+      let parents = [];
+      try {
+        parents = await this._fetchItems(batch, auth);
+      } catch (e) {
+        for (const id of batch) {
+          try {
+            const single = await this._fetchItems([id], auth);
+            parents.push(...single);
+          } catch (err) {
+            this._addToBlacklist(id);
           }
-          missing.delete(p.id);
-        });
+        }
       }
+
+      const fetched = parents.map((p) => p.id);
+      batch.map((id) => id.toString()).forEach((id) => {
+        if (!fetched.includes(id)) this._addToBlacklist(id);
+      });
+
+      let parentDeps = {};
+      if (this.includeRelations && parents.length) {
+        try {
+          parentDeps = await this._fetchRelations(
+            parents.map((p) => p.id),
+            auth
+          );
+        } catch (e) {
+          // ignore relation errors
+        }
+      }
+
+      parents.forEach((p) => {
+        p.dependencies = parentDeps[p.id] || [];
+        if (!map.has(p.id)) {
+          map.set(p.id, p);
+          results.push(p);
+          if (p.parentId && !map.has(p.parentId)) missing.add(p.parentId);
+        }
+        missing.delete(p.id);
+      });
+    }
 
     return Array.from(map.values());
   }
