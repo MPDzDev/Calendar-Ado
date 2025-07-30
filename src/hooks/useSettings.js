@@ -14,6 +14,7 @@ const defaultSettings = {
   azurePat: '',
   azureProjects: [],
   projectColors: {},
+  projectItems: {},
   azureTags: [],
   azureArea: '',
   azureIteration: '',
