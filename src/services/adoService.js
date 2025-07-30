@@ -252,8 +252,9 @@ export default class AdoService {
       }
     }
 
+    let map = null;
     if (this.fetchParents) {
-      const map = new Map(results.map((i) => [i.id, i]));
+      map = new Map(results.map((i) => [i.id, i]));
       let missing = new Set();
       results.forEach((item) => {
         if (item.parentId && !map.has(item.parentId)) {
@@ -306,7 +307,7 @@ export default class AdoService {
       }
     }
 
-    return Array.from(map.values());
+    return this.fetchParents ? Array.from(map.values()) : results;
   }
 
   async getWorkItemsByIds(ids = []) {
@@ -359,8 +360,9 @@ export default class AdoService {
       results.push(...items);
     }
 
+    let map = null;
     if (this.fetchParents) {
-      const map = new Map(results.map((i) => [i.id, i]));
+      map = new Map(results.map((i) => [i.id, i]));
       let missing = new Set();
       results.forEach((item) => {
         if (item.parentId && !map.has(item.parentId)) {
@@ -413,7 +415,7 @@ export default class AdoService {
       }
     }
 
-    return Array.from(map.values());
+    return this.fetchParents ? Array.from(map.values()) : results;
   }
 
   findMissingAcceptanceCriteria(
