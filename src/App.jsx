@@ -158,7 +158,8 @@ function App() {
       azureArea,
       azureIteration,
       settings.enableDevOpsReview,
-      settings.projectItems
+      settings.projectItems,
+      settings.fetchParents
     );
     let since = null;
     if (!full) {
@@ -443,7 +444,8 @@ function App() {
     settings.azureArea,
     settings.azureIteration,
     settings.enableDevOpsReview,
-    settings.projectItems
+    settings.projectItems,
+    settings.fetchParents
   );
   const treeProblems = settings.enableDevOpsReview
     ? reviewService.findTreeProblems(items)

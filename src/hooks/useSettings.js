@@ -15,6 +15,7 @@ const defaultSettings = {
   azureProjects: [],
   projectColors: {},
   projectItems: {},
+  fetchParents: true,
   azureTags: [],
   azureArea: '',
   azureIteration: '',

@@ -10,7 +10,8 @@ export default function DevOpsReview({ items = [], settings }) {
     settings.azureArea,
     settings.azureIteration,
     true,
-    settings.projectItems
+    settings.projectItems,
+    settings.fetchParents
   );
 
   const treeProblems = service.findTreeProblems(items);
