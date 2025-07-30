@@ -5,6 +5,7 @@ export default function YearHint({
   blocks = [],
   settings = {},
   items = [],
+  onWeekClick,
 }) {
   const startHour = settings.startHour ?? 0;
   const endHour = settings.endHour ?? 24;
@@ -19,7 +20,10 @@ export default function YearHint({
     return d;
   };
 
-  const firstWeek = getWeekStart(new Date(weekStart.getFullYear(), 0, 1));
+  const weekMs = 7 * 24 * 60 * 60 * 1000;
+  const currentWeek = getWeekStart(weekStart);
+  const offsetWeeks = Math.floor(52 * 0.75); // 39 weeks back
+  const firstWeek = getWeekStart(new Date(currentWeek.getTime() - offsetWeeks * weekMs));
   const weeks = Array.from({ length: 52 }, (_, i) => {
     const d = new Date(firstWeek);
     d.setDate(firstWeek.getDate() + i * 7);
@@ -33,9 +37,7 @@ export default function YearHint({
 
   const findItem = (id) => items?.find((i) => i.id === id);
 
-  const currentIndex = Math.floor(
-    (getWeekStart(weekStart) - firstWeek) / (7 * 24 * 60 * 60 * 1000)
-  );
+  const currentIndex = Math.floor((getWeekStart(weekStart) - firstWeek) / weekMs);
 
   const blocksByWeek = {};
   blocks.forEach((b) => {
@@ -61,15 +63,15 @@ export default function YearHint({
     });
   });
 
+  const firstMonth = new Date(firstWeek);
+  firstMonth.setDate(1);
   const months = Array.from({ length: 12 }, (_, m) => {
-    const start = new Date(weekStart.getFullYear(), m, 1);
-    const end = new Date(weekStart.getFullYear(), m + 1, 1);
-    const startIdx = Math.floor(
-      (getWeekStart(start) - firstWeek) / (7 * 24 * 60 * 60 * 1000)
-    );
-    const endIdx = Math.floor(
-      (getWeekStart(end) - firstWeek) / (7 * 24 * 60 * 60 * 1000)
-    );
+    const start = new Date(firstMonth);
+    start.setMonth(firstMonth.getMonth() + m);
+    const end = new Date(start);
+    end.setMonth(start.getMonth() + 1);
+    const startIdx = Math.floor((getWeekStart(start) - firstWeek) / weekMs);
+    const endIdx = Math.floor((getWeekStart(end) - firstWeek) / weekMs);
     return {
       name: start.toLocaleString('en-US', { month: 'short' }),
       startIdx,
@@ -80,6 +82,16 @@ export default function YearHint({
   const monthLines = months
     .map((m) => (m.startIdx > 0 && m.startIdx < 52 ? m.startIdx : null))
     .filter((i) => i !== null);
+
+  const handleClick = (e) => {
+    if (!onWeekClick) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const index = Math.max(0, Math.min(51, Math.floor(x / weekWidth)));
+    const date = new Date(firstWeek);
+    date.setDate(firstWeek.getDate() + index * 7);
+    onWeekClick(date);
+  };
 
   return (
     <div className="relative ml-4" style={{ width: weekWidth * 52 + 'px' }}>
@@ -96,7 +108,12 @@ export default function YearHint({
           );
         })}
       </div>
-      <svg width={weekWidth * 52} height={totalHeight} className="block">
+      <svg
+        width={weekWidth * 52}
+        height={totalHeight}
+        className="block cursor-pointer"
+        onClick={handleClick}
+      >
         {weeks.map((_, w) => (
           <g key={w} transform={`translate(${w * weekWidth},0)`}>
             {Array.from({ length: 7 }, (_, d) => (

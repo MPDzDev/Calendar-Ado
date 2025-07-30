@@ -486,6 +486,7 @@ function App() {
             blocks={blocks}
             settings={settings}
             items={items}
+            onWeekClick={(d) => setWeekStart(d)}
           />
         </div>
         <Calendar
