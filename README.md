@@ -63,6 +63,8 @@ Additionally, by making ADO updates a prerequisite for seamless time logging, th
 * Work items are cached locally; refresh only fetches updates since the last sync
 * Write time logs to tasks, bugs, and transversal activities (PATCH work item updates with time + comment)
 * Read-only enforcement on already-submitted blocks
+* `getWorkItemsByIds(ids)` helper fetches a specific list of items by ID
+* Settings allow listing work item IDs per project; listed projects fetch only those items
 
 ### 3.5 Sync & Review
 

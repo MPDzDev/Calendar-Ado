@@ -219,6 +219,10 @@ export default function Settings({ settings, setSettings, onExport, onImport }) 
                                 ...temp.projectColors,
                                 [name]: newColor,
                               },
+                              projectItems: {
+                                ...temp.projectItems,
+                                [name]: [],
+                              },
                             });
                             setNewProject('');
                             setNewColor('#cccccc');
@@ -246,6 +250,24 @@ export default function Settings({ settings, setSettings, onExport, onImport }) 
                             }
                             className="mx-1"
                           />
+                          <input
+                            type="text"
+                            placeholder="IDs"
+                            value={(temp.projectItems[p] || []).join(', ')}
+                            onChange={(e) =>
+                              setTemp({
+                                ...temp,
+                                projectItems: {
+                                  ...temp.projectItems,
+                                  [p]: e.target.value
+                                    .split(',')
+                                    .map((id) => id.trim())
+                                    .filter((id) => id),
+                                },
+                              })
+                            }
+                            className="border flex-grow px-1 text-xs mx-1"
+                          />
                           <button
                             className="text-xs text-red-600"
                             onClick={() =>
@@ -254,6 +276,9 @@ export default function Settings({ settings, setSettings, onExport, onImport }) 
                                 azureProjects: temp.azureProjects.filter((_, i) => i !== idx),
                                 projectColors: Object.fromEntries(
                                   Object.entries(temp.projectColors).filter(([key]) => key !== p)
+                                ),
+                                projectItems: Object.fromEntries(
+                                  Object.entries(temp.projectItems).filter(([key]) => key !== p)
                                 ),
                               })
                             }
