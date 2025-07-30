@@ -10,7 +10,8 @@ export default class AdoService {
     area = '',
     iteration = '',
     includeRelations = false,
-    projectItems = {}
+    projectItems = {},
+    fetchParents = true
   ) {
     this.org = org;
     this.token = token;
@@ -20,6 +21,7 @@ export default class AdoService {
     this.iteration = iteration;
     this.includeRelations = includeRelations;
     this.projectItems = projectItems;
+    this.fetchParents = fetchParents;
     this._b64 =
       typeof btoa === 'function'
         ? (str) => btoa(str)
@@ -250,56 +252,58 @@ export default class AdoService {
       }
     }
 
-    const map = new Map(results.map((i) => [i.id, i]));
-    let missing = new Set();
-    results.forEach((item) => {
-      if (item.parentId && !map.has(item.parentId)) {
-        missing.add(item.parentId);
-      }
-    });
+    if (this.fetchParents) {
+      const map = new Map(results.map((i) => [i.id, i]));
+      let missing = new Set();
+      results.forEach((item) => {
+        if (item.parentId && !map.has(item.parentId)) {
+          missing.add(item.parentId);
+        }
+      });
 
-    while (missing.size > 0) {
-      const batch = Array.from(missing).slice(0, 200);
-      let parents = [];
-      try {
-        parents = await this._fetchItems(batch, auth);
-      } catch (e) {
-        for (const id of batch) {
-          try {
-            const single = await this._fetchItems([id], auth);
-            parents.push(...single);
-          } catch (err) {
-            this._addToBlacklist(id);
+      while (missing.size > 0) {
+        const batch = Array.from(missing).slice(0, 200);
+        let parents = [];
+        try {
+          parents = await this._fetchItems(batch, auth);
+        } catch (e) {
+          for (const id of batch) {
+            try {
+              const single = await this._fetchItems([id], auth);
+              parents.push(...single);
+            } catch (err) {
+              this._addToBlacklist(id);
+            }
           }
         }
-      }
 
-      const fetched = parents.map((p) => p.id);
-      batch.map((id) => id.toString()).forEach((id) => {
-        if (!fetched.includes(id)) this._addToBlacklist(id);
-      });
+        const fetched = parents.map((p) => p.id);
+        batch.map((id) => id.toString()).forEach((id) => {
+          if (!fetched.includes(id)) this._addToBlacklist(id);
+        });
 
-      let parentDeps = {};
-      if (this.includeRelations && parents.length) {
-        try {
-          parentDeps = await this._fetchRelations(
-            parents.map((p) => p.id),
-            auth
-          );
-        } catch (e) {
-          // ignore relation errors
+        let parentDeps = {};
+        if (this.includeRelations && parents.length) {
+          try {
+            parentDeps = await this._fetchRelations(
+              parents.map((p) => p.id),
+              auth
+            );
+          } catch (e) {
+            // ignore relation errors
+          }
         }
-      }
 
-      parents.forEach((p) => {
-        p.dependencies = parentDeps[p.id] || [];
-        if (!map.has(p.id)) {
-          map.set(p.id, p);
-          results.push(p);
-          if (p.parentId && !map.has(p.parentId)) missing.add(p.parentId);
-        }
-        missing.delete(p.id);
-      });
+        parents.forEach((p) => {
+          p.dependencies = parentDeps[p.id] || [];
+          if (!map.has(p.id)) {
+            map.set(p.id, p);
+            results.push(p);
+            if (p.parentId && !map.has(p.parentId)) missing.add(p.parentId);
+          }
+          missing.delete(p.id);
+        });
+      }
     }
 
     return Array.from(map.values());
@@ -355,56 +359,58 @@ export default class AdoService {
       results.push(...items);
     }
 
-    const map = new Map(results.map((i) => [i.id, i]));
-    let missing = new Set();
-    results.forEach((item) => {
-      if (item.parentId && !map.has(item.parentId)) {
-        missing.add(item.parentId);
-      }
-    });
+    if (this.fetchParents) {
+      const map = new Map(results.map((i) => [i.id, i]));
+      let missing = new Set();
+      results.forEach((item) => {
+        if (item.parentId && !map.has(item.parentId)) {
+          missing.add(item.parentId);
+        }
+      });
 
-    while (missing.size > 0) {
-      const batch = Array.from(missing).slice(0, 200);
-      let parents = [];
-      try {
-        parents = await this._fetchItems(batch, auth);
-      } catch (e) {
-        for (const id of batch) {
-          try {
-            const single = await this._fetchItems([id], auth);
-            parents.push(...single);
-          } catch (err) {
-            this._addToBlacklist(id);
+      while (missing.size > 0) {
+        const batch = Array.from(missing).slice(0, 200);
+        let parents = [];
+        try {
+          parents = await this._fetchItems(batch, auth);
+        } catch (e) {
+          for (const id of batch) {
+            try {
+              const single = await this._fetchItems([id], auth);
+              parents.push(...single);
+            } catch (err) {
+              this._addToBlacklist(id);
+            }
           }
         }
-      }
 
-      const fetched = parents.map((p) => p.id);
-      batch.map((id) => id.toString()).forEach((id) => {
-        if (!fetched.includes(id)) this._addToBlacklist(id);
-      });
+        const fetched = parents.map((p) => p.id);
+        batch.map((id) => id.toString()).forEach((id) => {
+          if (!fetched.includes(id)) this._addToBlacklist(id);
+        });
 
-      let parentDeps = {};
-      if (this.includeRelations && parents.length) {
-        try {
-          parentDeps = await this._fetchRelations(
-            parents.map((p) => p.id),
-            auth
-          );
-        } catch (e) {
-          // ignore relation errors
+        let parentDeps = {};
+        if (this.includeRelations && parents.length) {
+          try {
+            parentDeps = await this._fetchRelations(
+              parents.map((p) => p.id),
+              auth
+            );
+          } catch (e) {
+            // ignore relation errors
+          }
         }
-      }
 
-      parents.forEach((p) => {
-        p.dependencies = parentDeps[p.id] || [];
-        if (!map.has(p.id)) {
-          map.set(p.id, p);
-          results.push(p);
-          if (p.parentId && !map.has(p.parentId)) missing.add(p.parentId);
-        }
-        missing.delete(p.id);
-      });
+        parents.forEach((p) => {
+          p.dependencies = parentDeps[p.id] || [];
+          if (!map.has(p.id)) {
+            map.set(p.id, p);
+            results.push(p);
+            if (p.parentId && !map.has(p.parentId)) missing.add(p.parentId);
+          }
+          missing.delete(p.id);
+        });
+      }
     }
 
     return Array.from(map.values());
