@@ -412,7 +412,7 @@ function App() {
     : [];
   const highlightedIds = new Set(treeProblems.map((i) => i.id));
   const problemMap = new Map(treeProblems.map((p) => [p.id, p.issue]));
-
+  
   const openWorkItemsForWeek = useCallback(() => {
     const weekEnd = new Date(weekStart);
     weekEnd.setDate(weekStart.getDate() + 7);
@@ -469,6 +469,17 @@ function App() {
 
   const startSubmitSession = () => {
     setReviewOpen(true);
+  };
+
+  const handleReviewComplete = (ids) => {
+    if (ids && ids.length) {
+      setBlocks((prev) =>
+        prev.map((b) => (ids.includes(b.id) ? { ...b, status: 'submitted' } : b))
+      );
+      showToast('Blocks marked submitted');
+    }
+    setReviewOpen(false);
+    openWorkItemsForWeek();
   };
 
   const handleReviewComplete = (ids) => {
