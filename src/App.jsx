@@ -393,6 +393,26 @@ function App() {
     setBlocks(blocks.filter((b) => b.id !== id));
   };
 
+  const reviewHasListed = Object.values(settings.projectItems || {}).some(
+    (ids) => Array.isArray(ids) && ids.length > 0
+  );
+  const reviewService = new AdoService(
+    settings.azureOrg,
+    settings.azurePat,
+    settings.azureProjects,
+    settings.azureTags,
+    settings.azureArea,
+    settings.azureIteration,
+    settings.enableDevOpsReview,
+    settings.projectItems,
+    reviewHasListed ? false : settings.fetchParents
+  );
+  const treeProblems = settings.enableDevOpsReview
+    ? reviewService.findTreeProblems(items)
+    : [];
+  const highlightedIds = new Set(treeProblems.map((i) => i.id));
+  const problemMap = new Map(treeProblems.map((p) => [p.id, p.issue]));
+  
   const openWorkItemsForWeek = useCallback(() => {
     const weekEnd = new Date(weekStart);
     weekEnd.setDate(weekStart.getDate() + 7);
@@ -462,25 +482,16 @@ function App() {
     openWorkItemsForWeek();
   };
 
-  const reviewHasListed = Object.values(settings.projectItems || {}).some(
-    (ids) => Array.isArray(ids) && ids.length > 0
-  );
-  const reviewService = new AdoService(
-    settings.azureOrg,
-    settings.azurePat,
-    settings.azureProjects,
-    settings.azureTags,
-    settings.azureArea,
-    settings.azureIteration,
-    settings.enableDevOpsReview,
-    settings.projectItems,
-    reviewHasListed ? false : settings.fetchParents
-  );
-  const treeProblems = settings.enableDevOpsReview
-    ? reviewService.findTreeProblems(items)
-    : [];
-  const highlightedIds = new Set(treeProblems.map((i) => i.id));
-  const problemMap = new Map(treeProblems.map((p) => [p.id, p.issue]));
+  const handleReviewComplete = (ids) => {
+    if (ids && ids.length) {
+      setBlocks((prev) =>
+        prev.map((b) => (ids.includes(b.id) ? { ...b, status: 'submitted' } : b))
+      );
+      showToast('Blocks marked submitted');
+    }
+    setReviewOpen(false);
+    openWorkItemsForWeek();
+  };
 
   return (
     <div
