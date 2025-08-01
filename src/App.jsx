@@ -8,6 +8,7 @@ import YearHint from './components/YearHint';
 import Notes from './components/Notes';
 import PatrakLogo from './components/PatrakLogo';
 import TodoBar from './components/TodoBar';
+import ReviewWeekModal from './components/ReviewWeekModal';
 import useWorkBlocks from './hooks/useWorkBlocks';
 import useSettings from './hooks/useSettings';
 import useAdoItems from './hooks/useAdoItems';
@@ -40,6 +41,13 @@ function App() {
   const [resizing, setResizing] = useState(false);
   const [showReminder, setShowReminder] = useState(false);
   const [panelTab, setPanelTab] = useState('workItems');
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [toast, setToast] = useState('');
+
+  const showToast = (msg) => {
+    setToast(msg);
+    setTimeout(() => setToast(''), 2000);
+  };
 
   const handleExport = async () => {
     if (!window.api?.exportData) return;
@@ -385,7 +393,7 @@ function App() {
     setBlocks(blocks.filter((b) => b.id !== id));
   };
 
-  const startSubmitSession = () => {
+  const openWorkItemsForWeek = useCallback(() => {
     const weekEnd = new Date(weekStart);
     weekEnd.setDate(weekStart.getDate() + 7);
     const map = {};
@@ -437,6 +445,21 @@ function App() {
     } else {
       itemsToOpen.forEach((i) => window.open(i.url, '_blank'));
     }
+  }, [blocks, items, settings, weekStart, problemMap]);
+
+  const startSubmitSession = () => {
+    setReviewOpen(true);
+  };
+
+  const handleReviewComplete = (ids) => {
+    if (ids && ids.length) {
+      setBlocks((prev) =>
+        prev.map((b) => (ids.includes(b.id) ? { ...b, status: 'submitted' } : b))
+      );
+      showToast('Blocks marked submitted');
+    }
+    setReviewOpen(false);
+    openWorkItemsForWeek();
   };
 
   const reviewHasListed = Object.values(settings.projectItems || {}).some(
@@ -465,6 +488,11 @@ function App() {
       className="p-6 flex gap-4 h-full w-full overflow-hidden bg-gray-50 text-gray-800 dark:bg-gray-900 dark:text-gray-100"
     >
       <div className="flex flex-col flex-grow overflow-y-auto">
+        {toast && (
+          <div className="mb-2 p-2 bg-green-200 text-center text-sm text-green-800 fade-in">
+            {toast}
+          </div>
+        )}
         {showReminder && (
           <div className="mb-2 p-2 bg-yellow-200 text-center text-sm text-red-800 fade-in">
             No time logged today. Don't forget to log your work!
@@ -592,6 +620,14 @@ function App() {
           <DevOpsReview items={items} settings={settings} />
         )}
       </div>
+      {reviewOpen && (
+        <ReviewWeekModal
+          blocks={blocks}
+          weekStart={weekStart}
+          onClose={() => setReviewOpen(false)}
+          onSubmit={handleReviewComplete}
+        />
+      )}
     </div>
   );
 }
