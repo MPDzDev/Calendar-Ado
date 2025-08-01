@@ -173,6 +173,7 @@ export default function Calendar({
       workItem: form.workItem,
       itemId: null,
       comments: [],
+      status: 'draft',
     });
     setForm({
       start: `${String(settings.startHour).padStart(2, '0')}:00`,
@@ -250,6 +251,7 @@ export default function Calendar({
       note: '',
       workItem: '',
       comments: [],
+      status: 'draft',
     });
     setDrag(null);
   };
@@ -292,6 +294,7 @@ export default function Calendar({
       taskId: block.taskId,
       itemId: block.itemId,
       comments: [...(block.comments || [])],
+      status: block.status || 'draft',
     });
   };
 
@@ -453,6 +456,7 @@ export default function Calendar({
             taskId: block.taskId,
             itemId: block.itemId,
             comments: [...(block.comments || [])],
+            status: block.status || 'draft',
           });
         }
       }
@@ -493,6 +497,7 @@ export default function Calendar({
           workItem: display.title,
           taskId: item.id,
           itemId: display.id,
+          status: 'linked',
         });
     } else if (type === 'bug' || type === 'transversal activity') {
       if (onUpdate)
@@ -500,16 +505,18 @@ export default function Calendar({
           workItem: item.title,
           taskId: item.id,
           itemId: item.id,
+          status: 'linked',
         });
     } else {
       const tasks = getDescendantTasks(item.id);
       if (tasks.length === 1) {
-        if (onUpdate)
-          onUpdate(blockId, {
-            workItem: item.title,
-            taskId: tasks[0].id,
-            itemId: item.id,
-          });
+      if (onUpdate)
+        onUpdate(blockId, {
+          workItem: item.title,
+          taskId: tasks[0].id,
+          itemId: item.id,
+          status: 'linked',
+        });
       } else if (tasks.length > 0) {
         setTaskSelect({ blockId, parent: item, tasks });
       } else {
@@ -901,6 +908,7 @@ export default function Calendar({
                         workItem: taskSelect.parent.title,
                         taskId: t.id,
                         itemId: taskSelect.parent.id,
+                        status: 'linked',
                       });
                     setTaskSelect(null);
                   }}
