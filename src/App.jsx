@@ -8,7 +8,6 @@ import YearHint from './components/YearHint';
 import Notes from './components/Notes';
 import PatrakLogo from './components/PatrakLogo';
 import TodoBar from './components/TodoBar';
-import ReviewWeekModal from './components/ReviewWeekModal';
 import useWorkBlocks from './hooks/useWorkBlocks';
 import useSettings from './hooks/useSettings';
 import useAdoItems from './hooks/useAdoItems';
@@ -41,7 +40,6 @@ function App() {
   const [resizing, setResizing] = useState(false);
   const [showReminder, setShowReminder] = useState(false);
   const [panelTab, setPanelTab] = useState('workItems');
-  const [reviewOpen, setReviewOpen] = useState(false);
   const [toast, setToast] = useState('');
 
   const showToast = (msg) => {
@@ -419,10 +417,10 @@ function App() {
     const map = {};
     blocks.forEach((b) => {
       const start = new Date(b.start);
-      if (start >= weekStart && start < weekEnd && b.taskId) {
+      const iso = start.toISOString().split('T')[0];
+      if (start >= weekStart && start < weekEnd && b.taskId && !lockedDays[iso]) {
         const end = new Date(b.end);
         const hours = (end - start) / (1000 * 60 * 60);
-        const iso = start.toISOString().split('T')[0];
         const label = start.toLocaleDateString('en-US', {
           weekday: 'short',
           month: 'numeric',
@@ -465,31 +463,9 @@ function App() {
     } else {
       itemsToOpen.forEach((i) => window.open(i.url, '_blank'));
     }
-  }, [blocks, items, settings, weekStart, problemMap]);
+  }, [blocks, items, settings, weekStart, lockedDays, problemMap]);
 
   const startSubmitSession = () => {
-    setReviewOpen(true);
-  };
-
-  const handleReviewComplete = (ids) => {
-    if (ids && ids.length) {
-      setBlocks((prev) =>
-        prev.map((b) => (ids.includes(b.id) ? { ...b, status: 'submitted' } : b))
-      );
-      showToast('Blocks marked submitted');
-    }
-    setReviewOpen(false);
-    openWorkItemsForWeek();
-  };
-
-  const handleReviewComplete = (ids) => {
-    if (ids && ids.length) {
-      setBlocks((prev) =>
-        prev.map((b) => (ids.includes(b.id) ? { ...b, status: 'submitted' } : b))
-      );
-      showToast('Blocks marked submitted');
-    }
-    setReviewOpen(false);
     openWorkItemsForWeek();
   };
 
@@ -631,14 +607,6 @@ function App() {
           <DevOpsReview items={items} settings={settings} />
         )}
       </div>
-      {reviewOpen && (
-        <ReviewWeekModal
-          blocks={blocks}
-          weekStart={weekStart}
-          onClose={() => setReviewOpen(false)}
-          onSubmit={handleReviewComplete}
-        />
-      )}
     </div>
   );
 }
