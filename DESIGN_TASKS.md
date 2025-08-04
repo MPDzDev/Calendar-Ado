@@ -24,7 +24,7 @@ Based on recent design feedback, here are prioritized tasks for refreshing the a
   - Live search that updates the list as the user types.
   - Group items by status with collapsible sections.
 - **Submission workflow**
-  - "Review Week" modal before time submission.
+  - Exclude locked days when submitting instead of a "Review Week" modal.
   - Progress bar hover details showing hour breakdown.
   - Confirmation toast after submission.
 - **Support splitting across blocks**

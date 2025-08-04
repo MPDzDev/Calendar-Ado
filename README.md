@@ -114,7 +114,7 @@ Additionally, by making ADO updates a prerequisite for seamless time logging, th
 
 1. End of week, open Review Panel.
 2. Confirm matches for each block.
-3. A Review Week modal lists draft and linked blocks. Select any to mark as submitted before work items open.
+3. Lock any days that have already been submitted. Locked days are excluded when submitting.
 4. Submit all logs to ADO in batch.
 
 ### 4.3 Sync & Auth
