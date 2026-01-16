@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import StorageService from '../services/storageService';
 import PatService from '../services/patService';
+import TimeLogKeyService from '../services/timeLogKeyService';
 
 const defaultSettings = {
   startHour: 9,
@@ -30,6 +31,12 @@ const defaultSettings = {
     'Verified',
     'Closed',
   ],
+  timeLogBaseUrl: '',
+  timeLogOrgId: '',
+  timeLogApiKey: '',
+  timeLogUserId: '',
+  timeLogLookbackDays: 365,
+  timeLogPageSize: 100,
 };
 
 export default function useSettings() {
@@ -40,23 +47,36 @@ export default function useSettings() {
     const storage = new StorageService('settings', defaultSettings);
     const data = storage.read();
     const patService = new PatService();
-    Promise.resolve(patService.get()).then((pat) => {
-      if (data) {
-        setSettings({ ...defaultSettings, ...data, azurePat: pat });
-      } else {
-        setSettings({ ...defaultSettings, azurePat: pat });
-      }
-      setLoaded(true);
-    });
+    const timeLogKeyService = new TimeLogKeyService();
+    Promise.all([Promise.resolve(patService.get()), Promise.resolve(timeLogKeyService.get())])
+      .then(([pat, timeLogKey]) => {
+        if (data) {
+          setSettings({
+            ...defaultSettings,
+            ...data,
+            azurePat: pat,
+            timeLogApiKey: timeLogKey,
+          });
+        } else {
+          setSettings({
+            ...defaultSettings,
+            azurePat: pat,
+            timeLogApiKey: timeLogKey,
+          });
+        }
+      })
+      .finally(() => setLoaded(true));
   }, []);
 
   useEffect(() => {
     if (!loaded) return;
     const storage = new StorageService('settings');
-    const { azurePat, ...persist } = settings;
+    const { azurePat, timeLogApiKey, ...persist } = settings;
     storage.write(persist);
     const patService = new PatService();
-    patService.set(azurePat);
+    const timeLogKeyService = new TimeLogKeyService();
+    Promise.resolve(patService.set(azurePat)).catch(() => {});
+    Promise.resolve(timeLogKeyService.set(timeLogApiKey)).catch(() => {});
   }, [settings, loaded]);
 
   return { settings, setSettings };

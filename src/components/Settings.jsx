@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import PatService from '../services/patService';
+import { validateTimeLogSettings } from '../utils/validation';
 
 const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
@@ -9,6 +10,7 @@ export default function Settings({ settings, setSettings, onExport, onImport }) 
   const [temp, setTemp] = useState(settings);
   const [newProject, setNewProject] = useState('');
   const [newColor, setNewColor] = useState('#cccccc');
+  const [errors, setErrors] = useState({});
 
   useEffect(() => {
     setTemp(settings);
@@ -23,12 +25,35 @@ export default function Settings({ settings, setSettings, onExport, onImport }) 
   };
 
   const save = () => {
+    const wantsTimeLog =
+      temp.timeLogBaseUrl ||
+      temp.timeLogOrgId ||
+      temp.timeLogUserId ||
+      temp.timeLogApiKey;
+    if (wantsTimeLog) {
+      const validation = validateTimeLogSettings(temp);
+      if (!validation.valid) {
+        setErrors(validation.errors);
+        setTab('timeLog');
+        return;
+      }
+    }
+    setErrors({});
     const patService = new PatService();
     patService.set(temp.azurePat);
     setSettings(temp);
     setOpen(false);
     setNewProject('');
     setNewColor('#cccccc');
+  };
+
+  const clearError = (key) => {
+    if (!errors[key]) return;
+    setErrors((prev) => {
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
   };
 
   return (
@@ -61,6 +86,14 @@ export default function Settings({ settings, setSettings, onExport, onImport }) 
                 onClick={() => setTab('azure')}
               >
                 Azure DevOps
+              </button>
+              <button
+                className={`px-2 py-1 text-sm ${
+                  tab === 'timeLog' ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-gray-700'
+                }`}
+                onClick={() => setTab('timeLog')}
+              >
+                TimeLog
               </button>
             </div>
               {tab === 'general' && (
@@ -169,6 +202,133 @@ export default function Settings({ settings, setSettings, onExport, onImport }) 
                       />
                       <span>Daily reminders</span>
                     </label>
+                  </div>
+                </>
+              )}
+              {tab === 'timeLog' && (
+                <>
+                  <div>
+                    <label className="mr-1">Base URL:</label>
+                    <input
+                      type="text"
+                      value={temp.timeLogBaseUrl}
+                      onChange={(e) => {
+                        clearError('timeLogBaseUrl');
+                        setTemp({ ...temp, timeLogBaseUrl: e.target.value });
+                      }}
+                      placeholder="https://<function-app>.azurewebsites.net"
+                      className="border w-full px-1"
+                    />
+                    {errors.timeLogBaseUrl && (
+                      <div className="text-xs text-red-600">{errors.timeLogBaseUrl}</div>
+                    )}
+                  </div>
+                  <div>
+                    <label className="mr-1">Organization ID:</label>
+                    <input
+                      type="text"
+                      value={temp.timeLogOrgId}
+                      onChange={(e) => {
+                        clearError('timeLogOrgId');
+                        setTemp({ ...temp, timeLogOrgId: e.target.value });
+                      }}
+                      placeholder="00000000-0000-0000-0000-000000000000"
+                      className="border w-full px-1"
+                    />
+                    {errors.timeLogOrgId && (
+                      <div className="text-xs text-red-600">{errors.timeLogOrgId}</div>
+                    )}
+                  </div>
+                  <div>
+                    <label className="mr-1">User ID:</label>
+                    <input
+                      type="text"
+                      value={temp.timeLogUserId}
+                      onChange={(e) => {
+                        clearError('timeLogUserId');
+                        setTemp({ ...temp, timeLogUserId: e.target.value });
+                      }}
+                      placeholder="00000000-0000-0000-0000-000000000000"
+                      className="border w-full px-1"
+                    />
+                    {errors.timeLogUserId && (
+                      <div className="text-xs text-red-600">{errors.timeLogUserId}</div>
+                    )}
+                  </div>
+                  <div>
+                    <label className="mr-1">API Key:</label>
+                    <input
+                      type="password"
+                      value={temp.timeLogApiKey}
+                      onChange={(e) => {
+                        clearError('timeLogApiKey');
+                        setTemp({ ...temp, timeLogApiKey: e.target.value });
+                      }}
+                      className="border w-full px-1"
+                    />
+                    {errors.timeLogApiKey && (
+                      <div className="text-xs text-red-600">{errors.timeLogApiKey}</div>
+                    )}
+                  </div>
+                  <div>
+                    <label className="mr-1">Lookback (days):</label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="2000"
+                      value={temp.timeLogLookbackDays}
+                      onChange={(e) => {
+                        clearError('timeLogLookbackDays');
+                        setTemp({
+                          ...temp,
+                          timeLogLookbackDays: parseInt(e.target.value, 10) || temp.timeLogLookbackDays,
+                        });
+                      }}
+                      className="border w-24 px-1"
+                    />
+                    <div className="flex gap-1 mt-1">
+                      {[30, 90, 180, 365].map((v) => (
+                        <button
+                          key={v}
+                          type="button"
+                          className={`px-2 py-0.5 text-xs border ${
+                            temp.timeLogLookbackDays === v ? 'bg-blue-500 text-white' : 'bg-gray-100 dark:bg-gray-700'
+                          }`}
+                          onClick={() => {
+                            clearError('timeLogLookbackDays');
+                            setTemp({ ...temp, timeLogLookbackDays: v });
+                          }}
+                        >
+                          {v}d
+                        </button>
+                      ))}
+                    </div>
+                    {errors.timeLogLookbackDays && (
+                      <div className="text-xs text-red-600">{errors.timeLogLookbackDays}</div>
+                    )}
+                  </div>
+                  <div>
+                    <label className="mr-1">Page Size:</label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="500"
+                      value={temp.timeLogPageSize}
+                      onChange={(e) => {
+                        clearError('timeLogPageSize');
+                        setTemp({
+                          ...temp,
+                          timeLogPageSize: parseInt(e.target.value, 10) || temp.timeLogPageSize,
+                        });
+                      }}
+                      className="border w-24 px-1"
+                    />
+                    {errors.timeLogPageSize && (
+                      <div className="text-xs text-red-600">{errors.timeLogPageSize}</div>
+                    )}
+                    <p className="text-[11px] text-gray-500 mt-1">
+                      Advanced option. Default 100. Increase for fewer requests if needed.
+                    </p>
                   </div>
                 </>
               )}

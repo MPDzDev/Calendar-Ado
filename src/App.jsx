@@ -8,6 +8,7 @@ import YearHint from './components/YearHint';
 import Notes from './components/Notes';
 import PatrakLogo from './components/PatrakLogo';
 import TodoBar from './components/TodoBar';
+import TimeLogReport from './components/TimeLogReport';
 import useWorkBlocks from './hooks/useWorkBlocks';
 import useSettings from './hooks/useSettings';
 import useAdoItems from './hooks/useAdoItems';
@@ -16,6 +17,7 @@ import useTodos from './hooks/useTodos';
 import useDayLocks from './hooks/useDayLocks';
 import useAreaAliases from './hooks/useAreaAliases';
 import AdoService from './services/adoService';
+import TimeLogSyncService from './services/timeLogSyncService';
 import {
   trimLunchOverlap,
   splitByLunch,
@@ -41,6 +43,9 @@ function App() {
   const [showReminder, setShowReminder] = useState(false);
   const [panelTab, setPanelTab] = useState('workItems');
   const [toast, setToast] = useState('');
+  const [timeLogSyncing, setTimeLogSyncing] = useState(false);
+  const [timeLogReport, setTimeLogReport] = useState(null);
+  const [timeLogError, setTimeLogError] = useState('');
 
   const showToast = (msg) => {
     setToast(msg);
@@ -79,7 +84,12 @@ function App() {
       if (data.lockedDays) setLockedDays(data.lockedDays.lockedDays || {});
       if (data.areaAliases) setAreaAliases(data.areaAliases.aliases || {});
       if (data.settings) {
-        setSettings((prev) => ({ ...prev, ...data.settings, azurePat: prev.azurePat }));
+        setSettings((prev) => ({
+          ...prev,
+          ...data.settings,
+          azurePat: prev.azurePat,
+          timeLogApiKey: prev.timeLogApiKey,
+        }));
       }
     } catch (e) {
       console.error('Failed to import data', e);
@@ -465,6 +475,24 @@ function App() {
     }
   }, [blocks, items, settings, weekStart, lockedDays, problemMap]);
 
+  const handleTimeLogSync = useCallback(async () => {
+    setTimeLogError('');
+    setTimeLogSyncing(true);
+    const service = new TimeLogSyncService();
+    try {
+      const result = await service.sync({ settings, blocks });
+      if (result.blocks && result.report?.summary?.created > 0) {
+        setBlocks(result.blocks);
+      }
+      setTimeLogReport(result.report);
+      setToast('TimeLog sync completed');
+    } catch (e) {
+      setTimeLogError(e.message || 'Failed to sync TimeLog entries');
+    } finally {
+      setTimeLogSyncing(false);
+    }
+  }, [settings, blocks, setBlocks]);
+
   const startSubmitSession = () => {
     openWorkItemsForWeek();
   };
@@ -556,6 +584,26 @@ function App() {
           onExport={handleExport}
           onImport={handleImport}
         />
+        <div className="space-y-2">
+          <button
+            className={`w-full flex items-center justify-center gap-1 px-4 py-2 rounded-full shadow ${
+              timeLogSyncing ? 'bg-gray-400 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'
+            }`}
+            onClick={handleTimeLogSync}
+            disabled={timeLogSyncing}
+          >
+            <span>{timeLogSyncing ? 'Syncing TimeLog...' : 'Sync TimeLog'}</span>
+          </button>
+          {timeLogError && (
+            <div className="text-xs text-red-600">{timeLogError}</div>
+          )}
+        </div>
+        {timeLogReport && (
+          <TimeLogReport
+            report={timeLogReport}
+            onDismiss={() => setTimeLogReport(null)}
+          />
+        )}
         <HoursSummary blocks={blocks} weekStart={weekStart} items={items} />
         <div>
           <button
