@@ -148,5 +148,120 @@ body,
   transform-origin: top center;
 }
 
-.task-pill { @apply rounded-b-full rounded-t-md; }
+.tree-node {
+  @apply mb-2;
+}
+
+.tree-node-branch {
+  position: relative;
+  margin-left: 0.5rem;
+  padding-left: 0.75rem;
+  border-left: 1px solid rgba(148, 163, 184, 0.4);
+}
+
+.dark .tree-node-branch {
+  border-left-color: rgba(148, 163, 184, 0.25);
+}
+
+.tree-node-branch::before {
+  content: '';
+  position: absolute;
+  left: -1px;
+  top: 1.2rem;
+  width: 0.65rem;
+  height: 1px;
+  background: rgba(148, 163, 184, 0.4);
+}
+
+.dark .tree-node-branch::before {
+  background: rgba(148, 163, 184, 0.25);
+}
+
+.tree-children {
+  @apply mt-1 space-y-1;
+}
+
+.project-block {
+  @apply border border-slate-200 dark:border-slate-700 rounded-xl bg-white/80 dark:bg-slate-900/60;
+}
+
+.project-head {
+  @apply border-b border-slate-200 dark:border-slate-700;
+}
+
+.project-dot {
+  @apply inline-flex h-2.5 w-2.5 rounded-full;
+}
+
+.project-body {
+  @apply px-3 pb-3 space-y-2;
+}
+
+.project-pill {
+  @apply inline-flex items-center rounded-full border border-slate-200 dark:border-slate-600 px-2 py-0.5;
+}
+
+.project-tree-surface {
+  @apply rounded-lg border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-900/60 p-2;
+}
+
+.tree-pill-wrapper {
+  @apply flex flex-col gap-1;
+}
+
+.tree-pill {
+  @apply inline-flex items-center gap-2 rounded-full border px-3 py-1 text-sm font-medium shadow-sm;
+}
+
+.tree-pill:hover {
+  @apply shadow-sm;
+}
+
+.tree-pill-highlight {
+  @apply ring-2 ring-amber-400/50;
+}
+
+.tree-pill-toggle {
+  @apply inline-flex h-5 w-5 items-center justify-center rounded-full border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-200 transition-transform;
+}
+
+.tree-pill-dot {
+  @apply inline-flex h-2 w-2 rounded-full;
+}
+
+.tree-pill-id {
+  @apply font-mono text-[11px] text-slate-500 dark:text-slate-400;
+}
+
+.tree-pill-title {
+  @apply truncate max-w-full text-sm;
+}
+
+.tree-note-row {
+  @apply flex flex-wrap gap-1 text-[11px];
+}
+
+.tree-note-chip {
+  @apply inline-flex items-center rounded-full border border-amber-200 dark:border-amber-400/40 bg-amber-50 dark:bg-amber-400/10 px-2 py-0.5 text-amber-700 dark:text-amber-200;
+}
+
+.tree-task-row {
+  @apply flex flex-wrap gap-1;
+}
+
+.task-pill {
+  @apply inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium text-slate-900 shadow-sm;
+}
+
+.task-pill-highlight {
+  @apply ring-2 ring-amber-300;
+}
+
+.task-pill-title {
+  @apply truncate max-w-full;
+}
+
+.task-pill-note {
+  @apply inline-flex h-4 w-4 items-center justify-center rounded-full bg-white/60 text-[10px] font-semibold text-slate-800;
+}
 

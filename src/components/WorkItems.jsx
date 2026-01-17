@@ -42,13 +42,27 @@ export function buildTree(items) {
   return roots;
 }
 
-function countDescendants(node) {
-  if (!node.children || node.children.length === 0) return 0;
-  return node.children.reduce(
-    (sum, child) => sum + 1 + countDescendants(child),
-    0
+function summarizeWorkItems(items) {
+  return items.reduce(
+    (acc, item) => {
+      const type = (item.type || 'item').toLowerCase();
+      acc.total += 1;
+      acc[type] = (acc[type] || 0) + 1;
+      return acc;
+    },
+    { total: 0 }
   );
 }
+
+const PROJECT_METRIC_ORDER = [
+  { key: 'total', label: 'Work Items' },
+  { key: 'epic', label: 'Epics' },
+  { key: 'feature', label: 'Features' },
+  { key: 'user story', label: 'Stories' },
+  { key: 'bug', label: 'Bugs' },
+  { key: 'task', label: 'Tasks' },
+  { key: 'transversal activity', label: 'Transversal' },
+];
 
 function renderTree(
   nodes,
@@ -63,46 +77,69 @@ function renderTree(
 ) {
   return nodes.map((node) => {
     const type = node.type?.toLowerCase();
-    const isCollapsible = type === 'feature' || type === 'epic';
+    const children = node.children || [];
+    let taskChildren = [];
+    let structuralChildren = children;
+    if (type !== 'task' && children.length > 0) {
+      taskChildren = children.filter(
+        (child) => child.type?.toLowerCase() === 'task'
+      );
+      structuralChildren = children.filter(
+        (child) => child.type?.toLowerCase() !== 'task'
+      );
+    }
+    const hasStructuralChildren = structuralChildren.length > 0;
+    const hasTaskChildren = taskChildren.length > 0;
+    const isCollapsible =
+      (hasStructuralChildren || hasTaskChildren) &&
+      (type === 'feature' || type === 'epic');
     const collapsed = featureCollapsed[node.id];
-    const containerClass = isCollapsible ? 'block w-full' : 'inline-block';
+    const indentStyle =
+      level > 0 ? { marginLeft: `${level * 0.75}rem` } : undefined;
+
     return (
-      <div key={node.id} className={containerClass}>
-        <div className={isCollapsible ? 'flex items-center cursor-pointer' : ''} onClick={() => isCollapsible && toggleFeature(node.id)}>
-          <WorkItem
-            item={node}
-            level={level}
-            notes={notesMap[node.id] || []}
-            onNoteDrop={onNoteDrop}
-            onItemDrop={itemDrop}
-            highlight={highlightIds?.has(node.id)}
-            pill={node.type?.toLowerCase() === 'task' && level > 0}
-            onOpen={openItem}
-          />
-          {isCollapsible && node.children.length > 0 && (
-            <span className="ml-1 text-xs">
-              {collapsed
-                ? `▶ (${countDescendants(node)})`
-                : '▼'}
-            </span>
-          )}
-        </div>
-        {node.children.length > 0 && !collapsed &&
-          renderTree(
-            node.children,
-            level + 1,
-            onNoteDrop,
-            itemDrop,
-            notesMap,
-            highlightIds,
-            featureCollapsed,
-            toggleFeature,
-            openItem
-          )}
+      <div
+        key={node.id}
+        className={`tree-node ${level > 0 ? 'tree-node-branch' : ''}`}
+        style={indentStyle}
+      >
+        <WorkItem
+          item={node}
+          notes={notesMap[node.id] || []}
+          onNoteDrop={onNoteDrop}
+          onItemDrop={itemDrop}
+          highlight={highlightIds?.has(node.id)}
+          onOpen={openItem}
+          collapsible={isCollapsible}
+          collapsed={collapsed}
+          onToggle={() => isCollapsible && toggleFeature(node.id)}
+          childTasks={taskChildren.map((child) => ({
+            item: child,
+            notes: notesMap[child.id] || [],
+            highlight: highlightIds?.has(child.id),
+          }))}
+        />
+        {hasStructuralChildren && !collapsed && (
+          <div className="tree-children">
+            {renderTree(
+              structuralChildren,
+              level + 1,
+              onNoteDrop,
+              itemDrop,
+              notesMap,
+              highlightIds,
+              featureCollapsed,
+              toggleFeature,
+              openItem
+            )}
+          </div>
+        )}
       </div>
     );
   });
 }
+
+
 
 export default function WorkItems({
   items,
@@ -180,6 +217,8 @@ export default function WorkItems({
   const updateSettings = (changes) =>
     setSettings((prev) => ({ ...prev, ...changes }));
 
+  const itemMap = new Map(items.map((i) => [i.id, i]));
+
   const filtered = items.filter((i) => {
     const matchesSearch = i.title
       .toLowerCase()
@@ -215,24 +254,28 @@ export default function WorkItems({
     );
   });
 
-  const itemMap = new Map(items.map((i) => [i.id, i]));
+  const filteredWithParents = [];
+  const seen = new Set();
+  const includeWithAncestors = (item) => {
+    if (!item || seen.has(item.id)) return;
+    seen.add(item.id);
+    if (item.parentId && itemMap.has(item.parentId)) {
+      includeWithAncestors(itemMap.get(item.parentId));
+    }
+    filteredWithParents.push(item);
+  };
+  filtered.forEach(includeWithAncestors);
 
-  const allProjects = Array.from(
-    new Set(items.map((i) => i.project || 'Unknown'))
-  );
-
-  const grouped = allProjects.reduce((acc, project) => {
-    acc[project] = [];
+  const grouped = filteredWithParents.reduce((acc, item) => {
+    const projectKey = item.project || 'Unknown';
+    if (!acc[projectKey]) acc[projectKey] = [];
+    acc[projectKey].push(item);
     return acc;
   }, {});
-
-  filtered.forEach((item) => {
-    const projectKey = item.project || 'Unknown';
-    grouped[projectKey].push(item);
-  });
+  const groupedEntries = Object.entries(grouped);
 
   useEffect(() => {
-    const keys = Object.keys(grouped);
+    const keys = Array.from(new Set(items.map((i) => i.project || 'Unknown')));
     setCollapsed((prev) => {
       const next = { ...prev };
       keys.forEach((k) => {
@@ -417,40 +460,41 @@ export default function WorkItems({
         </div>
         <div className="mb-2 relative" ref={groupRefs.tags}>
           <div className="flex items-center flex-wrap" ref={pillRowRefs.tags}>
-          <div
-            className="font-semibold cursor-pointer"
-            onClick={() => toggleFilterGroup('tags')}
-          >
-            Tags
-          </div>
-          <div className="flex items-center flex-wrap ml-2 space-x-1 overflow-hidden">
-            {settings.azureTags.length > 0 &&
-              (condensed.tags ? (
-                <span className="px-2 py-1 text-xs border rounded-full bg-gray-200 dark:bg-gray-700 flex items-center">
-                  {`${settings.azureTags.length} filters`}
-                  <button
-                    className="ml-1"
-                    onClick={() => {
-                      // Clear all tag filters locally.
-                      updateSettings({ azureTags: [] });
-                    }}
-                  >
-                    x
-                  </button>
-                </span>
-              ) : (
-                settings.azureTags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="px-2 py-1 text-xs border rounded-full bg-gray-200 dark:bg-gray-700 flex items-center"
-                  >
-                    {tag}
-                    <button className="ml-1" onClick={() => toggleTag(tag)}>
+            <div
+              className="font-semibold cursor-pointer"
+              onClick={() => toggleFilterGroup('tags')}
+            >
+              Tags
+            </div>
+            <div className="flex items-center flex-wrap ml-2 space-x-1 overflow-hidden">
+              {settings.azureTags.length > 0 &&
+                (condensed.tags ? (
+                  <span className="px-2 py-1 text-xs border rounded-full bg-gray-200 dark:bg-gray-700 flex items-center">
+                    {`${settings.azureTags.length} filters`}
+                    <button
+                      className="ml-1"
+                      onClick={() => {
+                        // Clear all tag filters locally.
+                        updateSettings({ azureTags: [] });
+                      }}
+                    >
                       x
                     </button>
                   </span>
-                ))
-              ))}
+                ) : (
+                  settings.azureTags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="px-2 py-1 text-xs border rounded-full bg-gray-200 dark:bg-gray-700 flex items-center"
+                    >
+                      {tag}
+                      <button className="ml-1" onClick={() => toggleTag(tag)}>
+                        x
+                      </button>
+                    </span>
+                  ))
+                ))}
+            </div>
           </div>
         </div>
         {activeFilterGroup === 'tags' && (
@@ -475,7 +519,6 @@ export default function WorkItems({
             ))}
           </div>
         )}
-      </div>
       <div className="mb-2 relative" ref={groupRefs.areas}>
         <div className="flex items-center flex-wrap" ref={pillRowRefs.areas}>
           <div
@@ -560,12 +603,21 @@ export default function WorkItems({
           </div>
         )}
       </div>
+      </div>
       <div
         ref={treeRef}
         onDragOver={handleTreeDragOver}
-        className="flex-grow overflow-y-auto space-y-2 scroll-container min-h-0"
+        className="flex-grow overflow-y-auto space-y-3 scroll-container min-h-0"
       >
-        {Object.entries(grouped).map(([project, list]) => {
+        {groupedEntries.length === 0 && (
+          <div className="project-empty text-sm text-slate-500 dark:text-slate-400 px-2 py-4">
+            No work items match the current filters.
+          </div>
+        )}
+        {groupedEntries.map(([project, list]) => {
+          const structuredTree = buildTree(list);
+          const metrics = summarizeWorkItems(list);
+          const swatch = projectColors[project] || '#94a3b8';
           const allowGroupDrop = (e) => {
             if (e.dataTransfer.types.includes('application/x-note')) {
               e.preventDefault();
@@ -576,45 +628,84 @@ export default function WorkItems({
             if (!raw) return;
             e.preventDefault();
             const note = JSON.parse(raw);
-            const firstTree = buildTree(list);
-            const first = firstTree[0];
+            const first = structuredTree[0];
             if (first) {
               onNoteDrop && onNoteDrop(first.id, note);
             }
           };
           return (
-            <div key={project} className="">
-              <div
-                className="px-2 py-1 cursor-pointer font-semibold"
-                style={{ backgroundColor: projectColors[project] || undefined }}
+            <div
+              key={project}
+              className="project-block border border-slate-200 dark:border-slate-700 rounded-xl bg-white/80 dark:bg-slate-900/60"
+            >
+              <button
+                type="button"
+                className="project-head flex w-full items-center justify-between px-3 py-2 text-left text-sm"
                 onClick={() => toggle(project)}
               >
-                {project}
-              </div>
+                <span className="flex items-center gap-2 text-slate-800 dark:text-slate-100 font-medium">
+                  <span
+                    className="project-dot"
+                    style={{ backgroundColor: swatch }}
+                  />
+                  {project}
+                </span>
+                <span className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
+                  <span>{list.length} items</span>
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 20 20"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    className={`transition-transform ${collapsed[project] ? '' : 'rotate-90'}`}
+                  >
+                    <path
+                      d="M7 5l5 5-5 5"
+                      stroke="currentColor"
+                      strokeWidth="1.75"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </span>
+              </button>
               {!collapsed[project] && (
-                <div
-                  className="mt-1 ml-2 bg-white dark:bg-gray-800 border p-1"
-                  onDragOver={allowGroupDrop}
-                  onDrop={handleGroupDrop}
-                >
-                  {renderTree(
-                    buildTree(list),
-                    0,
-                    onNoteDrop,
-                    dropHandler,
-                    itemNotes,
-                    highlightedIds,
-                    featureCollapsed,
-                    toggleFeature,
-                    openItem
-                  )}
+                <div className="project-body px-3 pb-3 space-y-2">
+                  <div className="project-metrics flex flex-wrap gap-2 text-xs text-slate-500 dark:text-slate-400">
+                    {PROJECT_METRIC_ORDER.map(({ key, label }) => {
+                      const value = metrics[key] || 0;
+                      if (key !== 'total' && value === 0) return null;
+                      return (
+                        <span key={key} className="project-pill">
+                          {label}: <span className="font-semibold text-slate-900 dark:text-white ml-1">{value}</span>
+                        </span>
+                      );
+                    })}
+                  </div>
+                  <div
+                    className="project-tree-surface rounded-lg border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-900/60 p-2"
+                    onDragOver={allowGroupDrop}
+                    onDrop={handleGroupDrop}
+                  >
+                    {renderTree(
+                      structuredTree,
+                      0,
+                      onNoteDrop,
+                      dropHandler,
+                      itemNotes,
+                      highlightedIds,
+                      featureCollapsed,
+                      toggleFeature,
+                      openItem
+                    )}
+                  </div>
                 </div>
               )}
             </div>
           );
         })}
       </div>
-    </div>
   </div>
   );
 }
