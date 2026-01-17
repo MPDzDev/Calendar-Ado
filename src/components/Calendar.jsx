@@ -19,6 +19,7 @@ export default function Calendar({
   areaAliases = {},
   setAreaAliases,
   animDirection = null,
+  timeLogAlerts = {},
 }) {
   const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   const days = settings.workDays;
@@ -115,6 +116,7 @@ export default function Calendar({
   };
 
   const isDayLocked = (idx) => lockedDays[dayKey(idx)];
+  const dayAlertMessages = (idx) => timeLogAlerts[dayKey(idx)] || [];
 
   const areaSummaryForDay = (idx) => {
     const date = new Date(weekStart);
@@ -572,6 +574,13 @@ export default function Calendar({
               if (!isDayLocked(dayIdx)) setActiveDay(dayIdx);
             }}
           >
+            {dayAlertMessages(dayIdx).length > 0 && (
+              <div className="absolute top-1 left-1 text-red-600 text-xs font-semibold cursor-help"
+                title={dayAlertMessages(dayIdx).map((a) => a.message).join('\n')}
+              >
+                ⚠
+              </div>
+            )}
             {hoverDay === dayIdx && (
               <button
                 className="absolute top-0 right-0 p-1 text-sm"
@@ -645,6 +654,19 @@ export default function Calendar({
                       ? findItem(b.taskId)
                       : null;
                     const projectColor = item ? projectColors[item.project] : null;
+                    const status = (b.syncStatus || 'draft').toLowerCase();
+                    const statusLabel =
+                      status === 'synced'
+                        ? 'Synced'
+                        : status === 'modified'
+                        ? 'Edited'
+                        : 'Draft';
+                    const statusTheme =
+                      status === 'synced'
+                        ? 'bg-green-500'
+                        : status === 'modified'
+                        ? 'bg-yellow-500'
+                        : 'bg-gray-400';
                     return (
                       <div
                         key={b.id}
@@ -693,7 +715,9 @@ export default function Calendar({
                           if (isDayLocked(dayIdx)) return;
                           setContextMenu({ id: b.id, x: e.clientX, y: e.clientY });
                         }}
-                        className={`work-block absolute left-0 right-0 p-1 border rounded-md overflow-hidden select-none text-[10px] leading-tight shadow-sm ${b.taskId ? 'border-gray-300 dark:border-gray-500' : 'bg-gray-100 dark:bg-gray-600 border-gray-300 dark:border-gray-500'} ${b.taskId && b.itemId ? 'border-yellow-400' : ''} ${highlight ? 'ring-2 ring-blue-400' : ''}`}
+                        className={`work-block absolute left-0 right-0 p-1 border rounded-md overflow-hidden select-none text-[10px] leading-tight shadow-sm ${b.taskId ? 'border-gray-300 dark:border-gray-500' : 'bg-gray-100 dark:bg-gray-600 border-gray-300 dark:border-gray-500'} ${b.taskId && b.itemId ? 'border-yellow-400' : ''} ${highlight ? 'ring-2 ring-blue-400' : ''} ${
+                          status !== 'synced' ? 'border-dashed' : ''
+                        }`}
                         style={{
                           top: `${top}px`,
                           height: `${height}px`,
@@ -705,6 +729,14 @@ export default function Calendar({
                             : undefined,
                         }}
                       >
+                        <div className="flex justify-between items-center mb-0.5">
+                          <div className={`text-[9px] px-1 py-0.5 rounded text-white ${statusTheme}`}>
+                            {statusLabel}
+                          </div>
+                          <span className="text-[9px] text-gray-500">
+                            {b.updatedAt ? new Date(b.updatedAt).toLocaleDateString() : ''}
+                          </span>
+                        </div>
                         <div className="text-[10px]">
                           {(() => {
                             const d = new Date(start);

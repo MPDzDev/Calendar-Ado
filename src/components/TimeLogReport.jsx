@@ -48,14 +48,36 @@ function toCsv(differences = []) {
     .join('\n');
 }
 
-export default function TimeLogReport({ report, onDismiss }) {
+export default function TimeLogReport({
+  report,
+  onDismiss,
+  onFullRefresh,
+  onCreateMissing,
+  onOpenTimeLogSummary,
+}) {
   if (!report) return null;
   const {
     summary = {},
     differences = [],
     generatedAt = new Date().toISOString(),
     lookbackDays,
+    recommendationDate,
+    unsyncedWeeklyBlocks = [],
+    focusRange = null,
+    limitToFocusRange = false,
   } = report;
+  const dailyLimitIssues = differences.filter(
+    (diff) => diff.type === 'daily-limit-exceeded'
+  );
+  const recommendDateObj = recommendationDate ? new Date(recommendationDate) : null;
+  const focusStart = focusRange?.start ? new Date(focusRange.start) : null;
+  const focusEnd = focusRange?.end ? new Date(focusRange.end) : null;
+  let windowDescription = 'Window: custom range';
+  if (limitToFocusRange && focusStart && focusEnd) {
+    windowDescription = `Focused Week: ${focusStart.toLocaleDateString()} - ${focusEnd.toLocaleDateString()}`;
+  } else if (lookbackDays) {
+    windowDescription = `Window: last ${lookbackDays} days`;
+  }
 
   const exportJson = () => {
     download(
@@ -86,8 +108,13 @@ export default function TimeLogReport({ report, onDismiss }) {
         </button>
       </div>
       <div className="text-xs text-gray-500">
-        Window: last {lookbackDays} days • Generated: {new Date(generatedAt).toLocaleString()}
+        {windowDescription} - Generated: {new Date(generatedAt).toLocaleString()}
       </div>
+      {limitToFocusRange && focusStart && focusEnd && (
+        <div className="text-[11px] text-blue-600 dark:text-blue-300">
+          This delta refresh only analyzed the focused calendar week above.
+        </div>
+      )}
       <div className="grid grid-cols-2 gap-2 text-sm">
         <div className="p-2 bg-white dark:bg-gray-800 rounded shadow">
           <div className="text-gray-500 text-xs">Downloaded</div>
@@ -123,6 +150,62 @@ export default function TimeLogReport({ report, onDismiss }) {
           Export CSV
         </button>
       </div>
+      {recommendDateObj && (
+        <div className="p-2 bg-yellow-100 dark:bg-yellow-900 text-xs rounded flex flex-col gap-1">
+          <span>
+            Local blocks have unsynced edits dating back to{' '}
+            {recommendDateObj.toLocaleDateString()}. Consider running a full refresh from this date.
+          </span>
+          {onFullRefresh && (
+            <button
+              className="self-start px-2 py-1 bg-blue-500 text-white rounded"
+              onClick={() => onFullRefresh(recommendDateObj)}
+            >
+              Full Refresh from {recommendDateObj.toLocaleDateString()}
+            </button>
+          )}
+        </div>
+      )}
+      {unsyncedWeeklyBlocks.length > 0 && (
+        <div className="p-2 bg-blue-50 dark:bg-blue-900 text-xs rounded flex flex-col gap-1">
+          <span>
+            {unsyncedWeeklyBlocks.length} local block(s) in the current week are not synced yet.
+            Create them remotely to avoid data loss.
+          </span>
+          {onCreateMissing && (
+            <button
+              className="self-start px-2 py-1 bg-blue-600 text-white rounded"
+              onClick={() => onCreateMissing(unsyncedWeeklyBlocks)}
+            >
+              Review Push Suggestions
+            </button>
+          )}
+          {onOpenTimeLogSummary && (
+            <button
+              className="self-start px-2 py-1 bg-indigo-600 text-white rounded"
+              onClick={onOpenTimeLogSummary}
+            >
+              Open Azure TimeLog
+            </button>
+          )}
+        </div>
+      )}
+      {dailyLimitIssues.length > 0 && (
+        <div className="p-2 bg-red-50 dark:bg-red-900 text-xs rounded flex flex-col gap-1">
+          <span>
+            Daily cap reached on {dailyLimitIssues.length} remote block(s). These were skipped to avoid
+            logging more than 8 hours in a day. Adjust your entries manually in Azure TimeLog.
+          </span>
+          {onOpenTimeLogSummary && (
+            <button
+              className="self-start px-2 py-1 bg-red-600 text-white rounded"
+              onClick={onOpenTimeLogSummary}
+            >
+              Go to Azure TimeLog
+            </button>
+          )}
+        </div>
+      )}
       <div className="max-h-56 overflow-y-auto space-y-2 text-xs">
         {differences.length === 0 && (
           <div className="text-green-700">No differences detected.</div>

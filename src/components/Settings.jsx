@@ -4,7 +4,14 @@ import { validateTimeLogSettings } from '../utils/validation';
 
 const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-export default function Settings({ settings, setSettings, onExport, onImport }) {
+export default function Settings({
+  settings,
+  setSettings,
+  onExport,
+  onImport,
+  onFullTimeLogSync,
+  timeLogSyncing,
+}) {
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState('general');
   const [temp, setTemp] = useState(settings);
@@ -275,7 +282,7 @@ export default function Settings({ settings, setSettings, onExport, onImport }) 
                     <input
                       type="number"
                       min="1"
-                      max="2000"
+                      max="365"
                       value={temp.timeLogLookbackDays}
                       onChange={(e) => {
                         clearError('timeLogLookbackDays');
@@ -329,6 +336,29 @@ export default function Settings({ settings, setSettings, onExport, onImport }) 
                     <p className="text-[11px] text-gray-500 mt-1">
                       Advanced option. Default 100. Increase for fewer requests if needed.
                     </p>
+                  </div>
+                  <div className="mt-3">
+                    <button
+                      className={`w-full px-2 py-1 text-xs rounded ${
+                        timeLogSyncing
+                          ? 'bg-gray-400 text-white'
+                          : 'bg-blue-600 text-white hover:bg-blue-700'
+                      }`}
+                      onClick={() => {
+                        if (onFullTimeLogSync) onFullTimeLogSync();
+                      }}
+                      disabled={timeLogSyncing}
+                    >
+                      {timeLogSyncing ? 'Syncing...' : 'Full TimeLog Refresh'}
+                    </button>
+                    <p className="text-[11px] text-gray-500 mt-1">
+                      Runs a complete sync using the configured lookback window (maximum 365 days).
+                    </p>
+                    {settings.timeLogLastSync && (
+                      <p className="text-[11px] text-gray-500 mt-1">
+                        Last delta sync: {new Date(settings.timeLogLastSync).toLocaleString()}
+                      </p>
+                    )}
                   </div>
                 </>
               )}

@@ -28,8 +28,10 @@ describe('fetchTimeLogEntries', () => {
         userId: 'user',
         pageSize: 1,
       },
-      new Date('2025-01-01T00:00:00Z'),
-      { fetchFn }
+      {
+        fetchFn,
+        fromDate: new Date('2025-01-01T00:00:00Z'),
+      }
     );
 
     expect(fetchFn).toHaveBeenCalledTimes(3);
@@ -114,5 +116,126 @@ describe('mergeTimeLogs', () => {
 
     expect(secondRun.report.summary.identical).toBe(1);
     expect(secondRun.report.summary.differences).toBe(0);
+  });
+
+  it('suggests refresh dates based on updated timestamps of remote blocks only', () => {
+    const updatedAt = '2025-04-05T10:00:00.000Z';
+    const blocks = [
+      {
+        id: 'remote-1',
+        start: '2025-04-01T09:00:00.000Z',
+        end: '2025-04-01T10:15:00.000Z',
+        externalSource: TIME_LOG_SOURCE,
+        externalId: 'TL-remote',
+        syncStatus: 'modified',
+        updatedAt,
+        timeLogMeta: {
+          lastSyncedAt: '2025-04-02T10:00:00.000Z',
+        },
+      },
+      {
+        id: 'local-1',
+        start: '2025-04-03T09:00:00.000Z',
+        end: '2025-04-03T10:00:00.000Z',
+        updatedAt: '2025-04-04T08:00:00.000Z',
+      },
+    ];
+
+    const result = mergeTimeLogs(blocks, [], {
+      settings: { timeLogLookbackDays: 365 },
+      lastSyncDate: new Date('2025-04-06T00:00:00Z'),
+    });
+
+    expect(result.report.recommendationDate).toBe(updatedAt);
+  });
+
+  it('flags unsynced manual blocks within the focused week', () => {
+    const blocks = [
+      {
+        id: 'local-2',
+        start: '2026-01-19T09:00:00.000Z',
+        end: '2026-01-19T11:00:00.000Z',
+        note: 'Draft entry',
+        syncStatus: 'draft',
+        updatedAt: '2026-01-19T10:00:00.000Z',
+      },
+      {
+        id: 'outside',
+        start: '2026-02-01T09:00:00.000Z',
+        end: '2026-02-01T10:00:00.000Z',
+        syncStatus: 'draft',
+        updatedAt: '2026-02-01T09:30:00.000Z',
+      },
+    ];
+
+    const result = mergeTimeLogs(blocks, [], {
+      settings: { timeLogLookbackDays: 365 },
+      focusRange: {
+        start: new Date('2026-01-19T00:00:00.000Z'),
+        end: new Date('2026-01-26T00:00:00.000Z'),
+      },
+    });
+
+    expect(result.report.unsyncedWeeklyBlocks).toHaveLength(1);
+    expect(result.report.unsyncedWeeklyBlocks[0].id).toBe('local-2');
+  });
+
+  it('suppresses missing-remote differences outside the focused week when limited to focus', () => {
+    const blocks = [
+      {
+        id: 'remote-only',
+        start: '2026-02-01T09:00:00.000Z',
+        end: '2026-02-01T10:00:00.000Z',
+        externalSource: TIME_LOG_SOURCE,
+        externalId: 'TL-outside',
+        updatedAt: '2026-03-05T10:00:00.000Z',
+        timeLogMeta: {
+          lastSyncedAt: '2026-02-28T10:00:00.000Z',
+        },
+      },
+    ];
+
+    const result = mergeTimeLogs(blocks, [], {
+      settings: { timeLogLookbackDays: 365 },
+      focusRange: {
+        start: new Date('2026-02-10T00:00:00.000Z'),
+        end: new Date('2026-02-17T00:00:00.000Z'),
+      },
+      limitToFocusRange: true,
+      lastSyncDate: new Date('2026-03-01T00:00:00.000Z'),
+    });
+
+    expect(result.report.differences).toHaveLength(0);
+    expect(result.report.summary.differences).toBe(0);
+  });
+
+  it('skips importing remote entries when the daily total would exceed eight hours', () => {
+    const localBlock = {
+      id: 'local-3',
+      start: '2026-01-20T09:00:00.000Z',
+      end: '2026-01-20T15:00:00.000Z',
+      note: 'Manual block',
+    };
+    const remoteEntries = [
+      {
+        timeLogId: 'TL-limit',
+        minutes: 360,
+        date: '2026-01-20T00:00:00Z',
+        comment: 'Remote block',
+      },
+    ];
+
+    const result = mergeTimeLogs([localBlock], remoteEntries, {
+      settings: { startHour: 9, lunchStart: 9, lunchEnd: 9, timeLogLookbackDays: 365 },
+    });
+
+    expect(result.blocks).toHaveLength(1);
+    expect(result.report.summary.created).toBe(0);
+    const limitDiff = result.report.differences.find(
+      (diff) => diff.type === 'daily-limit-exceeded'
+    );
+    expect(limitDiff).toBeTruthy();
+    expect(limitDiff.local.minutes).toBe(360);
+    expect(limitDiff.remote.minutes).toBe(360);
   });
 });

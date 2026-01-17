@@ -31,8 +31,8 @@ export function validateTimeLogSettings(settings = {}) {
     errors.timeLogApiKey = 'API key is required';
   }
   const lookback = parseInt(settings.timeLogLookbackDays, 10);
-  if (Number.isNaN(lookback) || lookback <= 0 || lookback > 2000) {
-    errors.timeLogLookbackDays = 'Lookback days must be between 1 and 2000';
+  if (Number.isNaN(lookback) || lookback <= 0 || lookback > 365) {
+    errors.timeLogLookbackDays = 'Lookback days must be between 1 and 365';
   }
   const pageSize = parseInt(settings.timeLogPageSize, 10);
   if (Number.isNaN(pageSize) || pageSize <= 0 || pageSize > 500) {

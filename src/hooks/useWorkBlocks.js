@@ -10,6 +10,8 @@ export default function useWorkBlocks() {
     const loaded = (data.workBlocks || []).map((b) => ({
       ...b,
       status: b.status || 'draft',
+      updatedAt: b.updatedAt || new Date().toISOString(),
+      syncStatus: b.syncStatus || b.status,
     }));
     setBlocks(loaded);
   }, []);

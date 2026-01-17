@@ -9,6 +9,7 @@ import Notes from './components/Notes';
 import PatrakLogo from './components/PatrakLogo';
 import TodoBar from './components/TodoBar';
 import TimeLogReport from './components/TimeLogReport';
+import TimeLogPushSuggestions from './components/TimeLogPushSuggestions';
 import useWorkBlocks from './hooks/useWorkBlocks';
 import useSettings from './hooks/useSettings';
 import useAdoItems from './hooks/useAdoItems';
@@ -24,6 +25,25 @@ import {
   splitForOverlaps,
 } from './utils/timeAdjust';
 import { getWeekNumber } from './utils/date';
+
+function buildTimeLogAlerts(report) {
+  if (!report?.differences) return {};
+  const alerts = {};
+  report.differences.forEach((diff) => {
+    if (diff.type !== 'daily-limit-exceeded') return;
+    const dateKey = diff.remote?.date || diff.local?.date;
+    if (!dateKey) return;
+    const list = alerts[dateKey] || [];
+    list.push({
+      type: diff.type,
+      message:
+        diff.message ||
+        'Daily limit exceeded. Review remote entries before importing.',
+    });
+    alerts[dateKey] = list;
+  });
+  return alerts;
+}
 
 function App() {
   const { blocks, setBlocks } = useWorkBlocks();
@@ -46,11 +66,37 @@ function App() {
   const [timeLogSyncing, setTimeLogSyncing] = useState(false);
   const [timeLogReport, setTimeLogReport] = useState(null);
   const [timeLogError, setTimeLogError] = useState('');
+  const [timeLogAlerts, setTimeLogAlerts] = useState({});
+  const [pushSuggestions, setPushSuggestions] = useState([]);
+  const [showPushSuggestions, setShowPushSuggestions] = useState(false);
+
+  const getWeekStart = (date) => {
+    const d = new Date(date);
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+    d.setDate(diff);
+    d.setHours(0, 0, 0, 0);
+    return d;
+  };
+
+  const [weekStart, setWeekStart] = useState(getWeekStart(new Date()));
+  const [weekAnim, setWeekAnim] = useState(null);
+  const weekNumber = getWeekNumber(weekStart);
+
+  const dirtyClone = (block = {}, extra = {}) => {
+    const updatedAt = new Date().toISOString();
+    const status =
+      block.syncStatus === 'synced'
+        ? 'modified'
+        : block.syncStatus || 'draft';
+    return { ...block, ...extra, updatedAt, syncStatus: status };
+  };
 
   const showToast = (msg) => {
     setToast(msg);
     setTimeout(() => setToast(''), 2000);
   };
+
 
   const handleExport = async () => {
     if (!window.api?.exportData) return;
@@ -146,12 +192,139 @@ function App() {
     setBlocks((prev) =>
       prev.map((b) =>
         b.id === blockId
-          ? { ...b, comments: [...(b.comments || []), note.text] }
+          ? dirtyClone(b, { comments: [...(b.comments || []), note.text] })
           : b
       )
     );
     if (!note.starred) deleteNote(note.id);
   };
+
+  const getReferenceDateFromBlock = (block) => {
+    if (!block) return null;
+    if (block.start) {
+      const startDate = new Date(block.start);
+      if (!Number.isNaN(startDate.getTime())) {
+        return startDate;
+      }
+    }
+    const dateKey = block.date || block.timeLogMeta?.workDate || null;
+    if (dateKey) {
+      const normalized = new Date(`${dateKey}T00:00:00`);
+      if (!Number.isNaN(normalized.getTime())) {
+        return normalized;
+      }
+    }
+    return null;
+  };
+
+  const focusWeekFromBlock = useCallback(
+    (block) => {
+      const reference = getReferenceDateFromBlock(block);
+      if (!reference) return;
+      const monday = new Date(reference);
+      const day = monday.getDay();
+      const diff = monday.getDate() - day + (day === 0 ? -6 : 1);
+      monday.setDate(diff);
+      monday.setHours(0, 0, 0, 0);
+      setWeekStart(monday);
+    },
+    [setWeekStart]
+  );
+
+  const buildPushSuggestions = useCallback(
+    (blocksNeedingAttention = []) => {
+      if (!Array.isArray(blocksNeedingAttention)) return [];
+      const itemMap = new Map();
+      (items || []).forEach((item) => {
+        if (item?.id !== null && item?.id !== undefined) {
+          itemMap.set(item.id.toString(), item);
+        }
+      });
+      const groupMap = new Map();
+      blocksNeedingAttention.forEach((block) => {
+        if (!block) return;
+        const dateKey = block.date || block.timeLogMeta?.workDate || 'unknown';
+        const hasConcreteDate = dateKey !== 'unknown';
+        const workItemIdRaw =
+          block.taskId ??
+          block.itemId ??
+          block.workItemId ??
+          block.timeLogMeta?.workItemId ??
+          null;
+        const workItemId = workItemIdRaw !== null && workItemIdRaw !== undefined
+          ? workItemIdRaw.toString()
+          : null;
+        const groupKey = `${dateKey}|${workItemId || 'unassigned'}`;
+        if (!groupMap.has(groupKey)) {
+          const day = hasConcreteDate ? new Date(`${dateKey}T00:00:00`) : null;
+          const dayLabel =
+            hasConcreteDate && day && !Number.isNaN(day.getTime())
+              ? day.toLocaleDateString('en-US', {
+                  weekday: 'short',
+                  month: 'short',
+                  day: 'numeric',
+                })
+              : 'Date unknown';
+          const linkedItem = workItemId ? itemMap.get(workItemId) : null;
+          const workItemTitle =
+            linkedItem?.title ||
+            linkedItem?.name ||
+            block.workItem ||
+            (workItemId ? `Azure #${workItemId}` : 'Unassigned');
+          groupMap.set(groupKey, {
+            id: groupKey,
+            date: dateKey,
+            dayLabel,
+            workItemId,
+            workItemTitle,
+            minutes: 0,
+            blocks: [],
+          });
+        }
+        const group = groupMap.get(groupKey);
+        const blockMinutes = Number.isFinite(block.minutes) ? block.minutes : 0;
+        group.minutes += blockMinutes;
+        group.blocks.push(block);
+      });
+      return Array.from(groupMap.values()).sort((a, b) => {
+        if (a.date === b.date) {
+          return (a.workItemTitle || '').localeCompare(b.workItemTitle || '');
+        }
+        return (a.date || '').localeCompare(b.date || '');
+      });
+    },
+    [items]
+  );
+
+  const handleViewPushSuggestions = useCallback(
+    (blocksNeedingAttention = []) => {
+      if (blocksNeedingAttention.length > 0) {
+        focusWeekFromBlock(blocksNeedingAttention[0]);
+      }
+      const suggestions = buildPushSuggestions(blocksNeedingAttention);
+      setPushSuggestions(suggestions);
+      setShowPushSuggestions(true);
+    },
+    [buildPushSuggestions, focusWeekFromBlock]
+  );
+
+  const openTimeLogSummary = useCallback(() => {
+    const org = (settings.azureOrg || '').trim();
+    const project = Array.isArray(settings.azureProjects)
+      ? settings.azureProjects[0]
+      : null;
+    if (!org || !project) {
+      showToast('Set Azure organization and at least one project to open TimeLog summary.');
+      return;
+    }
+    const encodedProject = encodeURIComponent(project);
+    const url = `https://dev.azure.com/${org}/${encodedProject}/_apps/hub/TimeLog.time-logging.time-log-summary`;
+    if (window.api?.openExternal) {
+      window.api.openExternal(url);
+    } else {
+      window.open(url, '_blank');
+    }
+  }, [settings.azureOrg, settings.azureProjects]);
 
   const fetchWorkItems = useCallback(async (full = false, fromUser = false) => {
     const {
@@ -305,19 +478,6 @@ function App() {
     return () => clearTimeout(timeoutId);
   }, [blocks, settings.enableReminders]);
 
-  const getWeekStart = (date) => {
-    const d = new Date(date);
-    const day = d.getDay();
-    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-    d.setDate(diff);
-    d.setHours(0, 0, 0, 0);
-    return d;
-  };
-
-  const [weekStart, setWeekStart] = useState(getWeekStart(new Date()));
-  const [weekAnim, setWeekAnim] = useState(null);
-  const weekNumber = getWeekNumber(weekStart);
-
   const prevWeek = () => {
     setWeekAnim('right');
     setWeekStart((w) => new Date(w.getTime() - 7 * 24 * 60 * 60 * 1000));
@@ -348,6 +508,7 @@ function App() {
       const baseTime = Date.now();
       const pieces = splitByLunch(block, settings);
       let updated = [...prev];
+      const updatedAt = new Date().toISOString();
       pieces.forEach((part, pIdx) => {
         const segments = splitForOverlaps(updated, part);
         segments.forEach((seg, idx) => {
@@ -357,7 +518,7 @@ function App() {
           };
           const adjusted = trimLunchOverlap(blockData, settings);
           if (adjusted) {
-            updated.push(adjusted);
+            updated.push({ ...adjusted, updatedAt, syncStatus: adjusted.syncStatus || 'draft' });
           }
         });
       });
@@ -367,7 +528,7 @@ function App() {
 
   const updateBlock = (id, data) => {
     setBlocks((prev) =>
-      prev.map((b) => (b.id === id ? { ...b, ...data } : b))
+      prev.map((b) => (b.id === id ? dirtyClone(b, data) : b))
     );
   };
 
@@ -382,6 +543,11 @@ function App() {
     );
 
     let updated = [...others];
+    const updatedAt = new Date().toISOString();
+    const targetStatus =
+      current.syncStatus === 'synced'
+        ? 'modified'
+        : current.syncStatus || 'draft';
     pieces.forEach((part, index) => {
       const baseId = index === 0 ? id : Date.now() + index;
       const segments = splitForOverlaps(updated, part);
@@ -389,7 +555,7 @@ function App() {
         const blockData = { ...seg, id: idx === 0 ? baseId : Date.now() + index * 100 + idx };
         const adjusted = trimLunchOverlap(blockData, settings);
         if (adjusted) {
-          updated.push(adjusted);
+          updated.push({ ...adjusted, updatedAt, syncStatus: targetStatus });
         }
       });
     });
@@ -480,28 +646,79 @@ function App() {
     setTimeLogSyncing(true);
     const service = new TimeLogSyncService();
     try {
-      const result = await service.sync({ settings, blocks });
+      const lastSyncDate = settings.timeLogLastSync
+        ? new Date(settings.timeLogLastSync)
+        : null;
+      const focusStart = new Date(weekStart);
+      focusStart.setHours(0, 0, 0, 0);
+      const focusEnd = new Date(focusStart);
+      focusEnd.setDate(focusEnd.getDate() + 7);
+      const result = await service.sync({
+        settings,
+        blocks,
+        createdOnFromDate: lastSyncDate,
+        focusRange: { start: focusStart, end: focusEnd },
+        limitToFocusRange: true,
+      });
       if (result.blocks && result.report?.summary?.created > 0) {
         setBlocks(result.blocks);
       }
       setTimeLogReport(result.report);
-      setToast('TimeLog sync completed');
+      setTimeLogAlerts(buildTimeLogAlerts(result.report));
+      setToast('TimeLog delta sync completed');
+      setSettings((prev) => ({
+        ...prev,
+        timeLogLastSync: new Date().toISOString(),
+      }));
     } catch (e) {
       setTimeLogError(e.message || 'Failed to sync TimeLog entries');
     } finally {
       setTimeLogSyncing(false);
     }
-  }, [settings, blocks, setBlocks]);
+  }, [settings, blocks, setBlocks, setSettings, weekStart]);
+
+  const handleFullTimeLogSync = useCallback(async (startDateOverride = null) => {
+    setTimeLogError('');
+    setTimeLogSyncing(true);
+    const service = new TimeLogSyncService();
+    try {
+      const focusStart = new Date(weekStart);
+      focusStart.setHours(0, 0, 0, 0);
+      const focusEnd = new Date(focusStart);
+      focusEnd.setDate(focusEnd.getDate() + 7);
+      const result = await service.sync({
+        settings,
+        blocks,
+        createdOnFromDate: startDateOverride,
+        focusRange: { start: focusStart, end: focusEnd },
+      });
+      if (result.blocks && result.report?.summary?.created > 0) {
+        setBlocks(result.blocks);
+      }
+      setTimeLogReport(result.report);
+      setTimeLogAlerts(buildTimeLogAlerts(result.report));
+      setToast('Full TimeLog sync completed');
+      setSettings((prev) => ({
+        ...prev,
+        timeLogLastSync: new Date().toISOString(),
+      }));
+    } catch (e) {
+      setTimeLogError(e.message || 'Failed to sync TimeLog entries');
+    } finally {
+      setTimeLogSyncing(false);
+    }
+  }, [settings, blocks, setBlocks, setSettings, weekStart]);
 
   const startSubmitSession = () => {
     openWorkItemsForWeek();
   };
 
   return (
-    <div
-      ref={containerRef}
-      className="p-6 flex gap-4 h-full w-full overflow-hidden bg-gray-50 text-gray-800 dark:bg-gray-900 dark:text-gray-100"
-    >
+    <>
+      <div
+        ref={containerRef}
+        className="p-6 flex gap-4 h-full w-full overflow-hidden bg-gray-50 text-gray-800 dark:bg-gray-900 dark:text-gray-100"
+      >
       <div className="flex flex-col flex-grow overflow-y-auto">
         {toast && (
           <div className="mb-2 p-2 bg-green-200 text-center text-sm text-green-800 fade-in">
@@ -558,6 +775,7 @@ function App() {
           areaAliases={areaAliases}
           setAreaAliases={setAreaAliases}
           animDirection={weekAnim}
+          timeLogAlerts={timeLogAlerts}
         />
         <Notes
           notes={notes}
@@ -583,6 +801,8 @@ function App() {
           setSettings={setSettings}
           onExport={handleExport}
           onImport={handleImport}
+          onFullTimeLogSync={handleFullTimeLogSync}
+          timeLogSyncing={timeLogSyncing}
         />
         <div className="space-y-2">
           <button
@@ -592,7 +812,7 @@ function App() {
             onClick={handleTimeLogSync}
             disabled={timeLogSyncing}
           >
-            <span>{timeLogSyncing ? 'Syncing TimeLog...' : 'Sync TimeLog'}</span>
+            <span>{timeLogSyncing ? 'Syncing...' : 'Sync Delta'}</span>
           </button>
           {timeLogError && (
             <div className="text-xs text-red-600">{timeLogError}</div>
@@ -602,6 +822,9 @@ function App() {
           <TimeLogReport
             report={timeLogReport}
             onDismiss={() => setTimeLogReport(null)}
+            onFullRefresh={handleFullTimeLogSync}
+            onCreateMissing={handleViewPushSuggestions}
+            onOpenTimeLogSummary={openTimeLogSummary}
           />
         )}
         <HoursSummary blocks={blocks} weekStart={weekStart} items={items} />
@@ -656,6 +879,16 @@ function App() {
         )}
       </div>
     </div>
+    {showPushSuggestions && (
+      <TimeLogPushSuggestions
+        suggestions={pushSuggestions}
+        onClose={() => {
+          setShowPushSuggestions(false);
+          setPushSuggestions([]);
+        }}
+      />
+    )}
+    </>
   );
 }
 

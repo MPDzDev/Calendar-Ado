@@ -37,6 +37,7 @@ const defaultSettings = {
   timeLogUserId: '',
   timeLogLookbackDays: 365,
   timeLogPageSize: 100,
+  timeLogLastSync: null,
 };
 
 export default function useSettings() {
