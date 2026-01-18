@@ -152,6 +152,7 @@ const snapshotEntry = (entry) => ({
   createdOn: entry.createdOn || '',
   projectId: entry.projectId || null,
   userId: entry.userId || null,
+  projectName: entry.projectName || '',
 });
 
 const normalizeEntry = (entry) => ({
@@ -161,12 +162,36 @@ const normalizeEntry = (entry) => ({
   createdOn: entry.createdOn,
   workItemId: entry.workItemId ?? null,
   projectId: entry.projectId ?? null,
+  projectName: entry.projectName || entry.project || '',
   timeTypeId: entry.timeTypeId ?? null,
   timeTypeDescription: entry.timeTypeDescription || '',
   comment: entry.comment || '',
   userId: entry.userId || null,
   userName: entry.userName || '',
 });
+
+const extractEntryMetadata = (entries = []) => {
+  const metadata = {
+    userName: '',
+    projectId: '',
+    projectMap: {},
+  };
+  for (const entry of entries) {
+    if (!metadata.userName && entry.userName) {
+      metadata.userName = entry.userName;
+    }
+    if (entry.projectId) {
+      if (!metadata.projectId) {
+        metadata.projectId = entry.projectId.toString();
+      }
+      const projectName = (entry.projectName || '').trim();
+      if (projectName && !metadata.projectMap[projectName]) {
+        metadata.projectMap[projectName] = entry.projectId.toString();
+      }
+    }
+  }
+  return metadata;
+};
 
 const compareBlockToEntry = (block, entry) => {
   const diff = [];
@@ -240,6 +265,7 @@ const buildBlocksFromEntry = (entry, settings = {}, placementMap = {}) => {
           createdOn: entry.createdOn || null,
           workItemId: entry.workItemId ?? null,
           projectId: entry.projectId ?? null,
+          projectName: entry.projectName || '',
           timeTypeId: entry.timeTypeId ?? null,
           timeTypeDescription: entry.timeTypeDescription || '',
           comment: (entry.comment || '').trim(),
@@ -496,14 +522,27 @@ export function mergeTimeLogs(blocks = [], remoteEntries = [], options = {}) {
       }
       const heuristic = heuristicMatch(segmentEntry, updatedBlocks);
       if (heuristic) {
-        differences.push({
-          type: 'needs-link',
-          fields: ['externalId'],
-          message:
-            'Remote entry resembles a local manual entry. Link manually or adjust the block.',
-          local: snapshotBlock(heuristic),
-          remote: snapshotEntry(segmentEntry),
-        });
+        const fields = compareBlockToEntry(heuristic, segmentEntry);
+        if (fields.length === 0) {
+          summary.identical += 1;
+        } else {
+          differences.push({
+            type: 'field-mismatch',
+            fields,
+            message: buildDifferenceMessage(fields),
+            local: snapshotBlock(heuristic),
+            remote: snapshotEntry(segmentEntry),
+          });
+        }
+        heuristic.externalSource = TIME_LOG_SOURCE;
+        heuristic.externalId = entry.timeLogId;
+        heuristic.syncStatus = 'synced';
+        heuristic.updatedAt = nowIso;
+        heuristic.timeLogMeta = {
+          ...(heuristic.timeLogMeta || {}),
+          ...newBlock.timeLogMeta,
+          lastSyncedAt: nowIso,
+        };
         return;
       }
       const projectedMinutes = (dayTotals.get(newBlockDateKey) || 0) + segmentMinutes;
@@ -668,11 +707,16 @@ export default class TimeLogSyncService {
       },
       fetchOptions
     );
-    return mergeTimeLogs(blocks, entries, {
+    const metadata = extractEntryMetadata(entries);
+    const result = mergeTimeLogs(blocks, entries, {
       settings,
       lastSyncDate: createdOnFromDate,
       focusRange,
       limitToFocusRange,
     });
+    return {
+      ...result,
+      metadata,
+    };
   }
 }

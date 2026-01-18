@@ -19,6 +19,7 @@ import useDayLocks from './hooks/useDayLocks';
 import useAreaAliases from './hooks/useAreaAliases';
 import AdoService from './services/adoService';
 import TimeLogSyncService from './services/timeLogSyncService';
+import { createTimeLogEntry } from './services/timeLogPublishService';
 import {
   trimLunchOverlap,
   splitByLunch,
@@ -69,6 +70,8 @@ function App() {
   const [timeLogAlerts, setTimeLogAlerts] = useState({});
   const [pushSuggestions, setPushSuggestions] = useState([]);
   const [showPushSuggestions, setShowPushSuggestions] = useState(false);
+  const [pushCreateStatus, setPushCreateStatus] = useState({});
+  const [pushCreateError, setPushCreateError] = useState('');
 
   const getWeekStart = (date) => {
     const d = new Date(date);
@@ -82,6 +85,46 @@ function App() {
   const [weekStart, setWeekStart] = useState(getWeekStart(new Date()));
   const [weekAnim, setWeekAnim] = useState(null);
   const weekNumber = getWeekNumber(weekStart);
+
+  const dismissTimeLogReport = useCallback(() => {
+    setTimeLogReport((prev) => (prev ? null : prev));
+    setTimeLogAlerts({});
+  }, []);
+
+  const applyTimeLogMetadata = useCallback(
+    (metadata = {}) => {
+      if (!metadata || typeof metadata !== 'object') return;
+      setSettings((prev) => {
+        let changed = false;
+        const next = { ...prev };
+        if (metadata.userName && metadata.userName !== prev.timeLogUserName) {
+          next.timeLogUserName = metadata.userName;
+          changed = true;
+        }
+        if (metadata.projectId && metadata.projectId !== prev.timeLogProjectId) {
+          next.timeLogProjectId = metadata.projectId;
+          changed = true;
+        }
+        const incomingMap = metadata.projectMap || {};
+        const existingMap = prev.timeLogProjectMap || {};
+        const mergedMap = { ...existingMap };
+        let mapChanged = false;
+        Object.entries(incomingMap).forEach(([projectName, projectId]) => {
+          if (!projectName || !projectId) return;
+          if (mergedMap[projectName] !== projectId) {
+            mergedMap[projectName] = projectId;
+            mapChanged = true;
+          }
+        });
+        if (mapChanged) {
+          next.timeLogProjectMap = mergedMap;
+          changed = true;
+        }
+        return changed ? next : prev;
+      });
+    },
+    [setSettings]
+  );
 
   const dirtyClone = (block = {}, extra = {}) => {
     const updatedAt = new Date().toISOString();
@@ -196,6 +239,7 @@ function App() {
           : b
       )
     );
+    dismissTimeLogReport();
     if (!note.starred) deleteNote(note.id);
   };
 
@@ -231,6 +275,20 @@ function App() {
     [setWeekStart]
   );
 
+  const itemProjectMap = useMemo(() => {
+    const map = new Map();
+    (items || []).forEach((item) => {
+      if (item?.id === null || item?.id === undefined) return;
+      const name =
+        item.project ||
+        item.projectName ||
+        item.fields?.['System.TeamProject'] ||
+        '';
+      if (name) map.set(item.id.toString(), name);
+    });
+    return map;
+  }, [items]);
+
   const buildPushSuggestions = useCallback(
     (blocksNeedingAttention = []) => {
       if (!Array.isArray(blocksNeedingAttention)) return [];
@@ -240,6 +298,7 @@ function App() {
           itemMap.set(item.id.toString(), item);
         }
       });
+      const knownProjects = settings.timeLogProjectMap || {};
       const groupMap = new Map();
       blocksNeedingAttention.forEach((block) => {
         if (!block) return;
@@ -251,9 +310,10 @@ function App() {
           block.workItemId ??
           block.timeLogMeta?.workItemId ??
           null;
-        const workItemId = workItemIdRaw !== null && workItemIdRaw !== undefined
-          ? workItemIdRaw.toString()
-          : null;
+        const workItemId =
+          workItemIdRaw !== null && workItemIdRaw !== undefined
+            ? workItemIdRaw.toString()
+            : null;
         const groupKey = `${dateKey}|${workItemId || 'unassigned'}`;
         if (!groupMap.has(groupKey)) {
           const day = hasConcreteDate ? new Date(`${dateKey}T00:00:00`) : null;
@@ -271,17 +331,41 @@ function App() {
             linkedItem?.name ||
             block.workItem ||
             (workItemId ? `Azure #${workItemId}` : 'Unassigned');
+          const projectName =
+            linkedItem?.project ||
+            block.timeLogMeta?.projectName ||
+            block.project ||
+            'Unassigned Project';
           groupMap.set(groupKey, {
             id: groupKey,
             date: dateKey,
             dayLabel,
             workItemId,
             workItemTitle,
+            projectName,
             minutes: 0,
+            projectId: block.timeLogMeta?.projectId || knownProjects[projectName] || null,
+            userName: block.timeLogMeta?.userName || null,
             blocks: [],
           });
         }
         const group = groupMap.get(groupKey);
+        const projectName =
+          group.projectName ||
+          block.timeLogMeta?.projectName ||
+          block.project ||
+          'Unassigned Project';
+        group.projectName = projectName;
+        if (!group.projectId) {
+          if (block.timeLogMeta?.projectId) {
+            group.projectId = block.timeLogMeta.projectId;
+          } else if (projectName && knownProjects[projectName]) {
+            group.projectId = knownProjects[projectName];
+          }
+        }
+        if (!group.userName && block.timeLogMeta?.userName) {
+          group.userName = block.timeLogMeta.userName;
+        }
         const blockMinutes = Number.isFinite(block.minutes) ? block.minutes : 0;
         group.minutes += blockMinutes;
         group.blocks.push(block);
@@ -293,7 +377,48 @@ function App() {
         return (a.date || '').localeCompare(b.date || '');
       });
     },
-    [items]
+    [items, settings.timeLogProjectMap]
+  );
+
+  const deriveProjectIdMap = useCallback(
+    (blockList = []) => {
+      const derived = {};
+      blockList.forEach((block) => {
+        const projectIdRaw = block?.timeLogMeta?.projectId;
+        if (!projectIdRaw) return;
+        const projectId = projectIdRaw.toString();
+        const candidateNames = [
+          block?.timeLogMeta?.projectName,
+          block?.project,
+          block?.workItemProject,
+        ];
+        let projectName =
+          candidateNames.find((name) => typeof name === 'string' && name.trim())?.trim() || '';
+        if (!projectName) {
+          const keys = [
+            block?.itemId,
+            block?.taskId,
+            block?.timeLogMeta?.workItemId,
+          ]
+            .map((key) =>
+              key !== null && key !== undefined ? key.toString() : null
+            )
+            .filter(Boolean);
+          for (const key of keys) {
+            if (itemProjectMap.has(key)) {
+              projectName = itemProjectMap.get(key);
+              break;
+            }
+          }
+        }
+        if (!projectName) return;
+        if (derived[projectName] !== projectId) {
+          derived[projectName] = projectId;
+        }
+      });
+      return derived;
+    },
+    [itemProjectMap]
   );
 
   const handleViewPushSuggestions = useCallback(
@@ -303,10 +428,192 @@ function App() {
       }
       const suggestions = buildPushSuggestions(blocksNeedingAttention);
       setPushSuggestions(suggestions);
+      setPushCreateStatus({});
+      setPushCreateError('');
       setShowPushSuggestions(true);
     },
     [buildPushSuggestions, focusWeekFromBlock]
   );
+
+  const handleClosePushSuggestions = useCallback(() => {
+    setShowPushSuggestions(false);
+    setPushSuggestions([]);
+    setPushCreateStatus({});
+    setPushCreateError('');
+  }, []);
+
+  const buildSuggestionPayload = useCallback(
+    (suggestion) => {
+      if (!suggestion) {
+        return { error: 'Suggestion is not available.' };
+      }
+      if (
+        !settings.timeLogBaseUrl ||
+        !settings.timeLogOrgId ||
+        !settings.timeLogApiKey
+      ) {
+        return { error: 'Complete the TimeLog settings before publishing entries.' };
+      }
+      if (!settings.timeLogUserId) {
+        return { error: 'TimeLog User ID is missing. Update Settings to continue.' };
+      }
+      const resolvedUserName =
+        (suggestion.userName && suggestion.userName.trim()) ||
+        (settings.timeLogUserName && settings.timeLogUserName.trim()) ||
+        '';
+      const projectMap = settings.timeLogProjectMap || {};
+      const resolvedProjectId =
+        (suggestion.projectId && suggestion.projectId.toString()) ||
+        (suggestion.projectName &&
+          projectMap[suggestion.projectName] &&
+          projectMap[suggestion.projectName].toString()) ||
+        (settings.timeLogProjectId && settings.timeLogProjectId.toString()) ||
+        '';
+      if (!resolvedUserName) {
+        return {
+          error: 'Run a TimeLog sync to capture your user name automatically.',
+        };
+      }
+      if (!resolvedProjectId) {
+        const label = suggestion.projectName || 'this project';
+        return {
+          error:
+            `Project mapping missing for ${label}. Run a TimeLog sync after logging time remotely to learn the project ID.`,
+        };
+      }
+      if (!suggestion.date || !/^\d{4}-\d{2}-\d{2}$/.test(suggestion.date)) {
+        return { error: 'Suggestion is missing a valid date.' };
+      }
+      const minutes = Math.max(0, Math.round(suggestion.minutes || 0));
+      if (minutes <= 0) {
+        return { error: 'Suggestion must contain minutes to publish.' };
+      }
+      const includeNotes = Boolean(settings.timeLogIncludeBlockNotes);
+      const noteSamples = includeNotes && Array.isArray(suggestion.blocks)
+        ? suggestion.blocks
+            .map((block) => (block.note || '').trim())
+            .filter(Boolean)
+        : [];
+      const commentSource = includeNotes && noteSamples.length
+        ? noteSamples.slice(0, 3).join(' | ')
+        : '';
+      const comment = commentSource.slice(0, 512);
+      const workItemId = suggestion.workItemId
+        ? Number(suggestion.workItemId)
+        : null;
+      const payload = {
+        comment,
+        minutes,
+        timeTypeDescription: 'WORK_TIME',
+        date: suggestion.date,
+        userId: settings.timeLogUserId,
+        userName: resolvedUserName,
+        userMakingChange: resolvedUserName,
+        projectId: resolvedProjectId,
+      };
+      if (workItemId) {
+        payload.workItemId = workItemId;
+      }
+      return {
+        payload,
+        config: {
+          baseUrl: settings.timeLogBaseUrl,
+          orgId: settings.timeLogOrgId,
+          apiKey: settings.timeLogApiKey,
+        },
+      };
+    },
+    [
+      settings.timeLogApiKey,
+      settings.timeLogBaseUrl,
+      settings.timeLogOrgId,
+      settings.timeLogProjectMap,
+      settings.timeLogProjectId,
+      settings.timeLogUserId,
+      settings.timeLogUserName,
+      settings.timeLogIncludeBlockNotes,
+    ]
+  );
+
+  const handleCreateTimeLogSuggestion = useCallback(
+    async (suggestion) => {
+      const result = buildSuggestionPayload(suggestion);
+      if (!result || !result.payload) {
+        const message =
+          result?.error || 'Suggestion is not ready for publishing.';
+        setPushCreateStatus((prev) => ({
+          ...prev,
+          [suggestion?.id || 'unknown']: { state: 'error', message },
+        }));
+        setPushCreateError(message);
+        return { success: false, error: message };
+      }
+      const { payload, config } = result;
+      setPushCreateStatus((prev) => ({
+        ...prev,
+        [suggestion.id]: { state: 'creating' },
+      }));
+      setPushCreateError('');
+      try {
+        const response = await createTimeLogEntry(config, payload);
+        setPushCreateStatus((prev) => ({
+          ...prev,
+          [suggestion.id]: { state: 'success', remote: response },
+        }));
+        return { success: true };
+      } catch (err) {
+        const message = err.message || 'Failed to create TimeLog entry.';
+        setPushCreateStatus((prev) => ({
+          ...prev,
+          [suggestion.id]: {
+            state: 'error',
+            message,
+          },
+        }));
+        setPushCreateError(message);
+        return { success: false, error: message };
+      }
+    },
+    [
+        buildSuggestionPayload,
+    ]
+  );
+
+  const handleCreateAllTimeLogSuggestions = useCallback(async () => {
+    if (!pushSuggestions.length) {
+      setPushCreateError('No suggestions available to publish.');
+      return;
+    }
+    let attempted = false;
+    // eslint-disable-next-line no-restricted-syntax
+    for (const suggestion of pushSuggestions) {
+      const status = pushCreateStatus[suggestion.id];
+      if (status?.state === 'success' || status?.state === 'creating') {
+        // Already processed or inflight
+        // eslint-disable-next-line no-continue
+        continue;
+      }
+      const buildResult = buildSuggestionPayload(suggestion);
+      if (!buildResult || !buildResult.payload) {
+        // Skip suggestions that are not ready to publish
+        // eslint-disable-next-line no-continue
+        continue;
+      }
+      attempted = true;
+      // eslint-disable-next-line no-await-in-loop
+      await handleCreateTimeLogSuggestion(suggestion);
+    }
+    if (!attempted) {
+      setPushCreateError(
+        'No suggestions are ready to push. Hover a block to review the payload requirements.'
+      );
+    }
+  }, [
+    pushSuggestions,
+    pushCreateStatus,
+    buildSuggestionPayload,
+    handleCreateTimeLogSuggestion,
+  ]);
 
   const openTimeLogSummary = useCallback(() => {
     const org = (settings.azureOrg || '').trim();
@@ -524,17 +831,34 @@ function App() {
       });
       return updated;
     });
+    dismissTimeLogReport();
   };
 
   const updateBlock = (id, data) => {
     setBlocks((prev) =>
       prev.map((b) => (b.id === id ? dirtyClone(b, data) : b))
     );
+    dismissTimeLogReport();
   };
 
   const updateBlockTime = (id, startISO, endISO) => {
     const current = blocks.find((b) => b.id === id);
     if (!current) return;
+
+    const currentStart = current.start ? new Date(current.start).getTime() : null;
+    const currentEnd = current.end ? new Date(current.end).getTime() : null;
+    const nextStart = startISO ? new Date(startISO).getTime() : null;
+    const nextEnd = endISO ? new Date(endISO).getTime() : null;
+
+    // Avoid marking the block dirty when the effective time range is unchanged
+    if (
+      currentStart !== null &&
+      currentEnd !== null &&
+      currentStart === nextStart &&
+      currentEnd === nextEnd
+    ) {
+      return;
+    }
 
     const others = blocks.filter((b) => b.id !== id);
     const pieces = splitByLunch(
@@ -561,10 +885,12 @@ function App() {
     });
 
     setBlocks(updated);
+    dismissTimeLogReport();
   };
 
   const deleteBlock = (id) => {
     setBlocks(blocks.filter((b) => b.id !== id));
+    dismissTimeLogReport();
   };
 
   const reviewHasListed = Object.values(settings.projectItems || {}).some(
@@ -665,6 +991,15 @@ function App() {
       }
       setTimeLogReport(result.report);
       setTimeLogAlerts(buildTimeLogAlerts(result.report));
+      const derivedMap = deriveProjectIdMap(result.blocks || []);
+      const metadata = {
+        ...(result.metadata || {}),
+        projectMap: {
+          ...(result.metadata?.projectMap || {}),
+          ...derivedMap,
+        },
+      };
+      applyTimeLogMetadata(metadata);
       setToast('TimeLog delta sync completed');
       setSettings((prev) => ({
         ...prev,
@@ -675,7 +1010,7 @@ function App() {
     } finally {
       setTimeLogSyncing(false);
     }
-  }, [settings, blocks, setBlocks, setSettings, weekStart]);
+  }, [settings, blocks, setBlocks, setSettings, weekStart, applyTimeLogMetadata, deriveProjectIdMap]);
 
   const handleFullTimeLogSync = useCallback(async (startDateOverride = null) => {
     setTimeLogError('');
@@ -697,6 +1032,15 @@ function App() {
       }
       setTimeLogReport(result.report);
       setTimeLogAlerts(buildTimeLogAlerts(result.report));
+      const derivedMap = deriveProjectIdMap(result.blocks || []);
+      const metadata = {
+        ...(result.metadata || {}),
+        projectMap: {
+          ...(result.metadata?.projectMap || {}),
+          ...derivedMap,
+        },
+      };
+      applyTimeLogMetadata(metadata);
       setToast('Full TimeLog sync completed');
       setSettings((prev) => ({
         ...prev,
@@ -707,7 +1051,7 @@ function App() {
     } finally {
       setTimeLogSyncing(false);
     }
-  }, [settings, blocks, setBlocks, setSettings, weekStart]);
+  }, [settings, blocks, setBlocks, setSettings, weekStart, applyTimeLogMetadata, deriveProjectIdMap]);
 
   const startSubmitSession = () => {
     openWorkItemsForWeek();
@@ -882,10 +1226,18 @@ function App() {
     {showPushSuggestions && (
       <TimeLogPushSuggestions
         suggestions={pushSuggestions}
-        onClose={() => {
-          setShowPushSuggestions(false);
-          setPushSuggestions([]);
+        onClose={handleClosePushSuggestions}
+        onCreateEntry={handleCreateTimeLogSuggestion}
+        onCreateAll={handleCreateAllTimeLogSuggestions}
+        statusMap={pushCreateStatus}
+        errorMessage={pushCreateError}
+        metadata={{
+          userName: settings.timeLogUserName,
+          userId: settings.timeLogUserId,
+          projectMap: settings.timeLogProjectMap,
+          defaultProjectId: settings.timeLogProjectId,
         }}
+        buildPayload={buildSuggestionPayload}
       />
     )}
     </>

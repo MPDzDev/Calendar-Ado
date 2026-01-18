@@ -17,10 +17,16 @@ export default function Settings({
   const [temp, setTemp] = useState(settings);
   const [newProject, setNewProject] = useState('');
   const [newColor, setNewColor] = useState('#cccccc');
+  const [projectItemInputs, setProjectItemInputs] = useState({});
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
     setTemp(settings);
+    const initialInputs = {};
+    (settings.azureProjects || []).forEach((p) => {
+      initialInputs[p] = '';
+    });
+    setProjectItemInputs(initialInputs);
   }, [settings]);
 
   const toggleDay = (idx) => {
@@ -60,6 +66,36 @@ export default function Settings({
       const next = { ...prev };
       delete next[key];
       return next;
+    });
+  };
+
+  const addWorkItem = (project) => {
+    const value = (projectItemInputs[project] || '').trim();
+    if (!value) return;
+    setTemp((prev) => {
+      const current = prev.projectItems[project] || [];
+      if (current.includes(value)) return prev;
+      return {
+        ...prev,
+        projectItems: {
+          ...prev.projectItems,
+          [project]: [...current, value],
+        },
+      };
+    });
+    setProjectItemInputs((prev) => ({ ...prev, [project]: '' }));
+  };
+
+  const removeWorkItem = (project, target) => {
+    setTemp((prev) => {
+      const filtered = (prev.projectItems[project] || []).filter((id) => id !== target);
+      return {
+        ...prev,
+        projectItems: {
+          ...prev.projectItems,
+          [project]: filtered,
+        },
+      };
     });
   };
 
@@ -337,6 +373,24 @@ export default function Settings({
                       Advanced option. Default 100. Increase for fewer requests if needed.
                     </p>
                   </div>
+                  <div className="mt-2">
+                    <label className="flex items-center space-x-2 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={!!temp.timeLogIncludeBlockNotes}
+                        onChange={(e) =>
+                          setTemp({
+                            ...temp,
+                            timeLogIncludeBlockNotes: e.target.checked,
+                          })
+                        }
+                      />
+                      <span>Include block notes in TimeLog comments</span>
+                    </label>
+                    <p className="text-[11px] text-gray-500 mt-1">
+                      When enabled, notes from each block in a suggestion are concatenated and sent as the comment.
+                    </p>
+                  </div>
                   <div className="mt-3">
                     <button
                       className={`w-full px-2 py-1 text-xs rounded ${
@@ -384,24 +438,24 @@ export default function Settings({
                   </div>
                   <div>
                     <label className="mr-1">Projects:</label>
-                    <div className="flex mb-1">
+                    <div className="flex flex-wrap gap-2 mb-2">
                       <input
                         type="text"
                         value={newProject}
                         onChange={(e) => setNewProject(e.target.value)}
-                        className="border flex-grow px-1"
+                        className="border flex-grow px-1 min-w-[8rem]"
+                        placeholder="Project name"
                       />
                       <input
                         type="color"
                         value={newColor}
                         onChange={(e) => setNewColor(e.target.value)}
-                        className="ml-1"
                       />
                       <button
-                        className="ml-1 px-2 bg-blue-500 text-white"
+                        className="px-3 py-1 bg-blue-500 text-white rounded text-sm"
                         onClick={() => {
                           const name = newProject.trim();
-                          if (name) {
+                          if (name && !temp.azureProjects.includes(name)) {
                             setTemp({
                               ...temp,
                               azureProjects: [...temp.azureProjects, name],
@@ -413,71 +467,151 @@ export default function Settings({
                                 ...temp.projectItems,
                                 [name]: [],
                               },
+                              timeLogProjectMap: {
+                                ...(temp.timeLogProjectMap || {}),
+                                [name]: '',
+                              },
                             });
+                            setProjectItemInputs((prev) => ({ ...prev, [name]: '' }));
                             setNewProject('');
                             setNewColor('#cccccc');
                           }
                         }}
                       >
-                        +
+                        Add
                       </button>
                     </div>
-                    <ul className="space-y-1">
-                      {temp.azureProjects.map((p, idx) => (
-                        <li key={idx} className="flex items-center justify-between border px-1">
-                          <span>{p}</span>
-                          <input
-                            type="color"
-                            value={temp.projectColors[p] || '#cccccc'}
-                            onChange={(e) =>
-                              setTemp({
-                                ...temp,
-                                projectColors: {
-                                  ...temp.projectColors,
-                                  [p]: e.target.value,
-                                },
-                              })
-                            }
-                            className="mx-1"
-                          />
-                          <input
-                            type="text"
-                            placeholder="IDs"
-                            value={(temp.projectItems[p] || []).join(', ')}
-                            onChange={(e) =>
-                              setTemp({
-                                ...temp,
-                                projectItems: {
-                                  ...temp.projectItems,
-                                  [p]: e.target.value
-                                    .split(',')
-                                    .map((id) => id.trim())
-                                    .filter((id) => id),
-                                },
-                              })
-                            }
-                            className="border flex-grow px-1 text-xs mx-1"
-                          />
-                          <button
-                            className="text-xs text-red-600"
-                            onClick={() =>
-                              setTemp({
-                                ...temp,
-                                azureProjects: temp.azureProjects.filter((_, i) => i !== idx),
-                                projectColors: Object.fromEntries(
-                                  Object.entries(temp.projectColors).filter(([key]) => key !== p)
-                                ),
-                                projectItems: Object.fromEntries(
-                                  Object.entries(temp.projectItems).filter(([key]) => key !== p)
-                                ),
-                              })
-                            }
+                    <div className="max-h-60 overflow-y-auto space-y-3 pr-1">
+                      {temp.azureProjects.length === 0 && (
+                        <div className="text-xs text-gray-500 border rounded border-dashed p-2">
+                          Add at least one Azure DevOps project to configure colors, project IDs, and
+                          allowed work items.
+                        </div>
+                      )}
+                      {temp.azureProjects.map((project) => {
+                        const workItems = temp.projectItems[project] || [];
+                        const pendingItem = projectItemInputs[project] || '';
+                        const projectId = (temp.timeLogProjectMap || {})[project] || '';
+                        return (
+                          <div
+                            key={project}
+                            className="border rounded-md p-3 bg-white dark:bg-gray-900/60 space-y-2"
                           >
-                            x
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
+                            <div className="flex items-center justify-between">
+                              <div className="font-semibold">{project}</div>
+                              <button
+                                className="text-xs text-red-600"
+                                onClick={() => {
+                                  setTemp({
+                                    ...temp,
+                                    azureProjects: temp.azureProjects.filter((p) => p !== project),
+                                    projectColors: Object.fromEntries(
+                                      Object.entries(temp.projectColors).filter(([key]) => key !== project)
+                                    ),
+                                    projectItems: Object.fromEntries(
+                                      Object.entries(temp.projectItems).filter(([key]) => key !== project)
+                                    ),
+                                    timeLogProjectMap: Object.fromEntries(
+                                      Object.entries(temp.timeLogProjectMap || {}).filter(
+                                        ([key]) => key !== project
+                                      )
+                                    ),
+                                  });
+                                  setProjectItemInputs((prev) => {
+                                    const next = { ...prev };
+                                    delete next[project];
+                                    return next;
+                                  });
+                                }}
+                              >
+                                Remove
+                              </button>
+                            </div>
+                            <div className="flex flex-wrap gap-3 text-xs">
+                              <label className="flex items-center gap-1">
+                                Color:
+                                <input
+                                  type="color"
+                                  value={temp.projectColors[project] || '#cccccc'}
+                                  onChange={(e) =>
+                                    setTemp({
+                                      ...temp,
+                                      projectColors: {
+                                        ...temp.projectColors,
+                                        [project]: e.target.value,
+                                      },
+                                    })
+                                  }
+                                />
+                              </label>
+                              <label className="flex items-center gap-1">
+                                Project ID:
+                                <input
+                                  type="text"
+                                  value={projectId}
+                                  onChange={(e) =>
+                                    setTemp({
+                                      ...temp,
+                                      timeLogProjectMap: {
+                                        ...(temp.timeLogProjectMap || {}),
+                                        [project]: e.target.value,
+                                      },
+                                    })
+                                  }
+                                  className="border px-1 py-0.5 text-xs w-40"
+                                  placeholder="Azure TimeLog project GUID"
+                                />
+                              </label>
+                            </div>
+                            <div>
+                              <div className="text-[11px] text-gray-500">Allowed work item IDs</div>
+                              <div className="flex gap-1 mt-1">
+                                <input
+                                  type="text"
+                                  value={pendingItem}
+                                  onChange={(e) =>
+                                    setProjectItemInputs((prev) => ({
+                                      ...prev,
+                                      [project]: e.target.value,
+                                    }))
+                                  }
+                                  className="border flex-grow px-1 text-xs"
+                                  placeholder="Add ID"
+                                />
+                                <button
+                                  className="px-2 text-xs bg-blue-500 text-white rounded"
+                                  onClick={() => addWorkItem(project)}
+                                >
+                                  Add
+                                </button>
+                              </div>
+                              <div className="flex flex-wrap gap-1 mt-2">
+                                {workItems.length === 0 && (
+                                  <span className="text-[11px] text-gray-500">
+                                    No restrictions configured.
+                                  </span>
+                                )}
+                                {workItems.map((item) => (
+                                  <span
+                                    key={item}
+                                    className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full text-[11px]"
+                                  >
+                                    {item}
+                                    <button
+                                      className="text-red-600"
+                                      onClick={() => removeWorkItem(project, item)}
+                                      title="Remove"
+                                    >
+                                      ×
+                                    </button>
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                   <div>
                     <label className="mr-1">Tags:</label>
