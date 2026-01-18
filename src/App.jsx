@@ -15,7 +15,7 @@ import useSettings from './hooks/useSettings';
 import useAdoItems from './hooks/useAdoItems';
 import useNotes from './hooks/useNotes';
 import useTodos from './hooks/useTodos';
-import useDayLocks from './hooks/useDayLocks';
+import useDayLocks, { normalizeLockedDays } from './hooks/useDayLocks';
 import useAreaAliases from './hooks/useAreaAliases';
 import AdoService from './services/adoService';
 import TimeLogSyncService from './services/timeLogSyncService';
@@ -25,7 +25,7 @@ import {
   splitByLunch,
   splitForOverlaps,
 } from './utils/timeAdjust';
-import { getWeekNumber } from './utils/date';
+import { getWeekNumber, formatLocalDateKey } from './utils/date';
 
 function buildTimeLogAlerts(report) {
   if (!report?.differences) return {};
@@ -85,6 +85,37 @@ function App() {
   const [weekStart, setWeekStart] = useState(getWeekStart(new Date()));
   const [weekAnim, setWeekAnim] = useState(null);
   const weekNumber = getWeekNumber(weekStart);
+  const FULL_DAY_MINUTES = 8 * 60;
+
+  const getBlockDurationMinutes = (block) => {
+    if (!block?.start || !block?.end) return 0;
+    const startDate = new Date(block.start);
+    const endDate = new Date(block.end);
+    if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) return 0;
+    return Math.max(0, Math.round((endDate.getTime() - startDate.getTime()) / 60000));
+  };
+
+  const fullySyncedDays = useMemo(() => {
+    const statusMap = {};
+    blocks.forEach((block) => {
+      const key = getBlockDayKey(block);
+      if (!key) return;
+      if (!statusMap[key]) {
+        statusMap[key] = { total: 0, synced: true, minutes: 0 };
+      }
+      statusMap[key].total += 1;
+      statusMap[key].minutes += getBlockDurationMinutes(block);
+      if ((block.syncStatus || '').toLowerCase() !== 'synced') {
+        statusMap[key].synced = false;
+      }
+    });
+    return Object.fromEntries(
+      Object.entries(statusMap).map(([key, info]) => [
+        key,
+        info.total > 0 && info.synced && info.minutes >= FULL_DAY_MINUTES,
+      ])
+    );
+  }, [blocks]);
 
   const dismissTimeLogReport = useCallback(() => {
     setTimeLogReport((prev) => (prev ? null : prev));
@@ -170,7 +201,7 @@ function App() {
         setItemNotes(data.notes.itemNotes || {});
       }
       if (data.todos) setTodos(data.todos.todos || []);
-      if (data.lockedDays) setLockedDays(data.lockedDays.lockedDays || {});
+      if (data.lockedDays) setLockedDays(normalizeLockedDays(data.lockedDays.lockedDays || {}));
       if (data.areaAliases) setAreaAliases(data.areaAliases.aliases || {});
       if (data.settings) {
         setSettings((prev) => ({
@@ -243,7 +274,7 @@ function App() {
     if (!note.starred) deleteNote(note.id);
   };
 
-  const getReferenceDateFromBlock = (block) => {
+  function getReferenceDateFromBlock(block) {
     if (!block) return null;
     if (block.start) {
       const startDate = new Date(block.start);
@@ -259,7 +290,43 @@ function App() {
       }
     }
     return null;
-  };
+  }
+
+  function getBlockDayKey(block) {
+    if (!block) return null;
+    if (block.timeLogMeta?.workDate) return block.timeLogMeta.workDate;
+    const reference = getReferenceDateFromBlock(block);
+    if (!reference) return null;
+    return formatLocalDateKey(reference);
+  }
+
+  useEffect(() => {
+    setLockedDays((prev) => {
+      let changed = false;
+      const next = { ...prev };
+      Object.entries(fullySyncedDays).forEach(([key, synced]) => {
+        if (synced) {
+          if (!next[key]) {
+            next[key] = 'auto';
+            changed = true;
+          } else if (next[key] !== 'manual' && next[key] !== 'auto') {
+            next[key] = 'auto';
+            changed = true;
+          }
+        } else if (next[key] === 'auto') {
+          delete next[key];
+          changed = true;
+        }
+      });
+      Object.keys(next).forEach((key) => {
+        if (!fullySyncedDays[key] && next[key] === 'auto') {
+          delete next[key];
+          changed = true;
+        }
+      });
+      return changed ? next : prev;
+    });
+  }, [fullySyncedDays, setLockedDays]);
 
   const focusWeekFromBlock = useCallback(
     (block) => {
@@ -919,7 +986,7 @@ function App() {
     const map = {};
     blocks.forEach((b) => {
       const start = new Date(b.start);
-      const iso = start.toISOString().split('T')[0];
+      const iso = formatLocalDateKey(start);
       if (start >= weekStart && start < weekEnd && b.taskId && !lockedDays[iso]) {
         const end = new Date(b.end);
         const hours = (end - start) / (1000 * 60 * 60);
@@ -986,7 +1053,7 @@ function App() {
         focusRange: { start: focusStart, end: focusEnd },
         limitToFocusRange: true,
       });
-      if (result.blocks && result.report?.summary?.created > 0) {
+      if (result.blocks) {
         setBlocks(result.blocks);
       }
       setTimeLogReport(result.report);
@@ -1027,7 +1094,7 @@ function App() {
         createdOnFromDate: startDateOverride,
         focusRange: { start: focusStart, end: focusEnd },
       });
-      if (result.blocks && result.report?.summary?.created > 0) {
+      if (result.blocks) {
         setBlocks(result.blocks);
       }
       setTimeLogReport(result.report);
@@ -1075,7 +1142,27 @@ function App() {
           </div>
         )}
         <div className="flex items-start justify-between">
-          <PatrakLogo />
+          <Settings
+            settings={settings}
+            setSettings={setSettings}
+            onExport={handleExport}
+            onImport={handleImport}
+            onFullTimeLogSync={handleFullTimeLogSync}
+            timeLogSyncing={timeLogSyncing}
+            renderTrigger={(openSettings) => (
+              <div className="relative inline-flex items-center group">
+                <PatrakLogo />
+                <button
+                  type="button"
+                  onClick={() => openSettings('general')}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 -translate-x-10 group-hover:translate-x-8 focus-visible:translate-x-8 transition-all duration-200 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 pointer-events-none group-hover:pointer-events-auto focus-visible:pointer-events-auto bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-100 border border-gray-200 dark:border-gray-700 rounded-full shadow px-2 py-1"
+                >
+                  <span className="sr-only">Open settings</span>
+                  ⚙
+                </button>
+              </div>
+            )}
+          />
           <TodoBar
             todos={todos}
             onToggleTodo={toggleTodo}
@@ -1140,14 +1227,6 @@ function App() {
         className="pl-6 space-y-4 flex flex-col h-full overflow-y-auto bg-white dark:bg-gray-800 shadow rounded-md"
         style={{ width: sidebarWidth }}
       >
-        <Settings
-          settings={settings}
-          setSettings={setSettings}
-          onExport={handleExport}
-          onImport={handleImport}
-          onFullTimeLogSync={handleFullTimeLogSync}
-          timeLogSyncing={timeLogSyncing}
-        />
         <div className="space-y-2">
           <button
             className={`w-full flex items-center justify-center gap-1 px-4 py-2 rounded-full shadow ${
@@ -1172,15 +1251,6 @@ function App() {
           />
         )}
         <HoursSummary blocks={blocks} weekStart={weekStart} items={items} />
-        <div>
-          <button
-            className="w-full flex items-center justify-center gap-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-full shadow"
-            onClick={startSubmitSession}
-          >
-            <span role="img" aria-label="rocket">🚀</span>
-            <span>Start Submit Session</span>
-          </button>
-        </div>
         <div className="flex space-x-2">
           <button
             className={`px-2 py-1 text-xs ${

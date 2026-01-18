@@ -11,6 +11,7 @@ export default function Settings({
   onImport,
   onFullTimeLogSync,
   timeLogSyncing,
+  renderTrigger = null,
 }) {
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState('general');
@@ -99,17 +100,28 @@ export default function Settings({
     });
   };
 
+  const openSettings = (initialTab = 'general') => {
+    setTab(initialTab);
+    setOpen(true);
+  };
+
+  const triggerElement =
+    typeof renderTrigger === 'function' ? (
+      renderTrigger(openSettings)
+    ) : (
+      <div className="mb-2">
+        <button
+          className="px-2 py-1 bg-gray-200 dark:bg-gray-700"
+          onClick={() => openSettings('general')}
+        >
+          Settings
+        </button>
+      </div>
+    );
+
   return (
-    <div className="mb-2">
-      <button
-        className="px-2 py-1 bg-gray-200 dark:bg-gray-700"
-        onClick={() => {
-          setTab('general');
-          setOpen(true);
-        }}
-      >
-        Settings
-      </button>
+    <>
+      {triggerElement}
       {open && (
         <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
           <div className="border p-4 bg-yellow-50 dark:bg-gray-800 dark:text-white space-y-2 shadow-lg w-80">
@@ -715,11 +727,11 @@ export default function Settings({
                 >
                   Import Data
                 </button>
-              </div>
             </div>
           </div>
-        )}
-      </div>
-    );
+        </div>
+      )}
+    </>
+  );
 }
 

@@ -2,6 +2,33 @@ import React, { useState, useRef, useEffect } from 'react';
 import ItemBubble from './ItemBubble';
 import { lightenColor } from '../utils/color';
 import { summarizeByArea } from '../utils/summary';
+import { formatLocalDateKey } from '../utils/date';
+
+const formatBlockRange = (start, end) => {
+  if (!start || !end) return '';
+  const startDate = new Date(start);
+  const endDate = new Date(end);
+  if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) return '';
+  return `${startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - ${endDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+};
+
+const getBlockTooltip = (block) => {
+  if (!block) return '';
+  const details = [];
+  const range = formatBlockRange(block.start, block.end);
+  if (range) details.push(range);
+  if (block.workItem) details.push(block.workItem);
+  if (block.itemId && block.taskId && block.itemId !== block.taskId) {
+    details.push(`Task: ${block.taskId}`);
+  } else if (block.taskId) {
+    details.push(`Task: ${block.taskId}`);
+  }
+  if (block.note) details.push(`Note: ${block.note}`);
+  if (block.comments?.length) {
+    details.push(`Comments: ${block.comments.join(', ')}`);
+  }
+  return details.join('\n');
+};
 
 export default function Calendar({
   blocks,
@@ -112,7 +139,7 @@ export default function Calendar({
   const dayKey = (idx) => {
     const d = new Date(weekStart);
     d.setDate(weekStart.getDate() + idx);
-    return d.toISOString().split('T')[0];
+    return formatLocalDateKey(d);
   };
 
   const isDayLocked = (idx) => lockedDays[dayKey(idx)];
@@ -154,7 +181,7 @@ export default function Calendar({
     setLockedDays((prev) => {
       const next = { ...prev };
       if (next[key]) delete next[key];
-      else next[key] = true;
+      else next[key] = 'manual';
       return next;
     });
   };
@@ -726,8 +753,9 @@ export default function Calendar({
                             ? projectColor
                               ? lightenColor(projectColor, 70)
                               : '#e5e7eb'
-                            : undefined,
+                          : undefined,
                         }}
+                        title={getBlockTooltip(b)}
                       >
                         <div className="flex justify-between items-center mb-0.5">
                           <div className={`text-[9px] px-1 py-0.5 rounded text-white ${statusTheme}`}>
