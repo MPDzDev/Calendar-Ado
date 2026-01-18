@@ -713,9 +713,6 @@ function App() {
     if (fromUser) {
       setFetchFailed(false);
     }
-    const hasListed = Object.values(settings.projectItems || {}).some(
-      (ids) => Array.isArray(ids) && ids.length > 0
-    );
     const service = new AdoService(
       azureOrg,
       azurePat,
@@ -725,7 +722,7 @@ function App() {
       azureIteration,
       settings.enableDevOpsReview,
       settings.projectItems,
-      hasListed ? false : settings.fetchParents
+      settings.fetchParents
     );
     let since = null;
     if (!full) {
@@ -960,9 +957,6 @@ function App() {
     dismissTimeLogReport();
   };
 
-  const reviewHasListed = Object.values(settings.projectItems || {}).some(
-    (ids) => Array.isArray(ids) && ids.length > 0
-  );
   const reviewService = new AdoService(
     settings.azureOrg,
     settings.azurePat,
@@ -972,7 +966,7 @@ function App() {
     settings.azureIteration,
     settings.enableDevOpsReview,
     settings.projectItems,
-    reviewHasListed ? false : settings.fetchParents
+    settings.fetchParents
   );
   const treeProblems = settings.enableDevOpsReview
     ? reviewService.findTreeProblems(items)

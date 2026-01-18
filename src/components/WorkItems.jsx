@@ -180,6 +180,7 @@ export default function WorkItems({
   });
 
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+  const totalItems = items?.length || 0;
 
   const handleTreeDragOver = (e) => {
     if (!treeRef.current) return;
@@ -312,41 +313,16 @@ export default function WorkItems({
   }, [activeFilterGroup]);
 
   const toggle = (project) =>
-    setCollapsed((prev) => {
-      const next = {};
-      Object.keys(prev).forEach((k) => {
-        next[k] = k === project ? !prev[project] : true;
-      });
-      return next;
-    });
+    setCollapsed((prev) => ({
+      ...prev,
+      [project]: !prev[project],
+    }));
 
   const toggleFeature = (id) =>
     setFeatureCollapsed((prev) => ({
       ...prev,
       [id]: !prev[id],
     }));
-
-  const collapseAll = () => {
-    const next = {};
-    items.forEach((i) => {
-      const type = (i.type || '').toLowerCase();
-      if (type === 'feature' || type === 'epic') {
-        next[i.id] = true;
-      }
-    });
-    setFeatureCollapsed(next);
-  };
-
-  const expandAll = () => {
-    const next = {};
-    items.forEach((i) => {
-      const type = (i.type || '').toLowerCase();
-      if (type === 'feature' || type === 'epic') {
-        next[i.id] = false;
-      }
-    });
-    setFeatureCollapsed(next);
-  };
 
   const availableTags = Array.from(
     new Set(items.flatMap((i) => i.tags || []))
@@ -404,205 +380,245 @@ export default function WorkItems({
 
   return (
     <div className="mb-4 flex flex-col flex-grow overflow-y-auto min-h-0">
-      <div className="sticky top-0 bg-white dark:bg-gray-800 pb-2">
-        <div className="flex items-center justify-between mb-1">
-          <h2 className="font-semibold">Work Items</h2>
-          {onRefresh && (
-            <div className="space-x-2">
-              <button
-                className="px-2 py-1 text-xs bg-gray-200 dark:bg-gray-700"
-                onClick={() => onRefresh(false, true)}
-              >
-                Refresh
-              </button>
-              <button
-                className="px-2 py-1 text-xs bg-gray-200 dark:bg-gray-700"
-                onClick={() => onRefresh(true, true)}
-              >
-                Full Refresh
-              </button>
-              <button
-                className="px-2 py-1 text-xs bg-gray-200 dark:bg-gray-700"
-                onClick={collapseAll}
-              >
-                Collapse All
-              </button>
-              <button
-                className="px-2 py-1 text-xs bg-gray-200 dark:bg-gray-700"
-                onClick={expandAll}
-              >
-                Expand All
-              </button>
+      <div className="sticky top-0 bg-white dark:bg-gray-800 pb-3 z-10">
+        <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-gray-900/80 backdrop-blur px-4 py-4 shadow-sm space-y-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <div>
+              <p className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                Work Items
+              </p>
+              <p className="text-xl font-semibold leading-tight text-gray-900 dark:text-gray-50">
+                {totalItems.toLocaleString()}
+              </p>
             </div>
-          )}
-        </div>
-        <div className="flex space-x-2 mb-2">
-          <input
-            type="text"
-            placeholder="Search"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="border px-1 text-sm flex-grow"
-          />
-          <select
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value)}
-            className="border text-sm"
-          >
-            <option value="all">All</option>
-            <option value="feature">Features</option>
-            <option value="epic">Epics</option>
-            <option value="user story">User Stories</option>
-            <option value="bug">Bugs</option>
-            <option value="task">Tasks</option>
-            <option value="transversal activity">Transversal Activity</option>
-          </select>
-        </div>
-        <div className="mb-2 relative" ref={groupRefs.tags}>
-          <div className="flex items-center flex-wrap" ref={pillRowRefs.tags}>
-            <div
-              className="font-semibold cursor-pointer"
-              onClick={() => toggleFilterGroup('tags')}
+            {onRefresh && (
+              <div className="flex items-center gap-2 ml-auto text-[11px] font-medium">
+                <div className="inline-flex rounded-full border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 shadow-inner overflow-hidden">
+                  <button
+                    type="button"
+                    className="px-4 py-1.5 text-xs font-semibold text-white bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 transition"
+                    onClick={() => onRefresh(false, true)}
+                  >
+                    Refresh
+                  </button>
+                  <button
+                    type="button"
+                    className="px-3 py-1.5 text-xs text-gray-600 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+                    onClick={() => onRefresh(true, true)}
+                  >
+                    Full
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <div className="flex items-center flex-grow min-w-[10rem] rounded-full border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 px-3 py-1.5 text-sm focus-within:ring-2 focus-within:ring-blue-400">
+              <input
+                type="text"
+                placeholder="Search work items"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="bg-transparent flex-1 focus:outline-none placeholder:text-gray-400 dark:placeholder:text-gray-500"
+              />
+            </div>
+            <select
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value)}
+              className="px-3 py-1.5 text-xs rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
             >
-              Tags
-            </div>
-            <div className="flex items-center flex-wrap ml-2 space-x-1 overflow-hidden">
-              {settings.azureTags.length > 0 &&
-                (condensed.tags ? (
-                  <span className="px-2 py-1 text-xs border rounded-full bg-gray-200 dark:bg-gray-700 flex items-center">
-                    {`${settings.azureTags.length} filters`}
+              <option value="all">All Types</option>
+              <option value="feature">Features</option>
+              <option value="epic">Epics</option>
+              <option value="user story">User Stories</option>
+              <option value="bug">Bugs</option>
+              <option value="task">Tasks</option>
+              <option value="transversal activity">Transversal Activity</option>
+            </select>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-3 text-xs">
+            <div className="relative" ref={groupRefs.tags}>
+              <div className="flex items-center gap-2 flex-wrap" ref={pillRowRefs.tags}>
+                <button
+                  type="button"
+                  className={`px-3 py-1 rounded-full uppercase tracking-wide text-[10px] font-semibold border ${
+                    activeFilterGroup === 'tags'
+                      ? 'border-blue-400 bg-blue-50 text-blue-700 dark:border-blue-500 dark:bg-blue-900/30 dark:text-blue-200'
+                      : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300'
+                  }`}
+                  onClick={() => toggleFilterGroup('tags')}
+                >
+                  Tags
+                </button>
+                <div className="flex flex-wrap gap-1 min-h-[24px] overflow-hidden">
+                  {settings.azureTags.length > 0 &&
+                    (condensed.tags ? (
+                      <span className="px-2 py-0.5 border rounded-full bg-gray-100 dark:bg-gray-800 flex items-center">
+                        {`${settings.azureTags.length} filters`}
+                        <button
+                          className="ml-1 text-xs"
+                          onClick={() => {
+                            updateSettings({ azureTags: [] });
+                          }}
+                        >
+                          x
+                        </button>
+                      </span>
+                    ) : (
+                      settings.azureTags.map((tag) => (
+                        <span
+                          key={tag}
+                          className="px-2 py-0.5 border rounded-full bg-gray-100 dark:bg-gray-800 flex items-center"
+                        >
+                          {tag}
+                          <button className="ml-1 text-xs" onClick={() => toggleTag(tag)}>
+                            x
+                          </button>
+                        </span>
+                      ))
+                    ))}
+                </div>
+              </div>
+              {activeFilterGroup === 'tags' && (
+                <div className="absolute left-0 mt-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-xl p-2 z-20 flex flex-wrap gap-1">
+                  <button
+                    className={`px-2 py-1 rounded-full border ${
+                      settings.azureTags.length === 0
+                        ? 'bg-blue-500 text-white'
+                        : 'bg-gray-100 dark:bg-gray-800'
+                    }`}
+                    onClick={() => {
+                      updateSettings({ azureTags: [] });
+                    }}
+                  >
+                    All
+                  </button>
+                  {availableTags.map((tag) => (
                     <button
-                      className="ml-1"
-                      onClick={() => {
-                        // Clear all tag filters locally.
-                        updateSettings({ azureTags: [] });
-                      }}
-                    >
-                      x
-                    </button>
-                  </span>
-                ) : (
-                  settings.azureTags.map((tag) => (
-                    <span
                       key={tag}
-                      className="px-2 py-1 text-xs border rounded-full bg-gray-200 dark:bg-gray-700 flex items-center"
+                      className={`px-2 py-1 rounded-full border ${
+                        settings.azureTags.includes(tag)
+                          ? 'bg-blue-500 text-white'
+                          : 'bg-gray-100 dark:bg-gray-800'
+                      }`}
+                      onClick={() => toggleTag(tag)}
                     >
                       {tag}
-                      <button className="ml-1" onClick={() => toggleTag(tag)}>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="relative" ref={groupRefs.areas}>
+              <div className="flex items-center gap-2 flex-wrap" ref={pillRowRefs.areas}>
+                <button
+                  type="button"
+                  className={`px-3 py-1 rounded-full uppercase tracking-wide text-[10px] font-semibold border ${
+                    activeFilterGroup === 'areas'
+                      ? 'border-blue-400 bg-blue-50 text-blue-700 dark:border-blue-500 dark:bg-blue-900/30 dark:text-blue-200'
+                      : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300'
+                  }`}
+                  onClick={() => toggleFilterGroup('areas')}
+                >
+                  Areas
+                </button>
+                <div className="flex flex-wrap gap-1 min-h-[24px] overflow-hidden">
+                  {settings.azureArea && (
+                    <span className="px-2 py-0.5 border rounded-full bg-gray-100 dark:bg-gray-800 flex items-center">
+                      {settings.azureArea}
+                      <button className="ml-1 text-xs" onClick={() => toggleArea(settings.azureArea)}>
                         x
                       </button>
                     </span>
-                  ))
-                ))}
+                  )}
+                </div>
+              </div>
+              {activeFilterGroup === 'areas' && (
+                <div className="absolute left-0 mt-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-xl p-2 z-20 flex flex-wrap gap-1">
+                  <button
+                    className={`px-2 py-1 rounded-full border ${
+                      settings.azureArea === ''
+                        ? 'bg-blue-500 text-white'
+                        : 'bg-gray-100 dark:bg-gray-800'
+                    }`}
+                    onClick={() => {
+                      updateSettings({ azureArea: '' });
+                    }}
+                  >
+                    All
+                  </button>
+                  {availableAreas.map((area) => (
+                    <button
+                      key={area}
+                      className={`px-2 py-1 rounded-full border ${
+                        settings.azureArea === area
+                          ? 'bg-blue-500 text-white'
+                          : 'bg-gray-100 dark:bg-gray-800'
+                      }`}
+                      onClick={() => toggleArea(area)}
+                    >
+                      {area}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="relative" ref={groupRefs.iterations}>
+              <div className="flex items-center gap-2 flex-wrap" ref={pillRowRefs.iterations}>
+                <button
+                  type="button"
+                  className={`px-3 py-1 rounded-full uppercase tracking-wide text-[10px] font-semibold border ${
+                    activeFilterGroup === 'iterations'
+                      ? 'border-blue-400 bg-blue-50 text-blue-700 dark:border-blue-500 dark:bg-blue-900/30 dark:text-blue-200'
+                      : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300'
+                  }`}
+                  onClick={() => toggleFilterGroup('iterations')}
+                >
+                  Iterations
+                </button>
+                <div className="flex flex-wrap gap-1 min-h-[24px] overflow-hidden">
+                  {settings.azureIteration && (
+                    <span className="px-2 py-0.5 border rounded-full bg-gray-100 dark:bg-gray-800 flex items-center">
+                      {settings.azureIteration}
+                      <button className="ml-1 text-xs" onClick={() => toggleIteration(settings.azureIteration)}>
+                        x
+                      </button>
+                    </span>
+                  )}
+                </div>
+              </div>
+              {activeFilterGroup === 'iterations' && (
+                <div className="absolute left-0 mt-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-xl p-2 z-20 flex flex-wrap gap-1">
+                  <button
+                    className={`px-2 py-1 rounded-full border ${
+                      settings.azureIteration === ''
+                        ? 'bg-blue-500 text-white'
+                        : 'bg-gray-100 dark:bg-gray-800'
+                    }`}
+                    onClick={() => {
+                      updateSettings({ azureIteration: '' });
+                    }}
+                  >
+                    All
+                  </button>
+                  {availableIterations.map((it) => (
+                    <button
+                      key={it}
+                      className={`px-2 py-1 rounded-full border ${
+                        settings.azureIteration === it
+                          ? 'bg-blue-500 text-white'
+                          : 'bg-gray-100 dark:bg-gray-800'
+                      }`}
+                      onClick={() => toggleIteration(it)}
+                    >
+                      {it}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
-        {activeFilterGroup === 'tags' && (
-          <div className="absolute left-0 mt-1 bg-white dark:bg-gray-800 border p-2 z-10 flex flex-wrap gap-1">
-            <button
-              className={`px-2 py-1 text-xs border ${settings.azureTags.length === 0 ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-gray-700'}`}
-              onClick={() => {
-                // Reset tag filters without refetching.
-                updateSettings({ azureTags: [] });
-              }}
-            >
-              All
-            </button>
-            {availableTags.map((tag) => (
-              <button
-                key={tag}
-                className={`px-2 py-1 text-xs border ${settings.azureTags.includes(tag) ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-gray-700'}`}
-                onClick={() => toggleTag(tag)}
-              >
-                {tag}
-              </button>
-            ))}
-          </div>
-        )}
-      <div className="mb-2 relative" ref={groupRefs.areas}>
-        <div className="flex items-center flex-wrap" ref={pillRowRefs.areas}>
-          <div
-            className="font-semibold cursor-pointer"
-            onClick={() => toggleFilterGroup('areas')}
-          >
-            Areas
-          </div>
-          <div className="flex items-center flex-wrap ml-2 space-x-1 overflow-hidden">
-            {settings.azureArea && (
-              <span className="px-2 py-1 text-xs border rounded-full bg-gray-200 dark:bg-gray-700 flex items-center">
-                {settings.azureArea}
-                <button className="ml-1" onClick={() => toggleArea(settings.azureArea)}>
-                  x
-                </button>
-              </span>
-            )}
-          </div>
-        </div>
-        {activeFilterGroup === 'areas' && (
-          <div className="absolute left-0 mt-1 bg-white dark:bg-gray-800 border p-2 z-10 flex flex-wrap gap-1">
-            <button
-              className={`px-2 py-1 text-xs border ${settings.azureArea === '' ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-gray-700'}`}
-              onClick={() => {
-                // Clear area filter locally without refreshing.
-                updateSettings({ azureArea: '' });
-              }}
-            >
-              All
-            </button>
-            {availableAreas.map((area) => (
-              <button
-                key={area}
-                className={`px-2 py-1 text-xs border ${settings.azureArea === area ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-gray-700'}`}
-                onClick={() => toggleArea(area)}
-              >
-                {area}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-      <div className="mb-2 relative" ref={groupRefs.iterations}>
-        <div className="flex items-center flex-wrap" ref={pillRowRefs.iterations}>
-          <div
-            className="font-semibold cursor-pointer"
-            onClick={() => toggleFilterGroup('iterations')}
-          >
-            Iterations
-          </div>
-          <div className="flex items-center flex-wrap ml-2 space-x-1 overflow-hidden">
-            {settings.azureIteration && (
-              <span className="px-2 py-1 text-xs border rounded-full bg-gray-200 dark:bg-gray-700 flex items-center">
-                {settings.azureIteration}
-                <button className="ml-1" onClick={() => toggleIteration(settings.azureIteration)}>
-                  x
-                </button>
-              </span>
-            )}
-          </div>
-        </div>
-        {activeFilterGroup === 'iterations' && (
-          <div className="absolute left-0 mt-1 bg-white dark:bg-gray-800 border p-2 z-10 flex flex-wrap gap-1">
-            <button
-              className={`px-2 py-1 text-xs border ${settings.azureIteration === '' ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-gray-700'}`}
-              onClick={() => {
-                // Reset iteration filter locally without refetching.
-                updateSettings({ azureIteration: '' });
-              }}
-            >
-              All
-            </button>
-            {availableIterations.map((it) => (
-              <button
-                key={it}
-                className={`px-2 py-1 text-xs border ${settings.azureIteration === it ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-gray-700'}`}
-                onClick={() => toggleIteration(it)}
-              >
-                {it}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
       </div>
       <div
         ref={treeRef}
@@ -642,6 +658,7 @@ export default function WorkItems({
                 type="button"
                 className="project-head flex w-full items-center justify-between px-3 py-2 text-left text-sm"
                 onClick={() => toggle(project)}
+                aria-expanded={!collapsed[project]}
               >
                 <span className="flex items-center gap-2 text-slate-800 dark:text-slate-100 font-medium">
                   <span
@@ -650,24 +667,29 @@ export default function WorkItems({
                   />
                   {project}
                 </span>
-                <span className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
-                  <span>{list.length} items</span>
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 20 20"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                    className={`transition-transform ${collapsed[project] ? '' : 'rotate-90'}`}
+                <span className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                  <span className="hidden sm:inline">{list.length} items</span>
+                  <span
+                    className={`inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-300 dark:border-slate-600 bg-white/80 dark:bg-slate-900/50 transition-transform ${
+                      collapsed[project] ? '' : 'rotate-90'
+                    }`}
                   >
-                    <path
-                      d="M7 5l5 5-5 5"
-                      stroke="currentColor"
-                      strokeWidth="1.75"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 20 20"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M7 5l5 5-5 5"
+                        stroke="currentColor"
+                        strokeWidth="1.75"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </span>
                 </span>
               </button>
               {!collapsed[project] && (

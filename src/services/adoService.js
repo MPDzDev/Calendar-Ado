@@ -22,6 +22,11 @@ export default class AdoService {
     this.includeRelations = includeRelations;
     this.projectItems = projectItems;
     this.fetchParents = fetchParents;
+    this.explicitProjectSet = new Set(
+      Object.entries(projectItems || {})
+        .filter(([, ids]) => Array.isArray(ids) && ids.length > 0)
+        .map(([project]) => (project || '').toLowerCase())
+    );
     this._b64 =
       typeof btoa === 'function'
         ? (str) => btoa(str)
@@ -29,6 +34,15 @@ export default class AdoService {
     const storage = new StorageService('workItemBlacklist', []);
     this._blacklistStore = storage;
     this.blacklist = new Set(storage.read() || []);
+  }
+
+  _shouldFetchParentsForItem(item) {
+    if (!this.fetchParents) {
+      return false;
+    }
+    const key = (item?.project || '').toLowerCase();
+    if (!key) return true;
+    return !this.explicitProjectSet.has(key);
   }
 
   _addToBlacklist(id) {
@@ -257,7 +271,11 @@ export default class AdoService {
       map = new Map(results.map((i) => [i.id, i]));
       let missing = new Set();
       results.forEach((item) => {
-        if (item.parentId && !map.has(item.parentId)) {
+        if (
+          this._shouldFetchParentsForItem(item) &&
+          item.parentId &&
+          !map.has(item.parentId)
+        ) {
           missing.add(item.parentId);
         }
       });
@@ -300,7 +318,13 @@ export default class AdoService {
           if (!map.has(p.id)) {
             map.set(p.id, p);
             results.push(p);
-            if (p.parentId && !map.has(p.parentId)) missing.add(p.parentId);
+            if (
+              this._shouldFetchParentsForItem(p) &&
+              p.parentId &&
+              !map.has(p.parentId)
+            ) {
+              missing.add(p.parentId);
+            }
           }
           missing.delete(p.id);
         });
@@ -365,7 +389,11 @@ export default class AdoService {
       map = new Map(results.map((i) => [i.id, i]));
       let missing = new Set();
       results.forEach((item) => {
-        if (item.parentId && !map.has(item.parentId)) {
+        if (
+          this._shouldFetchParentsForItem(item) &&
+          item.parentId &&
+          !map.has(item.parentId)
+        ) {
           missing.add(item.parentId);
         }
       });
@@ -408,7 +436,13 @@ export default class AdoService {
           if (!map.has(p.id)) {
             map.set(p.id, p);
             results.push(p);
-            if (p.parentId && !map.has(p.parentId)) missing.add(p.parentId);
+            if (
+              this._shouldFetchParentsForItem(p) &&
+              p.parentId &&
+              !map.has(p.parentId)
+            ) {
+              missing.add(p.parentId);
+            }
           }
           missing.delete(p.id);
         });

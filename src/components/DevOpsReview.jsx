@@ -2,9 +2,6 @@ import React from 'react';
 import AdoService from '../services/adoService.js';
 
 export default function DevOpsReview({ items = [], settings }) {
-  const hasListed = Object.values(settings.projectItems || {}).some(
-    (ids) => Array.isArray(ids) && ids.length > 0
-  );
   const service = new AdoService(
     settings.azureOrg,
     settings.azurePat,
@@ -14,7 +11,7 @@ export default function DevOpsReview({ items = [], settings }) {
     settings.azureIteration,
     true,
     settings.projectItems,
-    hasListed ? false : settings.fetchParents
+    settings.fetchParents
   );
 
   const treeProblems = service.findTreeProblems(items);

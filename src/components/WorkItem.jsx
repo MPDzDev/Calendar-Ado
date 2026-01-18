@@ -18,6 +18,8 @@ function TaskPill({
   highlight = false,
 }) {
   const accent = TYPE_ACCENTS.task || '#facc15';
+  const displayTitle =
+    task.title && task.title.length > 10 ? `${task.title.slice(0, 10)}…` : task.title;
   const dragStart = (e) => {
     e.dataTransfer.setData('application/x-work-item', JSON.stringify(task));
   };
@@ -57,8 +59,15 @@ function TaskPill({
       style={{ backgroundColor: accent }}
       title={task.title}
     >
-      <span className="task-pill-title">{task.title}</span>
-      {notes.length > 0 && <span className="task-pill-note">{notes.length}</span>}
+      <span className="task-pill-title">{displayTitle}</span>
+      <div className="flex items-center gap-1">
+        {highlight && (
+          <span className="tree-problem-indicator" title="Tree validation issue">
+            !
+          </span>
+        )}
+        {notes.length > 0 && <span className="task-pill-note">{notes.length}</span>}
+      </div>
     </div>
   );
 }
@@ -172,6 +181,11 @@ export default function WorkItem({
           <span className="tree-pill-dot" style={{ backgroundColor: textColor }} />
         )}
         <span className="tree-pill-title">{item.title}</span>
+        {highlight && (
+          <span className="tree-problem-indicator" title="Tree validation issue">
+            !
+          </span>
+        )}
       </div>
       {!collapsed && childTasks.length > 0 && (
         <div className="tree-task-row">

@@ -237,6 +237,10 @@ body,
   @apply truncate max-w-full text-sm;
 }
 
+.tree-problem-indicator {
+  @apply inline-flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-white text-[10px] font-bold shadow-sm;
+}
+
 .tree-note-row {
   @apply flex flex-wrap gap-1 text-[11px];
 }
@@ -250,7 +254,7 @@ body,
 }
 
 .task-pill {
-  @apply inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium text-slate-900 shadow-sm;
+  @apply inline-flex items-center justify-between gap-2 rounded-full px-3 py-1 text-xs font-medium text-slate-900 shadow-sm w-32;
 }
 
 .task-pill-highlight {
@@ -258,7 +262,7 @@ body,
 }
 
 .task-pill-title {
-  @apply truncate max-w-full;
+  @apply block truncate max-w-[5.5rem];
 }
 
 .task-pill-note {
