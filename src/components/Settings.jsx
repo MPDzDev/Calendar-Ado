@@ -123,140 +123,133 @@ export default function Settings({
     <>
       {triggerElement}
       {open && (
-        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-          <div className="border p-4 bg-yellow-50 dark:bg-gray-800 dark:text-white space-y-2 shadow-lg w-80">
-            <div className="flex mb-2 space-x-2">
-              <button
-                className={`px-2 py-1 text-sm ${
-                  tab === 'general' ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-gray-700'
-                }`}
-                onClick={() => setTab('general')}
-              >
-                General
-              </button>
-              <button
-                className={`px-2 py-1 text-sm ${
-                  tab === 'azure' ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-gray-700'
-                }`}
-                onClick={() => setTab('azure')}
-              >
-                Azure DevOps
-              </button>
-              <button
-                className={`px-2 py-1 text-sm ${
-                  tab === 'timeLog' ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-gray-700'
-                }`}
-                onClick={() => setTab('timeLog')}
-              >
-                TimeLog
-              </button>
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-900 dark:text-white rounded-2xl shadow-2xl w-[960px] max-w-[95vw] h-[640px] max-h-[90vh] flex flex-col border border-gray-200 dark:border-gray-700">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+              <div>
+                <h2 className="text-lg font-semibold">Workspace Settings</h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Tune your calendar preferences, Azure integrations, and TimeLog options.
+                </p>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="inline-flex rounded-full bg-gray-100 dark:bg-gray-800 p-1">
+                  {['general', 'azure', 'timeLog'].map((key) => (
+                    <button
+                      key={key}
+                      onClick={() => setTab(key)}
+                      className={`px-4 py-1 text-sm rounded-full transition ${
+                        tab === key
+                          ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow'
+                          : 'text-gray-600 dark:text-gray-300'
+                      }`}
+                    >
+                      {key === 'general' && 'General'}
+                      {key === 'azure' && 'Azure'}
+                      {key === 'timeLog' && 'TimeLog'}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  className="text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 text-xl"
+                  onClick={() => setOpen(false)}
+                >
+                  ×
+                </button>
+              </div>
             </div>
+            <div className="flex-1 overflow-y-auto px-6 py-6 bg-gray-50 dark:bg-gray-900/60">
               {tab === 'general' && (
                 <>
-                  <div>
-                    <label className="mr-1">Start hour:</label>
-                    <input
-                      type="number"
-                      min="0"
-                      max="23"
-                      value={temp.startHour}
-                      onChange={(e) =>
-                        setTemp({ ...temp, startHour: parseInt(e.target.value) })
-                      }
-                      className="border w-16"
-                    />
-                  </div>
-                  <div>
-                    <label className="mr-1">End hour:</label>
-                    <input
-                      type="number"
-                      min="1"
-                      max="24"
-                      value={temp.endHour}
-                      onChange={(e) =>
-                        setTemp({ ...temp, endHour: parseInt(e.target.value) })
-                      }
-                      className="border w-16"
-                    />
-                  </div>
-                  <div>
-                    <label className="mr-1">Lunch start:</label>
-              <input
-                type="number"
-                min="0"
-                max="23"
-                value={temp.lunchStart}
-                onChange={(e) =>
-                  setTemp({ ...temp, lunchStart: parseInt(e.target.value) })
-                }
-                className="border w-16"
-              />
-                  </div>
-                  <div>
-                    <label className="mr-1">Lunch end:</label>
-              <input
-                type="number"
-                min="1"
-                max="24"
-                value={temp.lunchEnd}
-                onChange={(e) =>
-                  setTemp({ ...temp, lunchEnd: parseInt(e.target.value) })
-                }
-                className="border w-16"
-              />
-                  </div>
-                  <div>
-                    <label className="mr-1">Block size:</label>
-              <select
-                value={temp.blockMinutes}
-                onChange={(e) =>
-                  setTemp({ ...temp, blockMinutes: parseInt(e.target.value) })
-                }
-                className="border"
-              >
-                {[10, 15, 30, 60].map((m) => (
-                  <option key={m} value={m}>
-                    {m === 60 ? '1 h' : `${m} min`}
-                  </option>
-                ))}
-              </select>
-                  </div>
-                  <div>
-                    <div className="mb-1">Work days:</div>
-              <div className="flex space-x-2 flex-wrap">
-                {dayNames.map((d, idx) => (
-                  <label key={idx} className="flex items-center space-x-1">
-                    <input
-                      type="checkbox"
-                      checked={temp.workDays.includes(idx)}
-                      onChange={() => toggleDay(idx)}
-                    />
-                    <span>{d}</span>
-                  </label>
-                ))}
-              </div>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <label className="flex items-center space-x-1">
-                      <input
-                        type="checkbox"
-                        checked={temp.darkMode}
-                        onChange={() => setTemp({ ...temp, darkMode: !temp.darkMode })}
-                      />
-                      <span>Dark mode</span>
-                    </label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <label className="flex items-center space-x-1">
-                      <input
-                        type="checkbox"
-                        checked={temp.enableReminders}
-                        onChange={() =>
-                          setTemp({ ...temp, enableReminders: !temp.enableReminders })
-                        }
-                      />
-                      <span>Daily reminders</span>
-                    </label>
+                  <div className="grid gap-6 md:grid-cols-2">
+                    <div className="space-y-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 shadow-sm">
+                      <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-300">
+                        Working hours
+                      </h3>
+                      <div className="grid grid-cols-2 gap-4">
+                        {[
+                          { label: 'Start hour', key: 'startHour', min: 0, max: 23 },
+                          { label: 'End hour', key: 'endHour', min: 1, max: 24 },
+                          { label: 'Lunch start', key: 'lunchStart', min: 0, max: 23 },
+                          { label: 'Lunch end', key: 'lunchEnd', min: 1, max: 24 },
+                        ].map((field) => (
+                          <label key={field.key} className="text-xs text-gray-500 dark:text-gray-400">
+                            {field.label}
+                            <input
+                              type="number"
+                              min={field.min}
+                              max={field.max}
+                              value={temp[field.key]}
+                              onChange={(e) =>
+                                setTemp({ ...temp, [field.key]: parseInt(e.target.value, 10) })
+                              }
+                              className="mt-1 w-full rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-2 py-1 text-sm"
+                            />
+                          </label>
+                        ))}
+                        <label className="text-xs text-gray-500 dark:text-gray-400">
+                          Block size
+                          <select
+                            value={temp.blockMinutes}
+                            onChange={(e) =>
+                              setTemp({ ...temp, blockMinutes: parseInt(e.target.value, 10) })
+                            }
+                            className="mt-1 w-full rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-2 py-1 text-sm"
+                          >
+                            {[10, 15, 30, 60].map((m) => (
+                              <option key={m} value={m}>
+                                {m === 60 ? '1 h' : `${m} min`}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      </div>
+                    </div>
+                    <div className="space-y-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 shadow-sm">
+                      <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-300">
+                        Preferences
+                      </h3>
+                      <div className="flex flex-wrap gap-3">
+                        {dayNames.map((d, idx) => (
+                          <label
+                            key={idx}
+                            className={`px-3 py-1 rounded-full text-xs font-medium cursor-pointer border ${
+                              temp.workDays.includes(idx)
+                                ? 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900 dark:text-blue-200'
+                                : 'border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400'
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              className="hidden"
+                              checked={temp.workDays.includes(idx)}
+                              onChange={() => toggleDay(idx)}
+                            />
+                            {d}
+                          </label>
+                        ))}
+                      </div>
+                      <div className="space-y-2 text-sm">
+                        <label className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            checked={temp.darkMode}
+                            onChange={() => setTemp({ ...temp, darkMode: !temp.darkMode })}
+                          />
+                          <span>Enable dark mode</span>
+                        </label>
+                        <label className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            checked={temp.enableReminders}
+                            onChange={() =>
+                              setTemp({ ...temp, enableReminders: !temp.enableReminders })
+                            }
+                          />
+                          <span>Daily reminders</span>
+                        </label>
+                      </div>
+                    </div>
                   </div>
                 </>
               )}
@@ -727,6 +720,7 @@ export default function Settings({
                 >
                   Import Data
                 </button>
+              </div>
             </div>
           </div>
         </div>
