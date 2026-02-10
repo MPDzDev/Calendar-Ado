@@ -274,7 +274,8 @@ export default class AdoService {
         if (
           this._shouldFetchParentsForItem(item) &&
           item.parentId &&
-          !map.has(item.parentId)
+          !map.has(item.parentId) &&
+          !this.blacklist.has(item.parentId.toString())
         ) {
           missing.add(item.parentId);
         }
@@ -282,6 +283,7 @@ export default class AdoService {
 
       while (missing.size > 0) {
         const batch = Array.from(missing).slice(0, 200);
+        const attempted = batch.map((id) => id.toString());
         let parents = [];
         try {
           parents = await this._fetchItems(batch, auth);
@@ -297,9 +299,11 @@ export default class AdoService {
         }
 
         const fetched = parents.map((p) => p.id);
-        batch.map((id) => id.toString()).forEach((id) => {
+        attempted.forEach((id) => {
           if (!fetched.includes(id)) this._addToBlacklist(id);
         });
+
+        attempted.forEach((id) => missing.delete(id));
 
         let parentDeps = {};
         if (this.includeRelations && parents.length) {
@@ -321,7 +325,8 @@ export default class AdoService {
             if (
               this._shouldFetchParentsForItem(p) &&
               p.parentId &&
-              !map.has(p.parentId)
+              !map.has(p.parentId) &&
+              !this.blacklist.has(p.parentId.toString())
             ) {
               missing.add(p.parentId);
             }
@@ -392,7 +397,8 @@ export default class AdoService {
         if (
           this._shouldFetchParentsForItem(item) &&
           item.parentId &&
-          !map.has(item.parentId)
+          !map.has(item.parentId) &&
+          !this.blacklist.has(item.parentId.toString())
         ) {
           missing.add(item.parentId);
         }
@@ -400,6 +406,7 @@ export default class AdoService {
 
       while (missing.size > 0) {
         const batch = Array.from(missing).slice(0, 200);
+        const attempted = batch.map((id) => id.toString());
         let parents = [];
         try {
           parents = await this._fetchItems(batch, auth);
@@ -415,9 +422,11 @@ export default class AdoService {
         }
 
         const fetched = parents.map((p) => p.id);
-        batch.map((id) => id.toString()).forEach((id) => {
+        attempted.forEach((id) => {
           if (!fetched.includes(id)) this._addToBlacklist(id);
         });
+
+        attempted.forEach((id) => missing.delete(id));
 
         let parentDeps = {};
         if (this.includeRelations && parents.length) {
@@ -439,7 +448,8 @@ export default class AdoService {
             if (
               this._shouldFetchParentsForItem(p) &&
               p.parentId &&
-              !map.has(p.parentId)
+              !map.has(p.parentId) &&
+              !this.blacklist.has(p.parentId.toString())
             ) {
               missing.add(p.parentId);
             }

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import PatService from '../services/patService';
+import StorageService from '../services/storageService';
 import { validateTimeLogSettings } from '../utils/validation';
 
 const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -20,6 +21,8 @@ export default function Settings({
   const [newColor, setNewColor] = useState('#cccccc');
   const [projectItemInputs, setProjectItemInputs] = useState({});
   const [errors, setErrors] = useState({});
+  const [blacklistOpen, setBlacklistOpen] = useState(false);
+  const [blacklistIds, setBlacklistIds] = useState([]);
 
   useEffect(() => {
     setTemp(settings);
@@ -29,6 +32,12 @@ export default function Settings({
     });
     setProjectItemInputs(initialInputs);
   }, [settings]);
+
+  useEffect(() => {
+    if (!open) {
+      setBlacklistOpen(false);
+    }
+  }, [open]);
 
   const toggleDay = (idx) => {
     const exists = temp.workDays.includes(idx);
@@ -103,6 +112,36 @@ export default function Settings({
   const openSettings = (initialTab = 'general') => {
     setTab(initialTab);
     setOpen(true);
+  };
+
+  const loadBlacklist = () => {
+    const storage = new StorageService('workItemBlacklist', []);
+    const raw = storage.read();
+    const ids = Array.isArray(raw)
+      ? raw
+          .map((id) => (id == null ? '' : id.toString().trim()))
+          .filter((id) => id)
+      : [];
+    setBlacklistIds(ids);
+    return ids;
+  };
+
+  const openBlacklistModal = () => {
+    loadBlacklist();
+    setBlacklistOpen(true);
+  };
+
+  const clearBlacklist = () => {
+    const storage = new StorageService('workItemBlacklist', []);
+    storage.write([]);
+    setBlacklistIds([]);
+  };
+
+  const removeFromBlacklist = (idToRemove) => {
+    const next = blacklistIds.filter((id) => id !== idToRemove);
+    const storage = new StorageService('workItemBlacklist', []);
+    storage.write(next);
+    setBlacklistIds(next);
   };
 
   const triggerElement =
@@ -689,6 +728,30 @@ export default function Settings({
                     <span>Enable DevOps Review</span>
                   </label>
                 </div>
+                <div className="mt-3 rounded border border-amber-300 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-700 p-2">
+                  <div className="text-xs font-semibold text-amber-800 dark:text-amber-200">
+                    ADO blacklist
+                  </div>
+                  <p className="text-[11px] text-amber-700 dark:text-amber-300 mt-1">
+                    Failed parent work item IDs are stored here to avoid repeated failing requests.
+                  </p>
+                  <div className="flex gap-2 mt-2">
+                    <button
+                      type="button"
+                      className="px-2 py-1 text-xs bg-amber-600 text-white rounded"
+                      onClick={openBlacklistModal}
+                    >
+                      View Blacklist
+                    </button>
+                    <button
+                      type="button"
+                      className="px-2 py-1 text-xs bg-red-600 text-white rounded"
+                      onClick={clearBlacklist}
+                    >
+                      Clear Blacklist
+                    </button>
+                  </div>
+                </div>
               </>
             )}
               <div className="flex space-x-2 pt-2">
@@ -721,6 +784,60 @@ export default function Settings({
                   Import Data
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {blacklistOpen && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
+          <div className="bg-white dark:bg-gray-900 dark:text-white rounded-xl shadow-2xl w-[520px] max-w-[95vw] max-h-[80vh] flex flex-col border border-gray-200 dark:border-gray-700">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+              <h3 className="text-sm font-semibold">ADO Blacklist</h3>
+              <button
+                type="button"
+                className="text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 text-lg"
+                onClick={() => setBlacklistOpen(false)}
+              >
+                ×
+              </button>
+            </div>
+            <div className="px-4 py-3 text-xs text-gray-600 dark:text-gray-300 border-b border-gray-200 dark:border-gray-700">
+              {blacklistIds.length === 0
+                ? 'No blocked work item IDs.'
+                : `${blacklistIds.length} blocked work item ID${blacklistIds.length === 1 ? '' : 's'}`}
+            </div>
+            <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2">
+              {blacklistIds.map((id) => (
+                <div
+                  key={id}
+                  className="flex items-center justify-between border border-gray-200 dark:border-gray-700 rounded px-2 py-1"
+                >
+                  <code className="text-xs">{id}</code>
+                  <button
+                    type="button"
+                    className="text-xs text-red-600"
+                    onClick={() => removeFromBlacklist(id)}
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))}
+            </div>
+            <div className="flex gap-2 px-4 py-3 border-t border-gray-200 dark:border-gray-700">
+              <button
+                type="button"
+                className="px-2 py-1 text-xs bg-gray-200 dark:bg-gray-700 rounded"
+                onClick={loadBlacklist}
+              >
+                Refresh
+              </button>
+              <button
+                type="button"
+                className="px-2 py-1 text-xs bg-red-600 text-white rounded"
+                onClick={clearBlacklist}
+              >
+                Clear All
+              </button>
             </div>
           </div>
         </div>

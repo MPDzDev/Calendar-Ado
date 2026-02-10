@@ -63,6 +63,221 @@ describe('mergeTimeLogs', () => {
     expect(secondRun.blocks).toHaveLength(1);
   });
 
+  it('marks grouped draft blocks as synced when a remote entry aggregates minutes across the day', () => {
+    const settings = { startHour: 9, timeLogLookbackDays: 365 };
+    const blocks = [
+      {
+        id: 'local-a',
+        start: '2026-01-21T09:00:00.000Z',
+        end: '2026-01-21T10:00:00.000Z',
+        syncStatus: 'draft',
+        updatedAt: '2026-01-21T09:30:00.000Z',
+        taskId: '777',
+      },
+      {
+        id: 'local-b',
+        start: '2026-01-21T15:00:00.000Z',
+        end: '2026-01-21T16:00:00.000Z',
+        syncStatus: 'draft',
+        updatedAt: '2026-01-21T15:30:00.000Z',
+        taskId: '777',
+      },
+    ];
+    const remoteEntries = [
+      {
+        timeLogId: 'TL-agg',
+        minutes: 120,
+        date: '2026-01-21T00:00:00Z',
+        workItemId: 777,
+        comment: 'Combined entry',
+      },
+    ];
+    const firstRun = mergeTimeLogs(blocks, remoteEntries, { settings });
+    expect(firstRun.report.summary.created).toBe(0);
+    expect(firstRun.report.summary.identical).toBe(2);
+    expect(firstRun.blocks.every((block) => block.externalId === 'TL-agg')).toBe(true);
+    const secondRun = mergeTimeLogs(firstRun.blocks, remoteEntries, { settings });
+    expect(secondRun.report.summary.created).toBe(0);
+    expect(secondRun.report.summary.identical).toBe(2);
+    expect(secondRun.report.summary.differences).toBe(0);
+  });
+
+  it('splits a matching remote entry across multiple local blocks when their minutes sum exactly', () => {
+    const settings = { startHour: 9, timeLogLookbackDays: 365 };
+    const blocks = [
+      {
+        id: 'split-a',
+        start: '2026-01-25T09:00:00.000Z',
+        end: '2026-01-25T09:30:00.000Z',
+        syncStatus: 'draft',
+        updatedAt: '2026-01-25T09:05:00.000Z',
+        taskId: '321',
+      },
+      {
+        id: 'split-b',
+        start: '2026-01-25T16:00:00.000Z',
+        end: '2026-01-25T16:30:00.000Z',
+        syncStatus: 'draft',
+        updatedAt: '2026-01-25T16:05:00.000Z',
+        taskId: '321',
+      },
+    ];
+    const remoteEntries = [
+      {
+        timeLogId: 'TL-60',
+        minutes: 60,
+        date: '2026-01-25T00:00:00Z',
+        workItemId: 321,
+        comment: 'One hour total',
+      },
+    ];
+    const result = mergeTimeLogs(blocks, remoteEntries, { settings });
+    expect(result.report.summary.created).toBe(0);
+    const synced = result.blocks
+      .filter((block) => block.externalId === 'TL-60')
+      .sort(
+        (a, b) =>
+          (a.timeLogMeta?.segmentIndex ?? 0) - (b.timeLogMeta?.segmentIndex ?? 0)
+      );
+    expect(synced).toHaveLength(2);
+    synced.forEach((block, index) => {
+      expect((block.syncStatus || '').toLowerCase()).toBe('synced');
+      expect(block.timeLogMeta.segmentCount).toBe(2);
+      expect(block.timeLogMeta.segmentIndex).toBe(index);
+      expect(block.timeLogMeta.minutes).toBe(30);
+    });
+  });
+
+  it('only syncs the subset of drafts that match the remote minutes when additional edits exist', () => {
+    const settings = { startHour: 9, timeLogLookbackDays: 365 };
+    const blocks = [
+      {
+        id: 'older-1',
+        start: '2026-01-22T09:00:00.000Z',
+        end: '2026-01-22T09:45:00.000Z',
+        syncStatus: 'draft',
+        updatedAt: '2026-01-22T09:50:00.000Z',
+        taskId: '888',
+      },
+      {
+        id: 'older-2',
+        start: '2026-01-22T13:00:00.000Z',
+        end: '2026-01-22T13:45:00.000Z',
+        syncStatus: 'draft',
+        updatedAt: '2026-01-22T13:50:00.000Z',
+        taskId: '888',
+      },
+      {
+        id: 'newer',
+        start: '2026-01-22T16:00:00.000Z',
+        end: '2026-01-22T16:30:00.000Z',
+        syncStatus: 'draft',
+        updatedAt: '2026-01-22T16:10:00.000Z',
+        taskId: '888',
+      },
+    ];
+    const remoteEntries = [
+      {
+        timeLogId: 'TL-subset',
+        minutes: 90,
+        date: '2026-01-22T00:00:00Z',
+        workItemId: 888,
+        comment: 'Earlier work',
+      },
+    ];
+    const result = mergeTimeLogs(blocks, remoteEntries, { settings });
+    const syncedBlocks = result.blocks.filter((block) => block.externalId === 'TL-subset');
+    expect(syncedBlocks).toHaveLength(2);
+    const remaining = result.blocks.find((block) => block.id === 'newer');
+    expect((remaining.syncStatus || '').toLowerCase()).toBe('draft');
+    expect(result.report.summary.created).toBe(0);
+    expect(result.report.summary.identical).toBe(2);
+  });
+
+  it('matches unassigned remote entries when a single local group totals the same minutes', () => {
+    const settings = { startHour: 9, timeLogLookbackDays: 365 };
+    const blocks = [
+      {
+        id: 'unassigned-1',
+        start: '2026-01-26T09:00:00.000Z',
+        end: '2026-01-26T09:30:00.000Z',
+        syncStatus: 'draft',
+        updatedAt: '2026-01-26T09:10:00.000Z',
+      },
+      {
+        id: 'unassigned-2',
+        start: '2026-01-26T15:00:00.000Z',
+        end: '2026-01-26T15:30:00.000Z',
+        syncStatus: 'draft',
+        updatedAt: '2026-01-26T15:10:00.000Z',
+      },
+    ];
+    const remoteEntries = [
+      {
+        timeLogId: 'TL-unassigned',
+        minutes: 60,
+        date: '2026-01-26T00:00:00Z',
+        comment: 'No work item id returned',
+      },
+    ];
+
+    const result = mergeTimeLogs(blocks, remoteEntries, { settings });
+    const synced = result.blocks
+      .filter((block) => block.externalId === 'TL-unassigned')
+      .sort(
+        (a, b) =>
+          (a.timeLogMeta?.segmentIndex ?? 0) - (b.timeLogMeta?.segmentIndex ?? 0)
+      );
+    expect(synced).toHaveLength(2);
+    synced.forEach((block) => {
+      expect((block.syncStatus || '').toLowerCase()).toBe('synced');
+      expect(block.timeLogMeta.segmentCount).toBe(2);
+    });
+  });
+
+  it('imports long remote entries alongside mismatched local blocks instead of overwriting them', () => {
+    const settings = { startHour: 9, lunchStart: 12, lunchEnd: 13, timeLogLookbackDays: 365 };
+    const blocks = [
+      {
+        id: 'manual-1',
+        start: '2026-01-23T09:00:00.000Z',
+        end: '2026-01-23T09:30:00.000Z',
+        syncStatus: 'draft',
+        updatedAt: '2026-01-23T09:10:00.000Z',
+        taskId: '999',
+      },
+      {
+        id: 'manual-2',
+        start: '2026-01-23T09:00:00.000Z',
+        end: '2026-01-23T09:30:00.000Z',
+        syncStatus: 'draft',
+        updatedAt: '2026-01-23T09:20:00.000Z',
+        taskId: '999',
+      },
+    ];
+    const remoteEntries = [
+      {
+        timeLogId: 'TL-long',
+        minutes: 360,
+        date: '2026-01-23T00:00:00Z',
+        workItemId: 999,
+      },
+    ];
+
+    const result = mergeTimeLogs(blocks, remoteEntries, { settings });
+    const manualBlocks = result.blocks.filter((block) =>
+      block.id === 'manual-1' || block.id === 'manual-2'
+    );
+    expect(manualBlocks).toHaveLength(2);
+    expect(manualBlocks.every((block) => (block.syncStatus || '').toLowerCase() === 'draft')).toBe(
+      true
+    );
+    const imported = result.blocks.filter((block) => block.externalId === 'TL-long');
+    expect(imported).toHaveLength(2);
+    expect(result.report.summary.created).toBe(2);
+    expect(result.report.summary.identical).toBe(0);
+  });
+
   it('reports differences for minutes, date, workItemId, timeType, and comment mismatches', () => {
     const localBlock = {
       id: 'local-1',

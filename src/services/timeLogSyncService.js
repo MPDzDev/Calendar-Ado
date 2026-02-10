@@ -155,6 +155,160 @@ const snapshotEntry = (entry) => ({
   projectName: entry.projectName || '',
 });
 
+const getLocalWorkItemId = (block) => {
+  if (!block) return null;
+  const raw =
+    block.taskId ??
+    block.itemId ??
+    block.workItemId ??
+    block.timeLogMeta?.workItemId ??
+    null;
+  if (raw === null || raw === undefined) return null;
+  return raw.toString();
+};
+
+const sortBlocksForGrouping = (blocks = []) =>
+  [...blocks].sort((a, b) => {
+    const aIndex = Number.isFinite(a?.timeLogMeta?.segmentIndex)
+      ? a.timeLogMeta.segmentIndex
+      : null;
+    const bIndex = Number.isFinite(b?.timeLogMeta?.segmentIndex)
+      ? b.timeLogMeta.segmentIndex
+      : null;
+    if (aIndex !== null && bIndex !== null && aIndex !== bIndex) {
+      return aIndex - bIndex;
+    }
+    if (aIndex !== null) return -1;
+    if (bIndex !== null) return 1;
+    const toTs = (value) => {
+      if (!value) return null;
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return null;
+      return date.getTime();
+    };
+    const aUpdated = toTs(a?.updatedAt);
+    const bUpdated = toTs(b?.updatedAt);
+    if (aUpdated !== null && bUpdated !== null && aUpdated !== bUpdated) {
+      return aUpdated - bUpdated;
+    }
+    const aStart = toTs(a?.start);
+    const bStart = toTs(b?.start);
+    if (aStart !== null && bStart !== null && aStart !== bStart) {
+      return aStart - bStart;
+    }
+    return (a?.id ?? '').toString().localeCompare((b?.id ?? '').toString());
+  });
+
+const sumBlockMinutes = (blocks = []) =>
+  blocks.reduce((total, block) => total + blockDurationMinutes(block), 0);
+
+const isUnsyncedLocalBlock = (block) => {
+  if (!block) return false;
+  const status = (block.syncStatus || '').toLowerCase();
+  return status !== 'synced';
+};
+
+const selectBlocksByMinutes = (candidates = [], targetMinutes = 0) => {
+  if (!Array.isArray(candidates) || targetMinutes <= 0) return null;
+  const sorted = [...candidates].sort((a, b) => {
+    const toTs = (value) => {
+      if (!value) return null;
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return null;
+      return date.getTime();
+    };
+    const aUpdated = toTs(a?.updatedAt);
+    const bUpdated = toTs(b?.updatedAt);
+    if (aUpdated !== null && bUpdated !== null && aUpdated !== bUpdated) {
+      return aUpdated - bUpdated;
+    }
+    const aStart = toTs(a?.start);
+    const bStart = toTs(b?.start);
+    if (aStart !== null && bStart !== null && aStart !== bStart) {
+      return aStart - bStart;
+    }
+    return (a?.id ?? '').toString().localeCompare((b?.id ?? '').toString());
+  });
+  const memo = new Map();
+  const dfs = (index, remaining) => {
+    if (remaining === 0) return [];
+    if (index >= sorted.length || remaining < 0) return null;
+    const key = `${index}|${remaining}`;
+    if (memo.has(key)) return memo.get(key);
+    const minutes = blockDurationMinutes(sorted[index]);
+    let result = null;
+    if (minutes > 0 && minutes <= remaining) {
+      const include = dfs(index + 1, remaining - minutes);
+      if (include) {
+        result = [index, ...include];
+      }
+    }
+    if (!result) {
+      result = dfs(index + 1, remaining);
+    }
+    memo.set(key, result);
+    return result;
+  };
+  const indices = dfs(0, targetMinutes);
+  if (!indices || !indices.length) return null;
+  return indices.map((idx) => sorted[idx]);
+};
+
+const applyRemoteMetadataToBlocks = (
+  blocks = [],
+  entry,
+  nowIso,
+  trackedRemoteIds,
+  summary
+) => {
+  if (!blocks.length || !entry) return;
+  const dateKey = toDateKey(entry.date);
+  const segmentCount = blocks.length;
+  const remoteComment = (entry.comment || '').trim();
+  const sortedBlocks = sortBlocksForGrouping(blocks);
+  sortedBlocks.forEach((block, idx) => {
+    const minutes = blockDurationMinutes(block);
+    const existingIndex = Number.isFinite(block?.timeLogMeta?.segmentIndex)
+      ? block.timeLogMeta.segmentIndex
+      : null;
+    const segmentIndex = existingIndex !== null ? existingIndex : idx;
+    if (trackedRemoteIds) {
+      trackedRemoteIds.add(`${entry.timeLogId}:${segmentIndex}`);
+    }
+    block.externalSource = TIME_LOG_SOURCE;
+    block.externalId = entry.timeLogId;
+    block.syncStatus = 'synced';
+    block.updatedAt = nowIso;
+    block.timeLogMeta = {
+      ...(block.timeLogMeta || {}),
+      workDate: dateKey || block.timeLogMeta?.workDate || null,
+      minutes,
+      createdOn: entry.createdOn || block.timeLogMeta?.createdOn || null,
+      workItemId:
+        entry.workItemId ??
+        block.taskId ??
+        block.itemId ??
+        block.timeLogMeta?.workItemId ??
+        null,
+      projectId: entry.projectId ?? block.timeLogMeta?.projectId ?? null,
+      projectName: entry.projectName || block.timeLogMeta?.projectName || '',
+      timeTypeId: entry.timeTypeId ?? block.timeLogMeta?.timeTypeId ?? null,
+      timeTypeDescription:
+        entry.timeTypeDescription || block.timeLogMeta?.timeTypeDescription || '',
+      comment: remoteComment || block.timeLogMeta?.comment || '',
+      userId: entry.userId || block.timeLogMeta?.userId || '',
+      userName: entry.userName || block.timeLogMeta?.userName || '',
+      segmentIndex,
+      segmentCount,
+      remoteTimeLogId: entry.timeLogId,
+      lastSyncedAt: nowIso,
+    };
+    if (summary) {
+      summary.identical += 1;
+    }
+  });
+};
+
 const normalizeEntry = (entry) => ({
   timeLogId: entry.timeLogId?.toString(),
   minutes: parseInt(entry.minutes, 10) || 0,
@@ -413,6 +567,7 @@ export function mergeTimeLogs(blocks = [], remoteEntries = [], options = {}) {
   const localByExternalId = new Map();
   const placementMap = {};
   const trackedRemoteIds = new Set();
+  const matchedDraftBlocks = new Set();
   const hasFocusRange =
     focusStart &&
     focusEnd &&
@@ -471,8 +626,72 @@ export function mergeTimeLogs(blocks = [], remoteEntries = [], options = {}) {
       return;
     }
 
-    const segments = buildBlocksFromEntry(entry, settings, placementMap);
+    const entryDateKey = toDateKey(entry.date);
     const locals = localByExternalId.get(entry.timeLogId) || [];
+    const localGroupTotal =
+      locals.length > 1 ? sumBlockMinutes(locals) : blockDurationMinutes(locals[0]);
+    if (locals.length > 1 && localGroupTotal === entry.minutes) {
+      applyRemoteMetadataToBlocks(locals, entry, nowIso, trackedRemoteIds, summary);
+      locals.splice(0, locals.length);
+      return;
+    }
+
+    const remoteWorkItemId =
+      entry.workItemId !== null && entry.workItemId !== undefined
+        ? entry.workItemId.toString()
+        : null;
+
+    let draftGroup = null;
+    if (entry.minutes > 0) {
+      const candidateDrafts = updatedBlocks.filter((block) => {
+        if (matchedDraftBlocks.has(block)) return false;
+        if (!isUnsyncedLocalBlock(block)) return false;
+        if (block.externalSource === TIME_LOG_SOURCE && block.externalId) {
+          return false;
+        }
+        const dateKey = getBlockDateKey(block);
+        if (dateKey !== entryDateKey) return false;
+        if (!entryDateKey) return false;
+        return true;
+      });
+
+      if (remoteWorkItemId) {
+        draftGroup = selectBlocksByMinutes(
+          candidateDrafts.filter((block) => getLocalWorkItemId(block) === remoteWorkItemId),
+          entry.minutes
+        );
+      } else {
+        const byWorkItem = new Map();
+        candidateDrafts.forEach((block) => {
+          const key = getLocalWorkItemId(block) || '__unassigned__';
+          const list = byWorkItem.get(key) || [];
+          list.push(block);
+          byWorkItem.set(key, list);
+        });
+        let uniqueGroup = null;
+        let matchCount = 0;
+        byWorkItem.forEach((list) => {
+          if (matchCount > 1) return;
+          if (list.length < 2) return;
+          const match = selectBlocksByMinutes(list, entry.minutes);
+          if (match && match.length) {
+            matchCount += 1;
+            uniqueGroup = match;
+          }
+        });
+        if (matchCount === 1) {
+          draftGroup = uniqueGroup;
+        }
+      }
+    }
+
+    if (draftGroup && draftGroup.length) {
+      applyRemoteMetadataToBlocks(draftGroup, entry, nowIso, trackedRemoteIds, summary);
+      draftGroup.forEach((block) => matchedDraftBlocks.add(block));
+      return;
+    }
+
+    const segments = buildBlocksFromEntry(entry, settings, placementMap);
 
     if (segments.length > 1 && locals.length === 1) {
       const idx = updatedBlocks.findIndex((b) => b.id === locals[0].id);
