@@ -2,6 +2,15 @@
 
 All notable changes to this project are documented in this file.
 
+## [0.2.4] - 2026-04-25
+
+### Changed
+- Refined the top navigation UI to feel more modern and compact while keeping the calendar as the main focus.
+- Kept the minimap aligned with the navigation row and reduced the vertical cost of the header on smaller screens.
+- Reworked the notes tray into a subtle hover/click utility and switched high note counts to a popover.
+- Raised the notes popover above the calendar so it remains visible when opened.
+- App version bumped to `0.2.4`.
+
 ## [0.2.3] - 2026-04-25
 
 ### Changed

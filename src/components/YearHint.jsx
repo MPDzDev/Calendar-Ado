@@ -108,7 +108,7 @@ export default function YearHint({
   };
 
   return (
-    <div className="relative ml-4" style={{ width: weekWidth * 52 + 'px' }}>
+    <div className="relative" style={{ width: weekWidth * 52 + 'px' }}>
       <div className="flex text-[10px] mb-1">
         {months.map((m, idx) => {
           const start = Math.max(m.startIdx, 0);

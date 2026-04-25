@@ -1,6 +1,22 @@
 export const APP_CHANGELOG = {
-  fallbackVersion: '0.2.3',
+  fallbackVersion: '0.2.4',
   entries: {
+    '0.2.4': {
+      title: 'Navigation and Notes UI Refresh',
+      summary:
+        'The top navigation is now more modern and compact, and the notes tray stays unobtrusive while scaling better for larger note counts.',
+      sections: [
+        {
+          heading: 'What changed',
+          items: [
+            'Refined the header so the logo, week display, navigation, and minimap feel more modern without adding clutter.',
+            'Kept the minimap aligned with the navigation row and reduced the top section height on smaller screens.',
+            'Reworked the notes tray into a subtle utility target that expands on hover or click and switches to a popover when many notes are queued.',
+            'Raised the notes popover above the calendar so it remains visible when opened.',
+          ],
+        },
+      ],
+    },
     '0.2.3': {
       title: 'Single-Instance App Launch',
       summary:

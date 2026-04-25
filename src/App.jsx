@@ -1283,6 +1283,7 @@ function App() {
     setWeekStart((w) => shiftWeekStart(w, 1));
   };
   const currentWeek = () => setWeekStart(getWeekStart(new Date()));
+  const isCurrentWeek = formatLocalDateKey(weekStart) === formatLocalDateKey(getWeekStart(new Date()));
 
   useEffect(() => {
     if (!weekAnim) return;
@@ -1602,62 +1603,94 @@ function App() {
     <>
       <div
         ref={containerRef}
-        className="p-6 flex gap-4 h-full w-full overflow-hidden bg-gray-50 text-gray-800 dark:bg-gray-900 dark:text-gray-100"
+        className="p-5 md:p-6 flex gap-4 h-full w-full overflow-hidden bg-slate-100 text-gray-800 dark:bg-slate-950 dark:text-gray-100"
       >
-      <div className="flex flex-col flex-grow overflow-y-auto">
+      <div className="flex flex-col flex-grow overflow-y-auto min-w-0">
         {showReminder && (
-          <div className="mb-2 p-2 bg-yellow-200 text-center text-sm text-red-800 fade-in">
+          <div className="mb-3 rounded-2xl border border-amber-200 bg-amber-100/90 px-4 py-2 text-center text-sm text-amber-900 shadow-sm fade-in dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-100">
             No time logged today. Don't forget to log your work!
           </div>
         )}
-        <div className="flex items-start justify-between">
-          <Settings
-            settings={settings}
-            setSettings={setSettings}
-            onExport={handleExport}
-            onImport={handleImport}
-            onFullTimeLogSync={handleFullTimeLogSync}
-            timeLogSyncing={timeLogSyncing}
-            renderTrigger={(openSettings) => (
-              <div className="relative inline-flex items-center group">
-                <PatrakLogo />
-                <button
-                  type="button"
-                  onClick={() => openSettings('general')}
-                  className="absolute left-2 top-1/2 -translate-y-1/2 -translate-x-10 group-hover:translate-x-8 focus-visible:translate-x-8 transition-all duration-200 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 pointer-events-none group-hover:pointer-events-auto focus-visible:pointer-events-auto bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-100 border border-gray-200 dark:border-gray-700 rounded-full shadow px-2 py-1"
-                >
-                  <span className="sr-only">Open settings</span>
-                  ⚙
-                </button>
+        <div className="relative z-20 mb-3 rounded-[26px] border border-white/70 bg-white/85 px-3 py-2.5 shadow-[0_18px_45px_-28px_rgba(15,23,42,0.45)] backdrop-blur dark:border-slate-800 dark:bg-slate-900/85">
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-3">
+              <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3">
+                <Settings
+                  settings={settings}
+                  setSettings={setSettings}
+                  onExport={handleExport}
+                  onImport={handleImport}
+                  onFullTimeLogSync={handleFullTimeLogSync}
+                  timeLogSyncing={timeLogSyncing}
+                  renderTrigger={(openSettings) => (
+                    <div className="relative inline-flex items-center group mb-0">
+                      <PatrakLogo className="mb-0 text-2xl md:text-3xl" />
+                      <button
+                        type="button"
+                        onClick={() => openSettings('general')}
+                        className="absolute left-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 -translate-x-8 items-center justify-center rounded-full border border-slate-200 bg-white/95 text-slate-600 shadow-sm transition-all duration-200 opacity-0 group-hover:translate-x-8 group-hover:opacity-100 focus-visible:translate-x-8 focus-visible:opacity-100 pointer-events-none group-hover:pointer-events-auto focus-visible:pointer-events-auto dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                      >
+                        <span className="sr-only">Open settings</span>
+                        ⚙
+                      </button>
+                    </div>
+                  )}
+                />
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2 text-slate-900 dark:text-slate-50">
+                    <h2 className="text-base md:text-lg font-semibold tracking-tight">{formatRange()}</h2>
+                    <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                      Week {weekNumber}
+                    </span>
+                    {isCurrentWeek && (
+                      <span className="inline-flex items-center rounded-full bg-blue-600 px-2.5 py-1 text-xs font-medium text-white shadow-sm">
+                        Current
+                      </span>
+                    )}
+                  </div>
+                </div>
               </div>
-            )}
-          />
-          <TodoBar
-            todos={todos}
-            onToggleTodo={toggleTodo}
-            onDeleteTodo={deleteTodo}
-            onNoteDrop={handleTodoDrop}
-          />
-        </div>
-        <div className="mb-2 flex items-center space-x-2">
-          <button className="week-nav-button" onClick={prevWeek}>
-            ◀ Prev
-          </button>
-          <button className="week-nav-button" onClick={currentWeek}>
-            This Week
-          </button>
-          <button className="week-nav-button" onClick={nextWeek}>
-            Next ▶
-          </button>
-          <span className="week-range ml-4 font-semibold">{formatRange()}</span>
-          <span className="ml-2 font-semibold text-blue-600 dark:text-blue-400">Week {weekNumber}</span>
-          <YearHint
-            weekStart={weekStart}
-            blocks={blocks}
-            settings={settings}
-            items={items}
-            onWeekClick={(d) => setWeekStart(d)}
-          />
+              <div className="shrink-0">
+                <TodoBar
+                  todos={todos}
+                  onToggleTodo={toggleTodo}
+                  onDeleteTodo={deleteTodo}
+                  onNoteDrop={handleTodoDrop}
+                />
+              </div>
+            </div>
+            <div className="flex min-w-0 flex-col gap-2 md:flex-row md:items-center">
+              <div className="inline-flex w-full md:w-auto md:min-w-[320px] items-center rounded-2xl border border-slate-200 bg-slate-50/90 p-1 shadow-inner dark:border-slate-700 dark:bg-slate-800/80">
+                  <button className="week-nav-button" onClick={prevWeek}>
+                    <span aria-hidden="true">&larr;</span>
+                    <span>Previous</span>
+                  </button>
+                  <button
+                    className={`week-nav-button ${
+                      isCurrentWeek ? 'week-nav-button-active' : ''
+                    }`}
+                    onClick={currentWeek}
+                  >
+                    This Week
+                  </button>
+                  <button className="week-nav-button" onClick={nextWeek}>
+                    <span>Next</span>
+                    <span aria-hidden="true">&rarr;</span>
+                  </button>
+                </div>
+              <div className="min-w-0 flex-1 overflow-x-auto rounded-2xl border border-slate-200 bg-slate-50/70 px-2 py-1.5 shadow-inner dark:border-slate-700 dark:bg-slate-800/60">
+                <div className="w-max min-w-full flex justify-start md:justify-end">
+                  <YearHint
+                    weekStart={weekStart}
+                    blocks={blocks}
+                    settings={settings}
+                    items={items}
+                    onWeekClick={(d) => setWeekStart(d)}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
         <Calendar
           blocks={blocks}
@@ -1693,13 +1726,13 @@ function App() {
         onMouseDown={() => setResizing(true)}
       />
       <div
-        className="pl-6 space-y-4 flex flex-col h-full overflow-y-auto bg-white dark:bg-gray-800 shadow rounded-md"
+        className="pl-5 pr-4 py-4 space-y-4 flex flex-col h-full overflow-y-auto rounded-[26px] border border-white/70 bg-white/90 shadow-[0_18px_45px_-28px_rgba(15,23,42,0.45)] dark:border-slate-800 dark:bg-slate-900/85"
         style={{ width: sidebarWidth }}
       >
         <div className="space-y-2">
           <button
-            className={`w-full flex items-center justify-center gap-1 px-4 py-2 rounded-full shadow ${
-              timeLogSyncing ? 'bg-gray-400 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'
+            className={`w-full flex items-center justify-center gap-1 px-4 py-2.5 rounded-2xl shadow-sm transition ${
+              timeLogSyncing ? 'bg-slate-300 text-white dark:bg-slate-700' : 'bg-slate-900 hover:bg-slate-800 text-white dark:bg-blue-600 dark:hover:bg-blue-500'
             }`}
             onClick={handleTimeLogSync}
             disabled={timeLogSyncing}
@@ -1720,12 +1753,12 @@ function App() {
           />
         )}
         <HoursSummary blocks={blocks} weekStart={weekStart} items={items} />
-        <div className="flex space-x-2">
+        <div className="inline-flex rounded-2xl border border-slate-200 bg-slate-100/90 p-1 dark:border-slate-700 dark:bg-slate-800/80">
           <button
-            className={`px-2 py-1 text-xs ${
+            className={`rounded-xl px-3 py-1.5 text-xs font-medium transition ${
               panelTab === 'workItems'
-                ? 'bg-blue-500 text-white'
-                : 'bg-gray-200 dark:bg-gray-700'
+                ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white'
+                : 'text-slate-500 hover:text-slate-800 dark:text-slate-300 dark:hover:text-white'
             }`}
             onClick={() => setPanelTab('workItems')}
           >
@@ -1733,10 +1766,10 @@ function App() {
           </button>
           {settings.enableDevOpsReview && (
             <button
-              className={`px-2 py-1 text-xs ${
+              className={`rounded-xl px-3 py-1.5 text-xs font-medium transition ${
                 panelTab === 'review'
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-gray-200 dark:bg-gray-700'
+                  ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white'
+                  : 'text-slate-500 hover:text-slate-800 dark:text-slate-300 dark:hover:text-white'
               }`}
               onClick={() => setPanelTab('review')}
             >
