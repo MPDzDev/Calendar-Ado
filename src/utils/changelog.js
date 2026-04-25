@@ -1,6 +1,20 @@
 export const APP_CHANGELOG = {
-  fallbackVersion: '0.2.2',
+  fallbackVersion: '0.2.3',
   entries: {
+    '0.2.3': {
+      title: 'Single-Instance App Launch',
+      summary:
+        'Patrak now prevents a second app instance and focuses the existing window instead.',
+      sections: [
+        {
+          heading: 'What changed',
+          items: [
+            'Added an Electron single-instance lock so launching Patrak again does not open a second copy.',
+            'When a second launch is attempted, the existing window is restored and focused instead.',
+          ],
+        },
+      ],
+    },
     '0.2.2': {
       title: 'Calendar Past-Week Alignment Fix',
       summary:

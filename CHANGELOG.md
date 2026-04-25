@@ -2,6 +2,13 @@
 
 All notable changes to this project are documented in this file.
 
+## [0.2.3] - 2026-04-25
+
+### Changed
+- Added a single-instance lock so launching Patrak again does not open a second app instance.
+- When a second launch is attempted, the existing window is restored and focused instead.
+- App version bumped to `0.2.3`.
+
 ## [0.2.2] - 2026-04-25
 
 ### Changed

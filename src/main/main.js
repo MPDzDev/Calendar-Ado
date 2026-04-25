@@ -3,6 +3,14 @@ const keytar = require('keytar');
 const path = require('path');
 const fs = require('fs');
 
+let mainWindow = null;
+
+const hasSingleInstanceLock = app.requestSingleInstanceLock();
+
+if (!hasSingleInstanceLock) {
+  app.quit();
+}
+
 function createWindow() {
   const win = new BrowserWindow({
     width: 800,
@@ -22,6 +30,15 @@ function createWindow() {
     // window because it does not include the bundled scripts.
     win.loadFile(path.join(__dirname, '../../build/index.html'));
   }
+
+  mainWindow = win;
+  win.on('closed', () => {
+    if (mainWindow === win) {
+      mainWindow = null;
+    }
+  });
+
+  return win;
 }
 
 function openWorkItemWindow({ id, hours, url, days, message }) {
@@ -64,6 +81,17 @@ function openWorkItemWindow({ id, hours, url, days, message }) {
     win.webContents.executeJavaScript(script).catch(() => {});
   });
 }
+
+app.on('second-instance', () => {
+  if (!mainWindow) return;
+  if (mainWindow.isMinimized()) {
+    mainWindow.restore();
+  }
+  if (!mainWindow.isVisible()) {
+    mainWindow.show();
+  }
+  mainWindow.focus();
+});
 
 app.whenReady().then(() => {
   createWindow();
