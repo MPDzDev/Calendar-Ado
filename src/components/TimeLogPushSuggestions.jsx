@@ -14,6 +14,7 @@ export default function TimeLogPushSuggestions({
   onCreateEntry,
   onCreateAll,
   statusMap = {},
+  requiresResync = false,
   metadata = {},
   errorMessage = '',
   buildPayload,
@@ -26,7 +27,14 @@ export default function TimeLogPushSuggestions({
 
   const buildStatus = (suggestionId) => {
     const status = statusMap?.[suggestionId];
-    return status || { state: 'idle' };
+    if (status) return status;
+    if (requiresResync) {
+      return {
+        state: 'sync_required',
+        message: 'Run a TimeLog sync before publishing more entries.',
+      };
+    }
+    return { state: 'idle' };
   };
 
   const getPayloadInfo = (suggestion) => {
@@ -53,8 +61,10 @@ export default function TimeLogPushSuggestions({
     const ready =
       hasCreateHandler &&
       payloadInfo.payload &&
+      !requiresResync &&
       status.state !== 'creating' &&
-      status.state !== 'success';
+      status.state !== 'success' &&
+      status.state !== 'sync_required';
     return { suggestion, payloadInfo, status, ready };
   });
 
@@ -125,6 +135,11 @@ export default function TimeLogPushSuggestions({
         {errorMessage && (
           <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700 dark:bg-red-900/40 dark:border-red-800">
             {errorMessage}
+          </div>
+        )}
+        {requiresResync && (
+          <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:bg-amber-900/40 dark:border-amber-800">
+            Publishing is locked until you run a TimeLog sync. This prevents duplicate entries when the API fails after already creating the timelog.
           </div>
         )}
         <div className="max-h-96 overflow-y-auto space-y-3">
@@ -199,6 +214,8 @@ export default function TimeLogPushSuggestions({
                       className={`flex-1 rounded px-3 py-1 text-xs font-semibold ${
                         status.state === 'success'
                           ? 'bg-green-600 text-white'
+                          : status.state === 'sync_required'
+                          ? 'bg-amber-200 text-amber-800 cursor-not-allowed dark:bg-amber-900/60 dark:text-amber-100'
                           : ready
                           ? 'bg-blue-600 text-white hover:bg-blue-700'
                           : 'bg-gray-300 text-gray-600 cursor-not-allowed'
@@ -210,11 +227,16 @@ export default function TimeLogPushSuggestions({
                         ? 'Creating...'
                         : status.state === 'success'
                         ? 'Created'
+                        : status.state === 'sync_required'
+                        ? 'Sync Required'
                         : 'Create TimeLog'}
                     </button>
                   </div>
                   {status.state === 'error' && status.message && (
                     <div className="text-xs text-red-600">{status.message}</div>
+                  )}
+                  {status.state === 'sync_required' && status.message && (
+                    <div className="text-xs text-amber-700 dark:text-amber-300">{status.message}</div>
                   )}
                   {status.state === 'success' && (
                     <div className="text-xs text-green-600">

@@ -42,6 +42,19 @@ export function buildTree(items) {
   return roots;
 }
 
+export function matchesWorkItemSearch(item, searchTerm = '') {
+  const normalizedSearch = (searchTerm || '').trim().toLowerCase();
+  if (!normalizedSearch) return true;
+
+  const normalizedIdSearch = normalizedSearch.replace(/^#/, '');
+  const title = (item?.title || '').toLowerCase();
+  const itemId = item?.id === null || item?.id === undefined ? '' : String(item.id);
+  const matchesTitle = title.includes(normalizedSearch);
+  const matchesId = /^\d+$/.test(normalizedIdSearch) && itemId === normalizedIdSearch;
+
+  return matchesTitle || matchesId;
+}
+
 function summarizeWorkItems(items) {
   return items.reduce(
     (acc, item) => {
@@ -144,6 +157,9 @@ function renderTree(
 export default function WorkItems({
   items,
   onRefresh,
+  isRefreshing = false,
+  onSearchNoResults = null,
+  onSearchResultsRecovered = null,
   projectColors = {},
   settings,
   setSettings,
@@ -158,6 +174,7 @@ export default function WorkItems({
   const [collapsed, setCollapsed] = useState({});
   const [featureCollapsed, setFeatureCollapsed] = useState({});
   const [activeFilterGroup, setActiveFilterGroup] = useState(null);
+  const noResultSearchRef = useRef('');
 
   const treeRef = useRef(null);
 
@@ -221,9 +238,7 @@ export default function WorkItems({
   const itemMap = new Map(items.map((i) => [i.id, i]));
 
   const filtered = items.filter((i) => {
-    const matchesSearch = i.title
-      .toLowerCase()
-      .includes(search.toLowerCase());
+    const matchesSearch = matchesWorkItemSearch(i, search);
     const matchesType =
       typeFilter === 'all' || i.type?.toLowerCase() === typeFilter;
 
@@ -274,6 +289,34 @@ export default function WorkItems({
     return acc;
   }, {});
   const groupedEntries = Object.entries(grouped);
+
+  useEffect(() => {
+    const term = search.trim();
+    if (!term || filtered.length > 0) {
+      if (noResultSearchRef.current && typeof onSearchResultsRecovered === 'function') {
+        onSearchResultsRecovered();
+      }
+      noResultSearchRef.current = '';
+      return;
+    }
+    const normalized = term.toLowerCase();
+    if (noResultSearchRef.current === normalized) {
+      return;
+    }
+    noResultSearchRef.current = normalized;
+    if (typeof onSearchNoResults === 'function') {
+      onSearchNoResults(term);
+    }
+  }, [search, filtered.length, onSearchNoResults, onSearchResultsRecovered]);
+
+  useEffect(
+    () => () => {
+      if (noResultSearchRef.current && typeof onSearchResultsRecovered === 'function') {
+        onSearchResultsRecovered();
+      }
+    },
+    [onSearchResultsRecovered]
+  );
 
   useEffect(() => {
     const keys = Array.from(new Set(items.map((i) => i.project || 'Unknown')));
@@ -396,15 +439,25 @@ export default function WorkItems({
                 <div className="inline-flex rounded-full border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 shadow-inner overflow-hidden">
                   <button
                     type="button"
-                    className="px-4 py-1.5 text-xs font-semibold text-white bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 transition"
+                    className={`px-4 py-1.5 text-xs font-semibold text-white transition ${
+                      isRefreshing
+                        ? 'bg-blue-300 dark:bg-blue-500/60 cursor-not-allowed'
+                        : 'bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600'
+                    }`}
                     onClick={() => onRefresh(false, true)}
+                    disabled={isRefreshing}
                   >
-                    Refresh
+                    {isRefreshing ? 'Refreshing...' : 'Refresh'}
                   </button>
                   <button
                     type="button"
-                    className="px-3 py-1.5 text-xs text-gray-600 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+                    className={`px-3 py-1.5 text-xs transition ${
+                      isRefreshing
+                        ? 'text-gray-400 dark:text-gray-500 cursor-not-allowed'
+                        : 'text-gray-600 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700'
+                    }`}
                     onClick={() => onRefresh(true, true)}
+                    disabled={isRefreshing}
                   >
                     Full
                   </button>

@@ -48,4 +48,18 @@ describe('createTimeLogEntry', () => {
     );
     expect(fetchFn).toHaveBeenCalledTimes(1);
   });
+
+  it('does not retry failed requests', async () => {
+    const payload = { comment: 'unstable', minutes: 30 };
+    const fetchFn = jest.fn().mockResolvedValue({
+      ok: false,
+      status: 503,
+      json: () => Promise.resolve({ message: 'Temporary failure' }),
+    });
+
+    await expect(createTimeLogEntry(config, payload, { fetchFn })).rejects.toThrow(
+      'HTTP 503'
+    );
+    expect(fetchFn).toHaveBeenCalledTimes(1);
+  });
 });

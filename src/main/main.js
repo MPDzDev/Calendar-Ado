@@ -87,6 +87,8 @@ app.whenReady().then(() => {
     return keytar.deletePassword(service, account);
   });
 
+  ipcMain.handle('app:get-version', () => app.getVersion());
+
   ipcMain.handle('export-data', async (_event, data) => {
     const { canceled, filePath } = await dialog.showSaveDialog({
       defaultPath: 'patrak-data.json',

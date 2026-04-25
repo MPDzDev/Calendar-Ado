@@ -10,6 +10,8 @@ import PatrakLogo from './components/PatrakLogo';
 import TodoBar from './components/TodoBar';
 import TimeLogReport from './components/TimeLogReport';
 import TimeLogPushSuggestions from './components/TimeLogPushSuggestions';
+import ToastStack from './components/ToastStack';
+import ReleaseNotesModal from './components/ReleaseNotesModal';
 import useWorkBlocks from './hooks/useWorkBlocks';
 import useSettings from './hooks/useSettings';
 import useAdoItems from './hooks/useAdoItems';
@@ -18,6 +20,7 @@ import useTodos from './hooks/useTodos';
 import useDayLocks, { normalizeLockedDays } from './hooks/useDayLocks';
 import useAreaAliases from './hooks/useAreaAliases';
 import AdoService from './services/adoService';
+import StorageService from './services/storageService';
 import TimeLogSyncService from './services/timeLogSyncService';
 import { createTimeLogEntry } from './services/timeLogPublishService';
 import {
@@ -26,6 +29,7 @@ import {
   splitForOverlaps,
 } from './utils/timeAdjust';
 import { getWeekNumber, formatLocalDateKey } from './utils/date';
+import { APP_CHANGELOG, getPendingChangelogEntries } from './utils/changelog';
 
 function buildTimeLogAlerts(report) {
   if (!report?.differences) return {};
@@ -46,6 +50,15 @@ function buildTimeLogAlerts(report) {
   return alerts;
 }
 
+const UNCHANGED_ITEMS_TOAST_MESSAGE =
+  "Work item count didn't change. Some items may have been skipped due to earlier fetch failures (for example permissions, moved/deleted items, or temporary API errors). Clear the skip list and run a full refresh?";
+
+const BLACKLIST_INFO_TEXT =
+  'The app keeps a temporary skip list ("blacklist") for item IDs that previously failed to load, so one problematic item does not block the whole refresh. Typical causes include restricted access rights, missing or inaccessible parent links, items moved/deleted, or Azure DevOps timeout/throttling responses. Retry clears this list and requests those items again. No work items are deleted.';
+
+const PUSH_REQUIRES_SYNC_MESSAGE =
+  'A TimeLog push request may have already created a remote entry. Run a TimeLog sync before pushing any more changes.';
+
 function App() {
   const { blocks, setBlocks } = useWorkBlocks();
   const { settings, setSettings } = useSettings();
@@ -63,7 +76,12 @@ function App() {
   const [resizing, setResizing] = useState(false);
   const [showReminder, setShowReminder] = useState(false);
   const [panelTab, setPanelTab] = useState('workItems');
-  const [toast, setToast] = useState('');
+  const [toasts, setToasts] = useState([]);
+  const [workItemsRefreshing, setWorkItemsRefreshing] = useState(false);
+  const workItemsRefreshInFlightRef = useRef(false);
+  const toastTimersRef = useRef(new Map());
+  const toastsRef = useRef([]);
+  const workItemSearchToastIdRef = useRef(null);
   const [timeLogSyncing, setTimeLogSyncing] = useState(false);
   const [timeLogReport, setTimeLogReport] = useState(null);
   const [timeLogError, setTimeLogError] = useState('');
@@ -72,6 +90,8 @@ function App() {
   const [showPushSuggestions, setShowPushSuggestions] = useState(false);
   const [pushCreateStatus, setPushCreateStatus] = useState({});
   const [pushCreateError, setPushCreateError] = useState('');
+  const [pushRequiresResync, setPushRequiresResync] = useState(false);
+  const [releaseNotes, setReleaseNotes] = useState(null);
 
   const getWeekStart = (date) => {
     const d = new Date(date);
@@ -84,8 +104,77 @@ function App() {
 
   const [weekStart, setWeekStart] = useState(getWeekStart(new Date()));
   const [weekAnim, setWeekAnim] = useState(null);
+  const itemsRef = useRef(items);
   const weekNumber = getWeekNumber(weekStart);
   const FULL_DAY_MINUTES = 8 * 60;
+
+  useEffect(() => {
+    itemsRef.current = items;
+  }, [items]);
+
+  useEffect(() => {
+    toastsRef.current = toasts;
+    if (
+      workItemSearchToastIdRef.current
+      && !toasts.some((toast) => toast.id === workItemSearchToastIdRef.current)
+    ) {
+      workItemSearchToastIdRef.current = null;
+    }
+  }, [toasts]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const maybeShowReleaseNotes = async () => {
+      let runtimeVersion = '';
+      if (typeof window !== 'undefined' && window.api?.getAppVersion) {
+        try {
+          runtimeVersion = await window.api.getAppVersion();
+        } catch (err) {
+          runtimeVersion = '';
+        }
+      }
+
+      const appVersion =
+        (runtimeVersion || APP_CHANGELOG.fallbackVersion || '').toString().trim();
+      if (!appVersion) return;
+
+      const storage = new StorageService('releaseNotesMeta', {
+        lastSeenVersion: '',
+      });
+      const meta = storage.read() || {};
+
+      const pendingEntries = getPendingChangelogEntries(
+        APP_CHANGELOG.entries,
+        appVersion,
+        (meta.lastSeenVersion || '').toString().trim()
+      );
+      if (!pendingEntries.length) return;
+
+      storage.write({
+        ...meta,
+        lastSeenVersion: appVersion,
+        seenAt: new Date().toISOString(),
+      });
+
+      if (!cancelled) {
+        const latestEntry = pendingEntries[pendingEntries.length - 1] || {};
+        setReleaseNotes({
+          version: appVersion,
+          fromVersion: (meta.lastSeenVersion || '').toString().trim(),
+          releases: pendingEntries,
+          title: latestEntry.title || '',
+          summary: latestEntry.summary || '',
+        });
+      }
+    };
+
+    maybeShowReleaseNotes();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const getBlockDurationMinutes = (block) => {
     if (!block?.start || !block?.end) return 0;
@@ -166,10 +255,85 @@ function App() {
     return { ...block, ...extra, updatedAt, syncStatus: status };
   };
 
-  const showToast = (msg) => {
-    setToast(msg);
-    setTimeout(() => setToast(''), 2000);
-  };
+  const dismissToast = useCallback((toastId) => {
+    const existingTimer = toastTimersRef.current.get(toastId);
+    if (existingTimer) {
+      clearTimeout(existingTimer);
+      toastTimersRef.current.delete(toastId);
+    }
+    setToasts((prev) => prev.filter((toast) => toast.id !== toastId));
+  }, []);
+
+  const pushToast = useCallback((toastConfig) => {
+    const id = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+    const nextToast = {
+      id,
+      type: 'info',
+      message: '',
+      duration: null,
+      persistent: false,
+      infoText: '',
+      actionLabel: '',
+      onAction: null,
+      ...toastConfig,
+    };
+    setToasts((prev) => [...prev, nextToast]);
+    if (!nextToast.persistent) {
+      const defaultDuration =
+        nextToast.type === 'success'
+          ? 2500
+          : nextToast.type === 'error'
+            ? 5000
+            : 4000;
+      const timeoutMs = Number.isFinite(nextToast.duration)
+        ? nextToast.duration
+        : defaultDuration;
+      if (timeoutMs > 0) {
+        const timer = setTimeout(() => {
+          toastTimersRef.current.delete(id);
+          setToasts((prev) => prev.filter((toast) => toast.id !== id));
+        }, timeoutMs);
+        toastTimersRef.current.set(id, timer);
+      }
+    }
+    return id;
+  }, []);
+
+  const updateToast = useCallback((toastId, updates = {}) => {
+    if (!toastId) return;
+    setToasts((prev) =>
+      prev.map((toast) =>
+        toast.id === toastId
+          ? { ...toast, ...updates, id: toast.id }
+          : toast
+      )
+    );
+  }, []);
+
+  useEffect(() => () => {
+    toastTimersRef.current.forEach((timer) => clearTimeout(timer));
+    toastTimersRef.current.clear();
+  }, []);
+
+  const handleToastAction = useCallback(
+    async (toast) => {
+      if (!toast || typeof toast.onAction !== 'function') return;
+      dismissToast(toast.id);
+      try {
+        await toast.onAction();
+      } catch (err) {
+        pushToast({
+          type: 'error',
+          message: err?.message || 'Failed to perform toast action.',
+        });
+      }
+    },
+    [dismissToast, pushToast]
+  );
+
+  const dismissReleaseNotes = useCallback(() => {
+    setReleaseNotes(null);
+  }, []);
 
 
   const handleExport = async () => {
@@ -235,8 +399,34 @@ function App() {
       prev.map((n) => (n.id === id ? { ...n, starred: !n.starred } : n))
     );
 
-  const deleteNote = (id) =>
-    setNotes((prev) => prev.filter((n) => n.id !== id));
+  const deleteNote = useCallback(
+    (id, options = {}) => {
+      const { showUndo = true } = options;
+      const removedIndex = notes.findIndex((note) => note.id === id);
+      if (removedIndex < 0) return;
+      const removedNote = notes[removedIndex];
+      setNotes((prev) => prev.filter((note) => note.id !== id));
+      if (!showUndo) return;
+      pushToast({
+        type: 'info',
+        message: 'Note deleted.',
+        actionLabel: 'Undo',
+        duration: 8000,
+        onAction: () => {
+          setNotes((prev) => {
+            if (prev.some((note) => note.id === removedNote.id)) {
+              return prev;
+            }
+            const next = [...prev];
+            const targetIndex = Math.min(Math.max(removedIndex, 0), next.length);
+            next.splice(targetIndex, 0, removedNote);
+            return next;
+          });
+        },
+      });
+    },
+    [notes, setNotes, pushToast]
+  );
 
   const addTodo = (text) =>
     setTodos((prev) => [...prev, { id: Date.now(), text, done: false }]);
@@ -246,12 +436,38 @@ function App() {
       prev.map((t) => (t.id === id ? { ...t, done: !t.done } : t))
     );
 
-  const deleteTodo = (id) =>
-    setTodos((prev) => prev.filter((t) => t.id !== id));
+  const deleteTodo = useCallback(
+    (id, options = {}) => {
+      const { showUndo = true } = options;
+      const removedIndex = todos.findIndex((todo) => todo.id === id);
+      if (removedIndex < 0) return;
+      const removedTodo = todos[removedIndex];
+      setTodos((prev) => prev.filter((todo) => todo.id !== id));
+      if (!showUndo) return;
+      pushToast({
+        type: 'info',
+        message: 'Todo removed.',
+        actionLabel: 'Undo',
+        duration: 8000,
+        onAction: () => {
+          setTodos((prev) => {
+            if (prev.some((todo) => todo.id === removedTodo.id)) {
+              return prev;
+            }
+            const next = [...prev];
+            const targetIndex = Math.min(Math.max(removedIndex, 0), next.length);
+            next.splice(targetIndex, 0, removedTodo);
+            return next;
+          });
+        },
+      });
+    },
+    [todos, setTodos, pushToast]
+  );
 
   const handleTodoDrop = (note) => {
     addTodo(note.text);
-    if (!note.starred) deleteNote(note.id);
+    if (!note.starred) deleteNote(note.id, { showUndo: false });
   };
 
   const handleNoteDrop = (itemId, note) => {
@@ -259,7 +475,7 @@ function App() {
       const list = prev[itemId] ? [...prev[itemId], note.text] : [note.text];
       return { ...prev, [itemId]: list };
     });
-    if (!note.starred) deleteNote(note.id);
+    if (!note.starred) deleteNote(note.id, { showUndo: false });
   };
 
   const handleBlockCommentDrop = (blockId, note) => {
@@ -271,7 +487,7 @@ function App() {
       )
     );
     dismissTimeLogReport();
-    if (!note.starred) deleteNote(note.id);
+    if (!note.starred) deleteNote(note.id, { showUndo: false });
   };
 
   function getReferenceDateFromBlock(block) {
@@ -496,18 +712,22 @@ function App() {
       const suggestions = buildPushSuggestions(blocksNeedingAttention);
       setPushSuggestions(suggestions);
       setPushCreateStatus({});
-      setPushCreateError('');
+      if (!pushRequiresResync) {
+        setPushCreateError('');
+      }
       setShowPushSuggestions(true);
     },
-    [buildPushSuggestions, focusWeekFromBlock]
+    [buildPushSuggestions, focusWeekFromBlock, pushRequiresResync]
   );
 
   const handleClosePushSuggestions = useCallback(() => {
     setShowPushSuggestions(false);
     setPushSuggestions([]);
     setPushCreateStatus({});
-    setPushCreateError('');
-  }, []);
+    if (!pushRequiresResync) {
+      setPushCreateError('');
+    }
+  }, [pushRequiresResync]);
 
   const buildSuggestionPayload = useCallback(
     (suggestion) => {
@@ -604,6 +824,17 @@ function App() {
 
   const handleCreateTimeLogSuggestion = useCallback(
     async (suggestion) => {
+      if (pushRequiresResync) {
+        setPushCreateStatus((prev) => ({
+          ...prev,
+          [suggestion?.id || 'unknown']: {
+            state: 'sync_required',
+            message: PUSH_REQUIRES_SYNC_MESSAGE,
+          },
+        }));
+        setPushCreateError(PUSH_REQUIRES_SYNC_MESSAGE);
+        return { success: false, error: PUSH_REQUIRES_SYNC_MESSAGE };
+      }
       const result = buildSuggestionPayload(suggestion);
       if (!result || !result.payload) {
         const message =
@@ -629,11 +860,13 @@ function App() {
         }));
         return { success: true };
       } catch (err) {
-        const message = err.message || 'Failed to create TimeLog entry.';
+        const baseMessage = err.message || 'Failed to create TimeLog entry.';
+        const message = `${baseMessage} The API may still have created the entry, so run a TimeLog delta sync before retrying.`;
+        setPushRequiresResync(true);
         setPushCreateStatus((prev) => ({
           ...prev,
           [suggestion.id]: {
-            state: 'error',
+            state: 'sync_required',
             message,
           },
         }));
@@ -643,10 +876,15 @@ function App() {
     },
     [
         buildSuggestionPayload,
+        pushRequiresResync,
     ]
   );
 
   const handleCreateAllTimeLogSuggestions = useCallback(async () => {
+    if (pushRequiresResync) {
+      setPushCreateError(PUSH_REQUIRES_SYNC_MESSAGE);
+      return;
+    }
     if (!pushSuggestions.length) {
       setPushCreateError('No suggestions available to publish.');
       return;
@@ -678,9 +916,39 @@ function App() {
   }, [
     pushSuggestions,
     pushCreateStatus,
+    pushRequiresResync,
     buildSuggestionPayload,
     handleCreateTimeLogSuggestion,
   ]);
+
+  const clearWorkItemBlacklist = useCallback(() => {
+    const storage = new StorageService('workItemBlacklist', []);
+    storage.write([]);
+  }, []);
+
+  const getBlacklistedWorkItemIds = useCallback(() => {
+    const storage = new StorageService('workItemBlacklist', []);
+    const raw = storage.read();
+    if (!Array.isArray(raw)) return [];
+    return raw
+      .map((id) => (id === null || id === undefined ? '' : id.toString().trim()))
+      .filter(Boolean);
+  }, []);
+
+  const buildBlacklistRetryAction = useCallback(
+    (retryFn) => async () => {
+      clearWorkItemBlacklist();
+      pushToast({
+        type: 'info',
+        message: 'Skip list cleared. Running full refresh...',
+        duration: 2200,
+      });
+      if (typeof retryFn === 'function') {
+        await retryFn();
+      }
+    },
+    [clearWorkItemBlacklist, pushToast]
+  );
 
   const openTimeLogSummary = useCallback(() => {
     const org = (settings.azureOrg || '').trim();
@@ -688,7 +956,10 @@ function App() {
       ? settings.azureProjects[0]
       : null;
     if (!org || !project) {
-      showToast('Set Azure organization and at least one project to open TimeLog summary.');
+      pushToast({
+        type: 'info',
+        message: 'Set Azure organization and at least one project to open TimeLog summary.',
+      });
       return;
     }
     const encodedProject = encodeURIComponent(project);
@@ -698,9 +969,12 @@ function App() {
     } else {
       window.open(url, '_blank');
     }
-  }, [settings.azureOrg, settings.azureProjects]);
+  }, [settings.azureOrg, settings.azureProjects, pushToast]);
 
-  const fetchWorkItems = useCallback(async (full = false, fromUser = false) => {
+  const fetchWorkItems = useCallback(async (full = false, fromUser = false, options = {}) => {
+    if (workItemsRefreshInFlightRef.current) {
+      return;
+    }
     const {
       azureOrg,
       azurePat,
@@ -709,10 +983,35 @@ function App() {
       azureArea,
       azureIteration,
     } = settings;
-    if (!azureOrg || !azurePat) return;
+    if (!azureOrg || !azurePat) {
+      if (fromUser) {
+        pushToast({
+          type: 'error',
+          message: 'Set Azure organization and PAT before refreshing work items.',
+        });
+      }
+      return;
+    }
+
+    workItemsRefreshInFlightRef.current = true;
+    setWorkItemsRefreshing(true);
+
+    const { suppressUnchangedPrompt = false } = options || {};
+    const previousItems = itemsRef.current || [];
+    const previousCount = previousItems.length;
+    let loadingToastId = null;
+
     if (fromUser) {
       setFetchFailed(false);
+      loadingToastId = pushToast({
+        type: 'loading',
+        message: full
+          ? 'Running full work item refresh...'
+          : 'Refreshing work items...',
+        persistent: true,
+      });
     }
+
     const service = new AdoService(
       azureOrg,
       azurePat,
@@ -736,18 +1035,49 @@ function App() {
     }
     try {
       const data = await service.getWorkItems(since);
-      setItems((prev) => {
-        const map = new Map(prev.map((i) => [i.id, i]));
-        data.forEach((item) => {
-          map.set(item.id, item);
-        });
-        return Array.from(map.values());
+      const mergedMap = new Map(previousItems.map((item) => [item.id, item]));
+      data.forEach((item) => {
+        mergedMap.set(item.id, item);
       });
+      const mergedItems = Array.from(mergedMap.values());
+      const nextCount = mergedItems.length;
+
+      setItems(mergedItems);
       setItemsFetched(true);
       setLastFetch(Date.now());
+
+      if (loadingToastId) {
+        dismissToast(loadingToastId);
+        loadingToastId = null;
+      }
+
+      if (fromUser && !suppressUnchangedPrompt && nextCount === previousCount) {
+        pushToast({
+          type: 'info',
+          message: UNCHANGED_ITEMS_TOAST_MESSAGE,
+          infoText: BLACKLIST_INFO_TEXT,
+          actionLabel: 'Clear list + full refresh',
+          persistent: true,
+          onAction: buildBlacklistRetryAction(() =>
+            fetchWorkItems(true, true, { suppressUnchangedPrompt: true })
+          ),
+        });
+      }
     } catch (e) {
       console.error('Failed to fetch work items', e);
       setFetchFailed(true);
+      if (fromUser) {
+        pushToast({
+          type: 'error',
+          message: e?.message || 'Failed to refresh work items.',
+        });
+      }
+    } finally {
+      if (loadingToastId) {
+        dismissToast(loadingToastId);
+      }
+      workItemsRefreshInFlightRef.current = false;
+      setWorkItemsRefreshing(false);
     }
   }, [
     settings.azureOrg,
@@ -756,10 +1086,98 @@ function App() {
     settings.azureTags,
     settings.azureArea,
     settings.azureIteration,
+    settings.enableDevOpsReview,
+    settings.projectItems,
+    settings.fetchParents,
     setItems,
-    blocks,
     lastFetch,
+    dismissToast,
+    pushToast,
+    buildBlacklistRetryAction,
   ]);
+
+  const dismissWorkItemSearchToast = useCallback(() => {
+    const toastId = workItemSearchToastIdRef.current;
+    if (!toastId) return;
+    dismissToast(toastId);
+    workItemSearchToastIdRef.current = null;
+  }, [dismissToast]);
+
+  const upsertWorkItemSearchToast = useCallback(
+    (toastConfig = {}) => {
+      const currentToastId = workItemSearchToastIdRef.current;
+      const toastExists =
+        !!currentToastId
+        && toastsRef.current.some((toast) => toast.id === currentToastId);
+
+      const nextConfig = {
+        type: 'info',
+        persistent: true,
+        message: '',
+        infoText: '',
+        actionLabel: '',
+        onAction: null,
+        ...toastConfig,
+      };
+
+      if (toastExists) {
+        updateToast(currentToastId, nextConfig);
+        return currentToastId;
+      }
+
+      const createdId = pushToast(nextConfig);
+      workItemSearchToastIdRef.current = createdId;
+      return createdId;
+    },
+    [pushToast, updateToast]
+  );
+
+  const handleWorkItemSearchNoResults = useCallback(
+    (searchTerm = '') => {
+      const term = (searchTerm || '').trim();
+      if (!term) {
+        dismissWorkItemSearchToast();
+        return;
+      }
+
+      const looksLikeId = /^\d+$/.test(term);
+      if (looksLikeId) {
+        const blacklistIds = getBlacklistedWorkItemIds();
+        if (blacklistIds.includes(term)) {
+          upsertWorkItemSearchToast({
+            message: `No result for #${term}. This ID is currently in the skip list (blacklist), so it is excluded from refresh results.`,
+            infoText: BLACKLIST_INFO_TEXT,
+            actionLabel: 'Clear list + full refresh',
+            onAction: buildBlacklistRetryAction(() =>
+              fetchWorkItems(true, true, { suppressUnchangedPrompt: true })
+            ),
+          });
+          return;
+        }
+
+        upsertWorkItemSearchToast({
+          message: `No result for #${term}. This ID is not in the skip list. It may be outside your current filters, inaccessible with current permissions, or not in this local cache yet.`,
+        });
+        return;
+      }
+
+      upsertWorkItemSearchToast({
+        message:
+          'No work items matched your search. Tip: paste a numeric work item ID to check whether it is in the skip list (blacklist).',
+      });
+    },
+    [
+      fetchWorkItems,
+      getBlacklistedWorkItemIds,
+      buildBlacklistRetryAction,
+      upsertWorkItemSearchToast,
+      dismissWorkItemSearchToast,
+    ]
+  );
+
+  const handleWorkItemSearchResultsRecovered = useCallback(() => {
+    dismissWorkItemSearchToast();
+  }, [dismissWorkItemSearchToast]);
 
   useEffect(() => {
     if (settings.darkMode) {
@@ -952,10 +1370,35 @@ function App() {
     dismissTimeLogReport();
   };
 
-  const deleteBlock = (id) => {
-    setBlocks(blocks.filter((b) => b.id !== id));
-    dismissTimeLogReport();
-  };
+  const deleteBlock = useCallback(
+    (id, options = {}) => {
+      const { showUndo = true } = options;
+      const removedIndex = blocks.findIndex((block) => block.id === id);
+      if (removedIndex < 0) return;
+      const removedBlock = blocks[removedIndex];
+      setBlocks((prev) => prev.filter((block) => block.id !== id));
+      dismissTimeLogReport();
+      if (!showUndo) return;
+      pushToast({
+        type: 'info',
+        message: 'Work block deleted.',
+        actionLabel: 'Undo',
+        duration: 8000,
+        onAction: () => {
+          setBlocks((prev) => {
+            if (prev.some((block) => block.id === removedBlock.id)) {
+              return prev;
+            }
+            const next = [...prev];
+            const targetIndex = Math.min(Math.max(removedIndex, 0), next.length);
+            next.splice(targetIndex, 0, removedBlock);
+            return next;
+          });
+        },
+      });
+    },
+    [blocks, setBlocks, dismissTimeLogReport, pushToast]
+  );
 
   const reviewService = new AdoService(
     settings.azureOrg,
@@ -1061,7 +1504,13 @@ function App() {
         },
       };
       applyTimeLogMetadata(metadata);
-      setToast('TimeLog delta sync completed');
+      setPushRequiresResync(false);
+      setPushCreateStatus({});
+      setPushCreateError('');
+      pushToast({
+        type: 'success',
+        message: 'TimeLog delta sync completed.',
+      });
       setSettings((prev) => ({
         ...prev,
         timeLogLastSync: new Date().toISOString(),
@@ -1071,7 +1520,16 @@ function App() {
     } finally {
       setTimeLogSyncing(false);
     }
-  }, [settings, blocks, setBlocks, setSettings, weekStart, applyTimeLogMetadata, deriveProjectIdMap]);
+  }, [
+    settings,
+    blocks,
+    setBlocks,
+    setSettings,
+    weekStart,
+    applyTimeLogMetadata,
+    deriveProjectIdMap,
+    pushToast,
+  ]);
 
   const handleFullTimeLogSync = useCallback(async (startDateOverride = null) => {
     setTimeLogError('');
@@ -1102,7 +1560,13 @@ function App() {
         },
       };
       applyTimeLogMetadata(metadata);
-      setToast('Full TimeLog sync completed');
+      setPushRequiresResync(false);
+      setPushCreateStatus({});
+      setPushCreateError('');
+      pushToast({
+        type: 'success',
+        message: 'Full TimeLog sync completed.',
+      });
       setSettings((prev) => ({
         ...prev,
         timeLogLastSync: new Date().toISOString(),
@@ -1112,7 +1576,16 @@ function App() {
     } finally {
       setTimeLogSyncing(false);
     }
-  }, [settings, blocks, setBlocks, setSettings, weekStart, applyTimeLogMetadata, deriveProjectIdMap]);
+  }, [
+    settings,
+    blocks,
+    setBlocks,
+    setSettings,
+    weekStart,
+    applyTimeLogMetadata,
+    deriveProjectIdMap,
+    pushToast,
+  ]);
 
   const startSubmitSession = () => {
     openWorkItemsForWeek();
@@ -1125,11 +1598,6 @@ function App() {
         className="p-6 flex gap-4 h-full w-full overflow-hidden bg-gray-50 text-gray-800 dark:bg-gray-900 dark:text-gray-100"
       >
       <div className="flex flex-col flex-grow overflow-y-auto">
-        {toast && (
-          <div className="mb-2 p-2 bg-green-200 text-center text-sm text-green-800 fade-in">
-            {toast}
-          </div>
-        )}
         {showReminder && (
           <div className="mb-2 p-2 bg-yellow-200 text-center text-sm text-red-800 fade-in">
             No time logged today. Don't forget to log your work!
@@ -1280,6 +1748,9 @@ function App() {
             itemNotes={itemNotes}
             highlightedIds={highlightedIds}
             problems={problemMap}
+            isRefreshing={workItemsRefreshing}
+            onSearchNoResults={handleWorkItemSearchNoResults}
+            onSearchResultsRecovered={handleWorkItemSearchResultsRecovered}
           />
         )}
         {panelTab === 'review' && settings.enableDevOpsReview && (
@@ -1294,6 +1765,7 @@ function App() {
         onCreateEntry={handleCreateTimeLogSuggestion}
         onCreateAll={handleCreateAllTimeLogSuggestions}
         statusMap={pushCreateStatus}
+        requiresResync={pushRequiresResync}
         errorMessage={pushCreateError}
         metadata={{
           userName: settings.timeLogUserName,
@@ -1304,6 +1776,12 @@ function App() {
         buildPayload={buildSuggestionPayload}
       />
     )}
+    <ToastStack
+      toasts={toasts}
+      onDismiss={dismissToast}
+      onAction={handleToastAction}
+    />
+    <ReleaseNotesModal release={releaseNotes} onClose={dismissReleaseNotes} />
     </>
   );
 }
