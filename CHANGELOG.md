@@ -2,6 +2,14 @@
 
 All notable changes to this project are documented in this file.
 
+## [0.2.2] - 2026-04-25
+
+### Changed
+- Fixed past-week calendar drift caused by DST-sensitive week navigation.
+- Older weeks now keep Monday aligned and populated correctly when moving back through history.
+- The year minimap now uses the same DST-safe week indexing as the main calendar.
+- App version bumped to `0.2.2`.
+
 ## [0.2.1] - 2026-04-25
 
 ### Changed

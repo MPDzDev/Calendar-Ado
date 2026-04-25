@@ -1,6 +1,21 @@
 export const APP_CHANGELOG = {
-  fallbackVersion: '0.2.1',
+  fallbackVersion: '0.2.2',
   entries: {
+    '0.2.2': {
+      title: 'Calendar Past-Week Alignment Fix',
+      summary:
+        'Past-week navigation now stays aligned across DST boundaries, so older weeks no longer shift and hide Monday entries.',
+      sections: [
+        {
+          heading: 'What changed',
+          items: [
+            'Week navigation now moves by calendar dates instead of fixed millisecond offsets, which avoids DST drift.',
+            'The calendar week container now uses a local date key so older weeks render consistently.',
+            'The year minimap now uses DST-safe week indexing to stay aligned with the main calendar.',
+          ],
+        },
+      ],
+    },
     '0.2.1': {
       title: 'Safer TimeLog Publish Recovery',
       summary:

@@ -579,7 +579,7 @@ export default function Calendar({
   return (
     <div className="overflow-hidden relative">
       <div
-        key={weekStart.toISOString()}
+        key={formatLocalDateKey(weekStart) || weekStart.toISOString()}
         className={`grid gap-2 ${animClass}`}
         style={{ gridTemplateColumns: `repeat(${days.length}, minmax(0, 1fr))` }}
       >

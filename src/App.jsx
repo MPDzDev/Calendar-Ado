@@ -102,6 +102,13 @@ function App() {
     return d;
   };
 
+  const shiftWeekStart = useCallback((date, weekOffset) => {
+    const next = new Date(date);
+    next.setDate(next.getDate() + weekOffset * 7);
+    next.setHours(0, 0, 0, 0);
+    return next;
+  }, []);
+
   const [weekStart, setWeekStart] = useState(getWeekStart(new Date()));
   const [weekAnim, setWeekAnim] = useState(null);
   const itemsRef = useRef(items);
@@ -1269,11 +1276,11 @@ function App() {
 
   const prevWeek = () => {
     setWeekAnim('right');
-    setWeekStart((w) => new Date(w.getTime() - 7 * 24 * 60 * 60 * 1000));
+    setWeekStart((w) => shiftWeekStart(w, -1));
   };
   const nextWeek = () => {
     setWeekAnim('left');
-    setWeekStart((w) => new Date(w.getTime() + 7 * 24 * 60 * 60 * 1000));
+    setWeekStart((w) => shiftWeekStart(w, 1));
   };
   const currentWeek = () => setWeekStart(getWeekStart(new Date()));
 

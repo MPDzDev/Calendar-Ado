@@ -20,14 +20,30 @@ export default function YearHint({
     return d;
   };
 
-  const weekMs = 7 * 24 * 60 * 60 * 1000;
+  const addWeeks = (date, weekCount) => {
+    const next = new Date(date);
+    next.setDate(next.getDate() + weekCount * 7);
+    next.setHours(0, 0, 0, 0);
+    return next;
+  };
+
+  const weekIndexFrom = (date, baseDate) => {
+    const current = getWeekStart(date);
+    const base = getWeekStart(baseDate);
+    const currentUtc = Date.UTC(
+      current.getFullYear(),
+      current.getMonth(),
+      current.getDate()
+    );
+    const baseUtc = Date.UTC(base.getFullYear(), base.getMonth(), base.getDate());
+    return Math.round((currentUtc - baseUtc) / (7 * 24 * 60 * 60 * 1000));
+  };
+
   const currentWeek = getWeekStart(weekStart);
   const offsetWeeks = Math.floor(52 * 0.75); // 39 weeks back
-  const firstWeek = getWeekStart(new Date(currentWeek.getTime() - offsetWeeks * weekMs));
+  const firstWeek = addWeeks(currentWeek, -offsetWeeks);
   const weeks = Array.from({ length: 52 }, (_, i) => {
-    const d = new Date(firstWeek);
-    d.setDate(firstWeek.getDate() + i * 7);
-    return d;
+    return addWeeks(firstWeek, i);
   });
 
   const weekWidth = 14; // px width per week
@@ -37,16 +53,14 @@ export default function YearHint({
 
   const findItem = (id) => items?.find((i) => i.id === id);
 
-  const currentIndex = Math.floor((getWeekStart(weekStart) - firstWeek) / weekMs);
+  const currentIndex = weekIndexFrom(weekStart, firstWeek);
 
   const blocksByWeek = {};
   blocks.forEach((b) => {
     if (!b.start || !b.end) return;
     const start = new Date(b.start);
     const end = new Date(b.end);
-    const wIdx = Math.floor(
-      (getWeekStart(start) - firstWeek) / (7 * 24 * 60 * 60 * 1000)
-    );
+    const wIdx = weekIndexFrom(start, firstWeek);
     if (wIdx < 0 || wIdx >= 52) return;
     const dIdx = (start.getDay() + 6) % 7;
     const startMin =
@@ -70,8 +84,8 @@ export default function YearHint({
     start.setMonth(firstMonth.getMonth() + m);
     const end = new Date(start);
     end.setMonth(start.getMonth() + 1);
-    const startIdx = Math.floor((getWeekStart(start) - firstWeek) / weekMs);
-    const endIdx = Math.floor((getWeekStart(end) - firstWeek) / weekMs);
+    const startIdx = weekIndexFrom(start, firstWeek);
+    const endIdx = weekIndexFrom(end, firstWeek);
     return {
       name: start.toLocaleString('en-US', { month: 'short' }),
       startIdx,
