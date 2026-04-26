@@ -162,8 +162,9 @@ export default function Settings({
     <>
       {triggerElement}
       {open && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-900 dark:text-white rounded-2xl shadow-2xl w-[960px] max-w-[95vw] h-[640px] max-h-[90vh] flex flex-col border border-gray-200 dark:border-gray-700">
+        <>
+          <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm" />
+          <div className="fixed left-1/2 top-1/2 z-[51] w-[960px] max-w-[95vw] h-[640px] max-h-[90vh] -translate-x-1/2 -translate-y-1/2 bg-white dark:bg-gray-900 dark:text-white rounded-2xl shadow-2xl flex flex-col border border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
               <div>
                 <h2 className="text-lg font-semibold">Workspace Settings</h2>
@@ -786,11 +787,12 @@ export default function Settings({
               </div>
             </div>
           </div>
-        </div>
+        </>
       )}
       {blacklistOpen && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
-          <div className="bg-white dark:bg-gray-900 dark:text-white rounded-xl shadow-2xl w-[520px] max-w-[95vw] max-h-[80vh] flex flex-col border border-gray-200 dark:border-gray-700">
+        <>
+          <div className="fixed inset-0 z-[60] bg-black/40 backdrop-blur-sm" />
+          <div className="fixed left-1/2 top-1/2 z-[61] w-[520px] max-w-[95vw] max-h-[80vh] -translate-x-1/2 -translate-y-1/2 bg-white dark:bg-gray-900 dark:text-white rounded-xl shadow-2xl flex flex-col border border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
               <h3 className="text-sm font-semibold">ADO Blacklist</h3>
               <button
@@ -840,7 +842,7 @@ export default function Settings({
               </button>
             </div>
           </div>
-        </div>
+        </>
       )}
     </>
   );

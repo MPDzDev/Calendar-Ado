@@ -1611,7 +1611,7 @@ function App() {
             No time logged today. Don't forget to log your work!
           </div>
         )}
-        <div className="relative z-20 mb-3 rounded-[26px] border border-white/70 bg-white/85 px-3 py-2.5 shadow-[0_18px_45px_-28px_rgba(15,23,42,0.45)] backdrop-blur dark:border-slate-800 dark:bg-slate-900/85">
+        <div className="relative z-20 mb-3 rounded-[26px] border border-white/70 bg-white/85 px-3 py-2.5 shadow-[0_18px_45px_-28px_rgba(15,23,42,0.45)] dark:border-slate-800 dark:bg-slate-900/85">
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-3">
               <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3">
@@ -1726,12 +1726,12 @@ function App() {
         onMouseDown={() => setResizing(true)}
       />
       <div
-        className="pl-5 pr-4 py-4 space-y-4 flex flex-col h-full overflow-y-auto rounded-[26px] border border-white/70 bg-white/90 shadow-[0_18px_45px_-28px_rgba(15,23,42,0.45)] dark:border-slate-800 dark:bg-slate-900/85"
+        className="px-4 py-3 space-y-3 flex flex-col h-full overflow-y-auto rounded-[26px] border border-white/70 bg-white/90 shadow-[0_18px_45px_-28px_rgba(15,23,42,0.45)] dark:border-slate-800 dark:bg-slate-900/85"
         style={{ width: sidebarWidth }}
       >
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           <button
-            className={`w-full flex items-center justify-center gap-1 px-4 py-2.5 rounded-2xl shadow-sm transition ${
+            className={`w-full flex items-center justify-center gap-1 px-4 py-2 rounded-2xl shadow-sm transition ${
               timeLogSyncing ? 'bg-slate-300 text-white dark:bg-slate-700' : 'bg-slate-900 hover:bg-slate-800 text-white dark:bg-blue-600 dark:hover:bg-blue-500'
             }`}
             onClick={handleTimeLogSync}

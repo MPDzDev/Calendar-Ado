@@ -40,7 +40,7 @@ export default function HoursSummary({ blocks, weekStart, items }) {
   const [showDetails, setShowDetails] = useState(false);
 
   return (
-    <div className="mb-4 w-full">
+    <div className="mb-2 w-full">
       <div
         className={`relative h-3 rounded bg-gray-200 overflow-hidden ${overLimit ? 'ring-2 ring-amber-500' : ''}`}
         onMouseEnter={() => setShowDetails(true)}
@@ -60,7 +60,7 @@ export default function HoursSummary({ blocks, weekStart, items }) {
           </div>
         )}
       </div>
-      <div className="flex justify-between text-xs mt-1">
+      <div className="flex justify-between text-[11px] mt-1">
         <span className={textColor}>{totalHours.toFixed(1)}h/{WEEK_LIMIT}</span>
         <span className="text-green-600">{correctAssigned.toFixed(1)}h</span>
       </div>

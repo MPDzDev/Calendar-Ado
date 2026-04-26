@@ -97,17 +97,17 @@ export default function TimeLogReport({
   };
 
   return (
-    <div className="border rounded-md p-3 bg-gray-50 dark:bg-gray-900 text-sm space-y-2">
+    <div className="border rounded-2xl p-2.5 bg-gray-50 dark:bg-gray-900 text-sm space-y-2">
       <div className="flex items-center justify-between">
-        <h3 className="font-semibold text-base">TimeLog Sync Report</h3>
+        <h3 className="font-semibold text-sm">TimeLog Sync Report</h3>
         <button
-          className="text-xs px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded"
+          className="text-[11px] px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded-xl"
           onClick={onDismiss}
         >
           Dismiss
         </button>
       </div>
-      <div className="text-xs text-gray-500">
+      <div className="text-[11px] text-gray-500">
         {windowDescription} - Generated: {new Date(generatedAt).toLocaleString()}
       </div>
       {limitToFocusRange && focusStart && focusEnd && (
@@ -115,33 +115,33 @@ export default function TimeLogReport({
           This delta refresh only analyzed the focused calendar week above.
         </div>
       )}
-      <div className="grid grid-cols-2 gap-2 text-sm">
-        <div className="p-2 bg-white dark:bg-gray-800 rounded shadow">
+      <div className="grid grid-cols-2 gap-1.5 text-sm">
+        <div className="p-2 bg-white dark:bg-gray-800 rounded-xl shadow-sm">
           <div className="text-gray-500 text-xs">Downloaded</div>
-          <div className="text-xl font-semibold">{summary.downloaded || 0}</div>
+          <div className="text-lg font-semibold leading-tight">{summary.downloaded || 0}</div>
         </div>
-        <div className="p-2 bg-white dark:bg-gray-800 rounded shadow">
+        <div className="p-2 bg-white dark:bg-gray-800 rounded-xl shadow-sm">
           <div className="text-gray-500 text-xs">Created Locally</div>
-          <div className="text-xl font-semibold">{summary.created || 0}</div>
+          <div className="text-lg font-semibold leading-tight">{summary.created || 0}</div>
         </div>
-        <div className="p-2 bg-white dark:bg-gray-800 rounded shadow">
+        <div className="p-2 bg-white dark:bg-gray-800 rounded-xl shadow-sm">
           <div className="text-gray-500 text-xs">Matched & Identical</div>
-          <div className="text-xl font-semibold">{summary.identical || 0}</div>
+          <div className="text-lg font-semibold leading-tight">{summary.identical || 0}</div>
         </div>
-        <div className="p-2 bg-white dark:bg-gray-800 rounded shadow">
+        <div className="p-2 bg-white dark:bg-gray-800 rounded-xl shadow-sm">
           <div className="text-gray-500 text-xs">Differences</div>
-          <div className="text-xl font-semibold">{summary.differences || 0}</div>
+          <div className="text-lg font-semibold leading-tight">{summary.differences || 0}</div>
         </div>
       </div>
-      <div className="flex gap-2 text-xs">
+      <div className="flex gap-2 text-[11px]">
         <button
-          className="px-2 py-1 bg-blue-500 text-white rounded"
+          className="px-2 py-1 bg-blue-500 text-white rounded-xl"
           onClick={exportJson}
         >
           Export JSON
         </button>
         <button
-          className={`px-2 py-1 rounded ${
+          className={`px-2 py-1 rounded-xl ${
             differences.length ? 'bg-blue-500 text-white' : 'bg-gray-400 text-gray-200 cursor-not-allowed'
           }`}
           onClick={differences.length ? exportCsv : undefined}
@@ -151,14 +151,14 @@ export default function TimeLogReport({
         </button>
       </div>
       {recommendDateObj && (
-        <div className="p-2 bg-yellow-100 dark:bg-yellow-900 text-xs rounded flex flex-col gap-1">
+        <div className="p-2 bg-yellow-100 dark:bg-yellow-900 text-xs rounded-xl flex flex-col gap-1">
           <span>
             Local blocks have unsynced edits dating back to{' '}
             {recommendDateObj.toLocaleDateString()}. Consider running a full refresh from this date.
           </span>
           {onFullRefresh && (
             <button
-              className="self-start px-2 py-1 bg-blue-500 text-white rounded"
+              className="self-start px-2 py-1 bg-blue-500 text-white rounded-xl"
               onClick={() => onFullRefresh(recommendDateObj)}
             >
               Full Refresh from {recommendDateObj.toLocaleDateString()}
@@ -167,14 +167,14 @@ export default function TimeLogReport({
         </div>
       )}
       {unsyncedWeeklyBlocks.length > 0 && (
-        <div className="p-2 bg-blue-50 dark:bg-blue-900 text-xs rounded flex flex-col gap-1">
+        <div className="p-2 bg-blue-50 dark:bg-blue-900 text-xs rounded-xl flex flex-col gap-1">
           <span>
             {unsyncedWeeklyBlocks.length} local block(s) in the current week are not synced yet.
             Create them remotely to avoid data loss.
           </span>
           {onCreateMissing && (
             <button
-              className="self-start px-2 py-1 bg-blue-600 text-white rounded"
+              className="self-start px-2 py-1 bg-blue-600 text-white rounded-xl"
               onClick={() => onCreateMissing(unsyncedWeeklyBlocks)}
             >
               Review Push Suggestions
@@ -182,7 +182,7 @@ export default function TimeLogReport({
           )}
           {onOpenTimeLogSummary && (
             <button
-              className="self-start px-2 py-1 bg-indigo-600 text-white rounded"
+              className="self-start px-2 py-1 bg-indigo-600 text-white rounded-xl"
               onClick={onOpenTimeLogSummary}
             >
               Open Azure TimeLog
@@ -191,14 +191,14 @@ export default function TimeLogReport({
         </div>
       )}
       {dailyLimitIssues.length > 0 && (
-        <div className="p-2 bg-red-50 dark:bg-red-900 text-xs rounded flex flex-col gap-1">
+        <div className="p-2 bg-red-50 dark:bg-red-900 text-xs rounded-xl flex flex-col gap-1">
           <span>
             Daily cap reached on {dailyLimitIssues.length} remote block(s). These were skipped to avoid
             logging more than 8 hours in a day. Adjust your entries manually in Azure TimeLog.
           </span>
           {onOpenTimeLogSummary && (
             <button
-              className="self-start px-2 py-1 bg-red-600 text-white rounded"
+              className="self-start px-2 py-1 bg-red-600 text-white rounded-xl"
               onClick={onOpenTimeLogSummary}
             >
               Go to Azure TimeLog
@@ -206,14 +206,14 @@ export default function TimeLogReport({
           )}
         </div>
       )}
-      <div className="max-h-56 overflow-y-auto space-y-2 text-xs">
+      <div className="max-h-48 overflow-y-auto space-y-1.5 text-xs">
         {differences.length === 0 && (
           <div className="text-green-700">No differences detected.</div>
         )}
         {differences.map((diff, idx) => (
           <div
             key={`${diff.type}-${idx}`}
-            className="border rounded p-2 bg-white dark:bg-gray-800 space-y-1"
+            className="border rounded-xl p-2 bg-white dark:bg-gray-800 space-y-1"
           >
             <div className="font-semibold">
               {idx + 1}. {diff.type}

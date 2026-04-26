@@ -422,24 +422,24 @@ export default function WorkItems({
   const dropHandler = handleItemDrop;
 
   return (
-    <div className="mb-4 flex flex-col flex-grow overflow-y-auto min-h-0">
-      <div className="sticky top-0 bg-white dark:bg-gray-800 pb-3 z-10">
-        <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-gray-900/80 backdrop-blur px-4 py-4 shadow-sm space-y-3">
-          <div className="flex flex-wrap items-center gap-3">
+    <div className="mb-3 flex flex-col flex-grow overflow-y-auto min-h-0">
+      <div className="sticky top-0 bg-white dark:bg-gray-800 pb-2 z-10">
+        <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-gray-900/80 backdrop-blur px-3 py-3 shadow-sm space-y-2">
+          <div className="flex flex-wrap items-center gap-2.5">
             <div>
-              <p className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">
+              <p className="text-[10px] uppercase tracking-wide text-gray-500 dark:text-gray-400">
                 Work Items
               </p>
-              <p className="text-xl font-semibold leading-tight text-gray-900 dark:text-gray-50">
+              <p className="text-lg font-semibold leading-tight text-gray-900 dark:text-gray-50">
                 {totalItems.toLocaleString()}
               </p>
             </div>
             {onRefresh && (
-              <div className="flex items-center gap-2 ml-auto text-[11px] font-medium">
+              <div className="flex items-center gap-1.5 ml-auto text-[10px] font-medium">
                 <div className="inline-flex rounded-full border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 shadow-inner overflow-hidden">
                   <button
                     type="button"
-                    className={`px-4 py-1.5 text-xs font-semibold text-white transition ${
+                    className={`px-3 py-1 text-[11px] font-semibold text-white transition ${
                       isRefreshing
                         ? 'bg-blue-300 dark:bg-blue-500/60 cursor-not-allowed'
                         : 'bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600'
@@ -451,7 +451,7 @@ export default function WorkItems({
                   </button>
                   <button
                     type="button"
-                    className={`px-3 py-1.5 text-xs transition ${
+                    className={`px-2.5 py-1 text-[11px] transition ${
                       isRefreshing
                         ? 'text-gray-400 dark:text-gray-500 cursor-not-allowed'
                         : 'text-gray-600 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700'
@@ -465,8 +465,8 @@ export default function WorkItems({
               </div>
             )}
           </div>
-          <div className="flex flex-wrap gap-2">
-            <div className="flex items-center flex-grow min-w-[10rem] rounded-full border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 px-3 py-1.5 text-sm focus-within:ring-2 focus-within:ring-blue-400">
+          <div className="flex flex-wrap gap-1.5">
+            <div className="flex items-center flex-grow min-w-[9rem] rounded-full border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 px-2.5 py-1 text-[13px] focus-within:ring-2 focus-within:ring-blue-400">
               <input
                 type="text"
                 placeholder="Search work items"
@@ -478,7 +478,7 @@ export default function WorkItems({
             <select
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value)}
-              className="px-3 py-1.5 text-xs rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
+              className="px-2.5 py-1 text-[11px] rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
             >
               <option value="all">All Types</option>
               <option value="feature">Features</option>
@@ -489,12 +489,12 @@ export default function WorkItems({
               <option value="transversal activity">Transversal Activity</option>
             </select>
           </div>
-          <div className="grid gap-2 sm:grid-cols-3 text-xs">
+          <div className="grid gap-1.5 sm:grid-cols-3 text-[11px]">
             <div className="relative" ref={groupRefs.tags}>
-              <div className="flex items-center gap-2 flex-wrap" ref={pillRowRefs.tags}>
+              <div className="flex items-center gap-1.5 flex-wrap" ref={pillRowRefs.tags}>
                 <button
                   type="button"
-                  className={`px-3 py-1 rounded-full uppercase tracking-wide text-[10px] font-semibold border ${
+                    className={`px-2.5 py-0.5 rounded-full uppercase tracking-wide text-[9px] font-semibold border ${
                     activeFilterGroup === 'tags'
                       ? 'border-blue-400 bg-blue-50 text-blue-700 dark:border-blue-500 dark:bg-blue-900/30 dark:text-blue-200'
                       : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300'
@@ -503,10 +503,10 @@ export default function WorkItems({
                 >
                   Tags
                 </button>
-                <div className="flex flex-wrap gap-1 min-h-[24px] overflow-hidden">
+                <div className="flex flex-wrap gap-1 min-h-[20px] overflow-hidden">
                   {settings.azureTags.length > 0 &&
                     (condensed.tags ? (
-                      <span className="px-2 py-0.5 border rounded-full bg-gray-100 dark:bg-gray-800 flex items-center">
+                        <span className="px-2 py-0.5 border rounded-full bg-gray-100 dark:bg-gray-800 flex items-center text-[10px]">
                         {`${settings.azureTags.length} filters`}
                         <button
                           className="ml-1 text-xs"
@@ -521,7 +521,7 @@ export default function WorkItems({
                       settings.azureTags.map((tag) => (
                         <span
                           key={tag}
-                          className="px-2 py-0.5 border rounded-full bg-gray-100 dark:bg-gray-800 flex items-center"
+                          className="px-2 py-0.5 border rounded-full bg-gray-100 dark:bg-gray-800 flex items-center text-[10px]"
                         >
                           {tag}
                           <button className="ml-1 text-xs" onClick={() => toggleTag(tag)}>
@@ -533,7 +533,7 @@ export default function WorkItems({
                 </div>
               </div>
               {activeFilterGroup === 'tags' && (
-                <div className="absolute left-0 mt-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-xl p-2 z-20 flex flex-wrap gap-1">
+                <div className="absolute left-0 mt-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-xl p-1.5 z-20 flex flex-wrap gap-1 text-[10px]">
                   <button
                     className={`px-2 py-1 rounded-full border ${
                       settings.azureTags.length === 0
@@ -549,7 +549,7 @@ export default function WorkItems({
                   {availableTags.map((tag) => (
                     <button
                       key={tag}
-                      className={`px-2 py-1 rounded-full border ${
+                      className={`px-2 py-0.5 rounded-full border ${
                         settings.azureTags.includes(tag)
                           ? 'bg-blue-500 text-white'
                           : 'bg-gray-100 dark:bg-gray-800'
@@ -563,10 +563,10 @@ export default function WorkItems({
               )}
             </div>
             <div className="relative" ref={groupRefs.areas}>
-              <div className="flex items-center gap-2 flex-wrap" ref={pillRowRefs.areas}>
+              <div className="flex items-center gap-1.5 flex-wrap" ref={pillRowRefs.areas}>
                 <button
                   type="button"
-                  className={`px-3 py-1 rounded-full uppercase tracking-wide text-[10px] font-semibold border ${
+                    className={`px-2.5 py-0.5 rounded-full uppercase tracking-wide text-[9px] font-semibold border ${
                     activeFilterGroup === 'areas'
                       ? 'border-blue-400 bg-blue-50 text-blue-700 dark:border-blue-500 dark:bg-blue-900/30 dark:text-blue-200'
                       : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300'
@@ -575,9 +575,9 @@ export default function WorkItems({
                 >
                   Areas
                 </button>
-                <div className="flex flex-wrap gap-1 min-h-[24px] overflow-hidden">
+                <div className="flex flex-wrap gap-1 min-h-[20px] overflow-hidden">
                   {settings.azureArea && (
-                    <span className="px-2 py-0.5 border rounded-full bg-gray-100 dark:bg-gray-800 flex items-center">
+                    <span className="px-2 py-0.5 border rounded-full bg-gray-100 dark:bg-gray-800 flex items-center text-[10px]">
                       {settings.azureArea}
                       <button className="ml-1 text-xs" onClick={() => toggleArea(settings.azureArea)}>
                         x
@@ -587,9 +587,9 @@ export default function WorkItems({
                 </div>
               </div>
               {activeFilterGroup === 'areas' && (
-                <div className="absolute left-0 mt-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-xl p-2 z-20 flex flex-wrap gap-1">
+                <div className="absolute left-0 mt-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-xl p-1.5 z-20 flex flex-wrap gap-1 text-[10px]">
                   <button
-                    className={`px-2 py-1 rounded-full border ${
+                        className={`px-2 py-0.5 rounded-full border ${
                       settings.azureArea === ''
                         ? 'bg-blue-500 text-white'
                         : 'bg-gray-100 dark:bg-gray-800'
@@ -603,7 +603,7 @@ export default function WorkItems({
                   {availableAreas.map((area) => (
                     <button
                       key={area}
-                      className={`px-2 py-1 rounded-full border ${
+                      className={`px-2 py-0.5 rounded-full border ${
                         settings.azureArea === area
                           ? 'bg-blue-500 text-white'
                           : 'bg-gray-100 dark:bg-gray-800'
@@ -617,10 +617,10 @@ export default function WorkItems({
               )}
             </div>
             <div className="relative" ref={groupRefs.iterations}>
-              <div className="flex items-center gap-2 flex-wrap" ref={pillRowRefs.iterations}>
+              <div className="flex items-center gap-1.5 flex-wrap" ref={pillRowRefs.iterations}>
                 <button
                   type="button"
-                  className={`px-3 py-1 rounded-full uppercase tracking-wide text-[10px] font-semibold border ${
+                    className={`px-2.5 py-0.5 rounded-full uppercase tracking-wide text-[9px] font-semibold border ${
                     activeFilterGroup === 'iterations'
                       ? 'border-blue-400 bg-blue-50 text-blue-700 dark:border-blue-500 dark:bg-blue-900/30 dark:text-blue-200'
                       : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300'
@@ -629,9 +629,9 @@ export default function WorkItems({
                 >
                   Iterations
                 </button>
-                <div className="flex flex-wrap gap-1 min-h-[24px] overflow-hidden">
+                <div className="flex flex-wrap gap-1 min-h-[20px] overflow-hidden">
                   {settings.azureIteration && (
-                    <span className="px-2 py-0.5 border rounded-full bg-gray-100 dark:bg-gray-800 flex items-center">
+                    <span className="px-2 py-0.5 border rounded-full bg-gray-100 dark:bg-gray-800 flex items-center text-[10px]">
                       {settings.azureIteration}
                       <button className="ml-1 text-xs" onClick={() => toggleIteration(settings.azureIteration)}>
                         x
@@ -641,9 +641,9 @@ export default function WorkItems({
                 </div>
               </div>
               {activeFilterGroup === 'iterations' && (
-                <div className="absolute left-0 mt-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-xl p-2 z-20 flex flex-wrap gap-1">
+                <div className="absolute left-0 mt-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-xl p-1.5 z-20 flex flex-wrap gap-1 text-[10px]">
                   <button
-                    className={`px-2 py-1 rounded-full border ${
+                        className={`px-2 py-0.5 rounded-full border ${
                       settings.azureIteration === ''
                         ? 'bg-blue-500 text-white'
                         : 'bg-gray-100 dark:bg-gray-800'
@@ -657,7 +657,7 @@ export default function WorkItems({
                   {availableIterations.map((it) => (
                     <button
                       key={it}
-                      className={`px-2 py-1 rounded-full border ${
+                       className={`px-2 py-0.5 rounded-full border ${
                         settings.azureIteration === it
                           ? 'bg-blue-500 text-white'
                           : 'bg-gray-100 dark:bg-gray-800'
@@ -676,10 +676,10 @@ export default function WorkItems({
       <div
         ref={treeRef}
         onDragOver={handleTreeDragOver}
-        className="flex-grow overflow-y-auto space-y-3 scroll-container min-h-0"
+        className="flex-grow overflow-y-auto space-y-2 scroll-container min-h-0"
       >
         {groupedEntries.length === 0 && (
-          <div className="project-empty text-sm text-slate-500 dark:text-slate-400 px-2 py-4">
+          <div className="project-empty text-[13px] text-slate-500 dark:text-slate-400 px-2 py-3">
             No work items match the current filters.
           </div>
         )}
